@@ -288,3 +288,28 @@ func TestResponsiveStyle(t *testing.T) {
 		}
 	}
 }
+
+// TestOptionsAlignees : dans le panneau des options, le nom de l'option choisie, ceux des autres et l'aide
+// commencent sur la même colonne, le curseur et le titre deux colonnes avant, dans chaque disposition.
+func TestOptionsAlignees(t *testing.T) {
+	for _, c := range []struct{ w, h int }{{150, 45}, {100, 40}, {70, 30}} {
+		m, _ := ouvrirStyle(t)
+		m.Update(tea.WindowSizeMsg{Width: c.w, Height: c.h})
+		aller(t, m, gLigne2, "ctx")
+		appuyer(m, "→")
+		colonne := func(quoi string) int {
+			t.Helper()
+			for _, l := range strings.Split(ecran(m), "\n") {
+				if i := strings.Index(l, quoi); i >= 0 {
+					return largeur(l[:i])
+				}
+			}
+			t.Fatalf("%dx%d : %q absent\n%s", c.w, c.h, quoi, ecran(m))
+			return 0
+		}
+		titre, curseur, choisie, autre := colonne("Options · ctx"), colonne("› ctx.bar"), colonne("ctx.bar"), colonne("ctx.width")
+		if curseur != titre || choisie != curseur+2 || autre != choisie {
+			t.Errorf("%dx%d : titre %d, curseur %d, option choisie %d, autre option %d", c.w, c.h, titre, curseur, choisie, autre)
+		}
+	}
+}

@@ -611,7 +611,7 @@ func (m *Modele) panneauOptions(w int) []string {
 	for k, c := range cles {
 		v := m.valeurAffichee(c)
 		nom := tronquer(c.Nom, gauche)
-		x := " " + nom + espaces(gauche-largeur(nom)) + "  "
+		x := "  " + nom + espaces(gauche-largeur(nom)) + "  "
 		switch {
 		case k == o.opt && o.saisie:
 			x += "› " + gras + o.texte + z + "▏"
@@ -623,8 +623,8 @@ func (m *Modele) panneauOptions(w int) []string {
 		if o.st.Regle(c.Nom) && !(k == o.opt && o.saisie) {
 			x += estompe + " •" + z
 		}
-		if k == o.opt {
-			x = "›" + x[1:]
+		if k == o.opt { // le curseur devant le nom, comme dans la liste ; l'aide en dessous sur la même colonne
+			x = "› " + x[2:]
 		}
 		l = append(l, tronquer(x, w))
 	}
@@ -711,8 +711,8 @@ func (m *Modele) corpsStyle(nom string) []string {
 		}
 		droite = append(droite, m.boiteApercu(nom, d.ww, pattes)...)
 		droite = append(droite, "")
-		for _, x := range m.blocOptions(d.ww - 1) {
-			droite = append(droite, " "+x)
+		for _, x := range m.blocOptions(d.ww - 2) { // sur la colonne du texte de l'aperçu
+			droite = append(droite, "  "+x)
 		}
 		var corps []string
 		for k := 0; k < max(len(col), len(droite)); k++ {
