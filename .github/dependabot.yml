@@ -1,0 +1,16 @@
+# Mises à jour hebdomadaires des modules Go et des actions (épinglées par SHA, version en commentaire).
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope # chore(deps): bump …
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci # ci: bump …
