@@ -4,7 +4,9 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
-v0.1.0 will be the first public release.
+## [0.1.0] - 2026-10-24
+
+First public release.
 
 ### Added
 
@@ -15,4 +17,5 @@ v0.1.0 will be the first public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/commits/main
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/adrien-ln/agentline/releases/tag/v0.1.0
