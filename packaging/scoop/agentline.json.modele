@@ -1,0 +1,16 @@
+{
+    "version": "@VERSION@",
+    "description": "Statusline de Claude Code avec thèmes, sélecteur animé et thème par projet",
+    "homepage": "https://github.com/adrien-ln/agentline",
+    "license": "Unlicensed",
+    "architecture": {
+        "64bit": {
+            "url": "@BASE@/agentline_@VERSION@_windows_amd64.exe#/agentline.exe",
+            "hash": "@SHA_WINDOWS_AMD64@"
+        }
+    },
+    "bin": "agentline.exe",
+    "post_install": "& \"$dir\\agentline.exe\" install --in-place",
+    "pre_uninstall": "& \"$dir\\agentline.exe\" uninstall --in-place",
+    "notes": "La statusline est déclarée dans ~/.claude/settings.json (copie .bak avant). Choisis un thème avec : agentline"
+}

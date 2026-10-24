@@ -1,0 +1,6 @@
+# Nord
+# tags: gris, cyan, populaire
+TEXTE=eceff4 DISCRET=7b88a1 SEP=3b4252 ETEINT=4c566a
+MODELE=88c0d0 DOSSIER=81a1c1 LIEU=b48ead
+D0=a3be8c D50=ebcb8b D75=d08770 D100=bf616a
+INTENSITE=(8fbcbb 88c0d0 81a1c1 b48ead d08770)

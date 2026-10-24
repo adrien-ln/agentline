@@ -1,0 +1,58 @@
+package i18n
+
+// style : les options du style (internal/style : descriptions, valeurs refusées) et les sources des
+// thèmes (internal/theme).
+var style = map[string]string{
+	// Descriptions des options (agentline style keys, panneau du sélecteur)
+	"items de la 1re ligne ; « | » entre les segments, l'espace colle": "items of the 1st line; \"|\" between segments, a space keeps items together",
+	"items de la 2e ligne":                                                                 "items of the 2nd line",
+	"items de la ligne courte (SSH)":                                                       "items of the short line (SSH)",
+	"items jamais affichés, séparés par des espaces":                                       "items never shown, separated by spaces",
+	"jeu d'icônes : Nerd Font, caractères ordinaires, aucune":                              "icon set: Nerd Font, plain characters, none",
+	"séparateur des segments de la 1re ligne":                                              "separator between segments of the 1st line",
+	"séparateur des segments de la 2e ligne":                                               "separator between segments of the 2nd line",
+	"séparateur de la ligne courte (SSH)":                                                  "separator of the short line (SSH)",
+	"icône %s (auto : selon icons ; vide : aucune)":                                        "%s icon (auto: from icons; empty: none)",
+	"nom du modèle en entier, ou son premier mot":                                          "model name in full, or its first word",
+	"nom du modèle en dégradé, ou d'une couleur":                                           "model name as a gradient, or in one color",
+	"niveau d'effort : jauge et nom, jauge seule, nom seul":                                "effort level: gauge and name, gauge only, name only",
+	"compteurs (+1 ●2 ?3), ou un seul signe (✓ ou *)":                                      "counters (+1 ●2 ?3), or a single sign (✓ or *)",
+	"commits d'avance et de retard (↑ ↓)":                                                  "commits ahead and behind (↑ ↓)",
+	"état de la revue (approuvée, en revue…)":                                              "review state (approved, in review…)",
+	"numéro cliquable (lien OSC 8)":                                                        "clickable number (OSC 8 link)",
+	"longueur du nom de session avant coupure":                                             "session name length before it is cut",
+	"barre du contexte : lines, blocks, dots, none, ou 3 caractères (plein, moitié, vide)": "context bar: lines, blocks, dots, none, or 3 characters (full, half, empty)",
+	"cases de la barre du contexte":                                                        "cells of the context bar",
+	"seuil d'alerte du contexte, en %":                                                     "context alert threshold, in %",
+	"libellé du contexte":                                                                  "context label",
+	"seuil d'alerte des quotas, en %":                                                      "quota alert threshold, in %",
+	"projection à la fin de la fenêtre (↗)":                                                "projection at the end of the window (↗)",
+	"heure prévue du plafond, en alerte":                                                   "expected time of the limit, on alert",
+	"heure de remise à zéro : en alerte, toujours, jamais":                                 "reset time: on alert, always, never",
+	"libellé du quota de 5 heures":                                                         "label of the 5-hour quota",
+	"libellé du quota de 7 jours (auto : 7j en français, 7d en anglais)":                   "label of the 7-day quota (auto: 7j in French, 7d in English)",
+	"coût : sans abonnement seulement (api), ou toujours (always)":                         "cost: without a subscription only (api), or always",
+	"4,98 $ (fr) ou $4.98 (en) ; auto : selon la langue":                                   "4,98 $ (fr) or $4.98 (en); auto: follows the language",
+
+	// Valeurs refusées
+	"« %s » occupe %d colonnes : un caractère d'une colonne seulement": "\"%s\" takes %d columns: one-column characters only",
+	"pas d'espace au début ni à la fin":                                "no space at the start or the end",
+	"valeurs permises : %s":                                            "allowed values: %s",
+	"un nombre de %d à %d":                                             "a number from %d to %d",
+	"%d caractères au plus":                                            "%d characters at most",
+	"%s, ou exactement 3 caractères (plein, moitié, vide)":             "%s, or exactly 3 characters (full, half, empty)",
+	"option inconnue":                                                  "unknown option",
+	"option inconnue : %s":                                             "unknown option: %s",
+	"# Style de la statusline : agentline style keys pour les options, agentline style pour les régler.\n": "# Statusline style: agentline style keys for the options, agentline style to set them.\n",
+
+	// Sources des thèmes
+	"forcé":            "forced",
+	"branche":          "branch",
+	"projet":           "project",
+	"intégré":          "built-in",
+	"branche %s":       "branch %s",
+	"branche (aucune)": "branch (none)",
+	" (règle %s)":      " (rule %s)",
+	"projet %s":        "project %s",
+	"copie de %s : %w": "copy of %s: %w",
+}

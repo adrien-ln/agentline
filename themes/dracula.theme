@@ -1,0 +1,6 @@
+# Dracula
+# tags: violet, rose, populaire
+TEXTE=f8f8f2 DISCRET=6272a4 SEP=44475a ETEINT=565a75
+MODELE=ff79c6 DOSSIER=8be9fd LIEU=bd93f9
+D0=50fa7b D50=f1fa8c D75=ffb86c D100=ff5555
+INTENSITE=(8be9fd 50fa7b bd93f9 ff79c6 ffb86c)

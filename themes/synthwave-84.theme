@@ -1,0 +1,6 @@
+# Synthwave '84
+# tags: orange, cyan
+TEXTE=f9f6ff DISCRET=9d8fb5 SEP=3d2f5a ETEINT=5d4e7d
+MODELE=2de2e6 DOSSIER=ff7edb LIEU=ff8b39
+D0=72f1b8 D50=fede5d D75=ff8b39 D100=fe4450
+INTENSITE=(2de2e6 72f1b8 ff7edb fede5d ff8b39)

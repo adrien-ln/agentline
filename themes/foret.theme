@@ -1,0 +1,6 @@
+# Forêt
+# tags: cyan, vert
+TEXTE=ecfdf5 DISCRET=9fbfae SEP=2d4a3a ETEINT=52705c
+MODELE=a3e635 DOSSIER=86efac LIEU=2dd4bf
+D0=4ade80 D50=facc15 D75=fb923c D100=f43f5e
+INTENSITE=(2dd4bf 86efac a3e635 facc15 fb923c)

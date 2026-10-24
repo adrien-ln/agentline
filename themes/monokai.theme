@@ -1,0 +1,6 @@
+# Monokai
+# tags: orange, rose, populaire
+TEXTE=f8f8f2 DISCRET=908e7e SEP=49483e ETEINT=75715e
+MODELE=f92672 DOSSIER=66d9ef LIEU=fd971f
+D0=a6e22e D50=e6db74 D75=fd971f D100=f92672
+INTENSITE=(66d9ef a6e22e ae81ff f92672 fd971f)

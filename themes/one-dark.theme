@@ -1,0 +1,6 @@
+# One Dark
+# tags: bleu, rose, populaire
+TEXTE=abb2bf DISCRET=7f848e SEP=3e4452 ETEINT=5c6370
+MODELE=c678dd DOSSIER=56b6c2 LIEU=61afef
+D0=98c379 D50=e5c07b D75=d19a66 D100=e06c75
+INTENSITE=(56b6c2 61afef c678dd e06c75 d19a66)

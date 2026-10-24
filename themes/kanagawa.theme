@@ -1,0 +1,6 @@
+# Kanagawa
+# tags: bleu, violet, populaire
+TEXTE=dcd7ba DISCRET=727169 SEP=363646 ETEINT=54546d
+MODELE=957fb8 DOSSIER=7e9cd8 LIEU=7fb4ca
+D0=98bb6c D50=e6c384 D75=ffa066 D100=e82424
+INTENSITE=(7fb4ca 7e9cd8 957fb8 d27e99 ffa066)

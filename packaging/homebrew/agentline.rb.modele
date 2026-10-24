@@ -1,0 +1,40 @@
+# Formule Homebrew d'« agentline » (statusline de Claude Code), produite par scripts/construire.sh.
+class Agentline < Formula
+  desc "Statusline de Claude Code avec thèmes, sélecteur animé et thème par projet"
+  homepage "https://github.com/adrien-ln/agentline"
+  version "@VERSION@"
+
+  on_macos do
+    on_arm do
+      url "@BASE@/agentline_@VERSION@_darwin_arm64"
+      sha256 "@SHA_DARWIN_ARM64@"
+    end
+    on_intel do
+      url "@BASE@/agentline_@VERSION@_darwin_amd64"
+      sha256 "@SHA_DARWIN_AMD64@"
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "@BASE@/agentline_@VERSION@_linux_arm64"
+      sha256 "@SHA_LINUX_ARM64@"
+    end
+    on_intel do
+      url "@BASE@/agentline_@VERSION@_linux_amd64"
+      sha256 "@SHA_LINUX_AMD64@"
+    end
+  end
+
+  def install
+    bin.install Dir["agentline_*"].first => "agentline"
+  end
+
+  def caveats
+    "Pour déclarer la statusline dans ~/.claude/settings.json (copie .bak avant) : agentline install --in-place"
+  end
+
+  test do
+    assert_match "agentline #{version}", shell_output("#{bin}/agentline version")
+  end
+end

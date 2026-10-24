@@ -1,0 +1,6 @@
+# Glacier
+# tags: bleu
+TEXTE=f0f9ff DISCRET=94a3b8 SEP=334155 ETEINT=475569
+MODELE=bae6fd DOSSIER=7dd3fc LIEU=818cf8
+D0=6ee7b7 D50=fde68a D75=fdba74 D100=f87171
+INTENSITE=(bae6fd 7dd3fc 818cf8 a5b4fc e0e7ff)

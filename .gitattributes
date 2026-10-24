@@ -1,0 +1,2 @@
+# Tout est lu par bash, y compris sur Windows : fins de ligne Unix partout (bash refuse les CRLF)
+* text=auto eol=lf

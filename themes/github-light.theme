@@ -1,0 +1,7 @@
+# GitHub Light
+# tags: bleu, gris, populaire
+# fond: clair
+TEXTE=1f2328 DISCRET=59636e SEP=d1d9e0 ETEINT=afb8c1
+MODELE=8250df MODELE_FIN=bf3989 DOSSIER=0969da LIEU=0969da
+D0=1a7f37 D50=9a6700 D75=bc4c00 D100=d1242f
+INTENSITE=(0969da 8250df bf3989 d1242f bc4c00)

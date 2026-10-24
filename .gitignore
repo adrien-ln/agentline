@@ -1,0 +1,11 @@
+
+# Binaires Go construits à la racine
+/agentline
+/agentline.exe
+
+# Binaires et manifestes produits par scripts/construire.sh
+/dist/
+
+# Notes et réglages locaux des agents (Claude Code), propres à chaque machine
+/CLAUDE.local.md
+/.claude/
