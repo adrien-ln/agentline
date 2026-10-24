@@ -6,6 +6,7 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ### Changed
 
+- Releases ship archives instead of bare binaries: `.zip` for Windows, installed with Scoop (`scoop bucket add agentline https://github.com/adrien-ln/scoop-agentline`), `.tar.gz` for macOS and Linux, installed with Homebrew (`brew install adrien-ln/agentline/agentline`) or the install script.
 - Over SSH, the full statusline is now the default; the short line is opt-in with `agentline style set ssh.short yes`.
 
 ### Fixed
