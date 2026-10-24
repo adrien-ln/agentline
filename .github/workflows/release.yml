@@ -1,0 +1,70 @@
+# Sur un tag vX.Y.Z : tests, binaires (Windows, Linux, macOS), SHA256SUMS, manifestes Scoop et Homebrew,
+# attestation de provenance, puis version GitHub dont les notes viennent des messages de commit.
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GOTOOLCHAIN: local
+  GOFLAGS: -mod=readonly
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # créer la version GitHub
+      id-token: write # attestation de provenance
+      attestations: write
+    steps:
+      - name: tag vX.Y.Z
+        id: tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::$TAG is not a vX.Y.Z tag"
+            exit 1
+          fi
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # tags et historique, pour les notes
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false # pas de cache partagé avec les autres workflows dans une construction publiée
+      - name: go vet and go test
+        run: go vet ./... && go test ./...
+      - name: build
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: bash scripts/construire.sh "$VERSION"
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: dist/${{ steps.tag.outputs.version }}/SHA256SUMS
+      - name: release notes
+        env:
+          TAG: ${{ github.ref_name }}
+        run: bash scripts/notes-de-version.sh "$TAG" > notes.md && cat notes.md
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          gh release create "$TAG" dist/"$VERSION"/* --repo "$GITHUB_REPOSITORY" \
+            --verify-tag --title "agentline $TAG" --notes-file notes.md
