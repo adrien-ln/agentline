@@ -3,7 +3,9 @@ package render
 import (
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
+	"github.com/adrien-ln/agentline/internal/ansi"
 	"github.com/adrien-ln/agentline/internal/etat"
 	"github.com/adrien-ln/agentline/internal/i18n"
 	"github.com/adrien-ln/agentline/internal/style"
@@ -304,10 +306,13 @@ func (r *rendu) composer(s *etat.Session, d disposition) string {
 		lignes, couleur = []ligne{d.court}, r.discret
 	}
 	var sortie strings.Builder
+	k := 0 // lignes écrites
 	for _, l := range lignes {
 		var segments []string
+		var places [][]Place // par segment, colonnes relatives au segment
 		for _, seg := range l.segments {
 			texte, alerte, ouvert := "", false, false
+			var ps []Place
 			for _, n := range seg {
 				if r.o.masque[n] {
 					continue
@@ -320,6 +325,10 @@ func (r *rendu) composer(s *etat.Session, d disposition) string {
 				case t != "" && !d.colle:
 					t = " " + t
 				}
+				if v := ansi.Visible(t); strings.TrimSpace(v) != "" {
+					debut := visibles(ansi.Visible(texte)) + visibles(v) - visibles(strings.TrimLeft(v, " "))
+					ps = append(ps, Place{Item: n, Debut: debut, Fin: visibles(ansi.Visible(texte)) + visibles(strings.TrimRight(v, " "))})
+				}
 				texte += t
 				alerte = alerte || a
 				ouvert = ouvert || t != "" && d.ouvert && !court
@@ -331,13 +340,42 @@ func (r *rendu) composer(s *etat.Session, d disposition) string {
 				texte += z
 			}
 			if alerte {
+				avant := visibles(ansi.Visible(texte))
 				texte = r.signal(texte)
+				decaler(ps, visibles(ansi.Visible(texte))-avant)
 			}
 			segments = append(segments, texte)
+			places = append(places, ps)
 		}
 		if len(segments) > 0 {
-			sortie.WriteString(r.afficher(" "+couleur+l.sep+z+" ", segments))
+			texte, debuts := r.afficher(" "+couleur+l.sep+z+" ", segments)
+			sortie.WriteString(texte)
+			if r.places != nil {
+				for i, d := range debuts {
+					for _, p := range places[i] {
+						p.Ligne, p.Debut, p.Fin = k, p.Debut+d, p.Fin+d
+						*r.places = append(*r.places, p)
+					}
+				}
+			}
+			k++
 		}
 	}
 	return sortie.String()
+}
+
+// Place : où un item est dessiné : sa ligne (0 : la première écrite), ses colonnes de début et de fin
+// (fin exclue), en caractères visibles comme ansi.Visible.
+type Place struct {
+	Item              string
+	Ligne, Debut, Fin int
+}
+
+func visibles(s string) int { return utf8.RuneCountInString(s) }
+
+func decaler(ps []Place, d int) {
+	for i := range ps {
+		ps[i].Debut += d
+		ps[i].Fin += d
+	}
 }

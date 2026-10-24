@@ -95,6 +95,8 @@ type rendu struct {
 	riche bool
 	c     ansi.Profil
 	f     *fixes // sans les couleurs du thème (SSH) : les couleurs ANSI fixes
+	// places : non nil (RenderPlaces), composer y note où chaque item est dessiné
+	places *[]Place
 
 	texte, discret, sep, eteint, dossier, lieu, vert, jaune, orange, rouge string
 	intensite                                                              [5]string
@@ -291,14 +293,16 @@ func cout(c string, anglais bool) string { // « 4,98 $ » (ou « $4.98 ») ; vi
 	return s + " $"
 }
 
-// afficher : une ligne, coupée avant le premier segment qui dépasse la largeur du terminal.
-func (r *rendu) afficher(sep string, segments []string) string {
+// afficher : une ligne, coupée avant le premier segment qui dépasse la largeur du terminal, et la colonne
+// visible où commence chaque segment écrit.
+func (r *rendu) afficher(sep string, segments []string) (string, []int) {
 	largeur := 1000
 	if r.env.Columns > 0 {
 		largeur = r.env.Columns - 4
 	}
 	vsep := utf8.RuneCountInString(ansi.Visible(sep))
 	var ligne strings.Builder
+	var debuts []int
 	vue := 0
 	for _, s := range segments {
 		t := utf8.RuneCountInString(ansi.Visible(s))
@@ -309,10 +313,11 @@ func (r *rendu) afficher(sep string, segments []string) string {
 			ligne.WriteString(sep)
 			vue += vsep
 		}
+		debuts = append(debuts, vue)
 		ligne.WriteString(s)
 		vue += t
 	}
-	return ligne.String() + "\n"
+	return ligne.String() + "\n", debuts
 }
 
 // Render : l'entrée JSON de Claude Code -> la statusline (une ligne en SSH, deux sinon).
@@ -322,6 +327,15 @@ func Render(j string, env Env) string { return RenderSession(claude.Lire([]byte(
 func RenderSession(ss etat.Session, env Env) string {
 	r := preparer(ss, env)
 	return r.composer(&ss, r.o.disp)
+}
+
+// RenderPlaces : comme RenderSession, avec la place de chaque item dessiné (le sélecteur s'en sert pour
+// montrer l'item choisi sur l'aperçu).
+func RenderPlaces(ss etat.Session, env Env) (string, []Place) {
+	r := preparer(ss, env)
+	places := []Place{}
+	r.places = &places
+	return r.composer(&ss, r.o.disp), places
 }
 
 // preparer : l'état git, le thème et les couleurs du rendu de la session.
