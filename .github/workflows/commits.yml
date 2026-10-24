@@ -1,0 +1,31 @@
+# Messages de commit et titre de chaque pull request : Conventional Commits (scripts/verifier-commits.sh).
+name: Commits
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  conventional:
+    # Les titres de Dependabot (« chore(deps): bump <module> from <a> to <b> ») dépassent souvent 72 caractères
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: commit messages and pull request title
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          TITRE: ${{ github.event.pull_request.title }}
+        run: bash scripts/verifier-commits.sh --title "$TITRE" "$BASE_SHA..$HEAD_SHA"

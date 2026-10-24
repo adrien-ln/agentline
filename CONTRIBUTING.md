@@ -49,9 +49,17 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 type(scope): imperative summary in lowercase
 ```
 
-- 72 characters at most, no final period; an optional body explains why.
-- Scopes: `render`, `selector`, `style`, `theme`, `install`, `cli`, `i18n`, `colors`, `docs`, `ci`, or none for general changes.
+- Types: `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `chore`, `ci`, `build`, `revert`.
+- 72 characters at most, no final period; an optional body, after a blank line, explains why.
+- Scopes: `render`, `selector`, `style`, `theme`, `install`, `cli`, `i18n`, `colors`, `docs`, `ci`, `deps`, or none for general changes.
 - Keep commits small; separate refactoring from behavior changes.
+
+The CI checks every commit of a pull request, and its title, with `scripts/verifier-commits.sh`. Run it before pushing, or use it as a `commit-msg` hook:
+
+```bash
+bash scripts/verifier-commits.sh origin/main..HEAD
+printf '#!/bin/sh\nexec bash scripts/verifier-commits.sh --file "$1"\n' > .git/hooks/commit-msg && chmod +x .git/hooks/commit-msg
+```
 
 One pull request covers one topic. Fill in the checklist of the template.
 
