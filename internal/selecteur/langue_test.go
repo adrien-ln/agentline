@@ -40,6 +40,8 @@ func TestAnglais(t *testing.T) {
 	appuyer(m, "échap", "entrée")
 	contient("validation", ecran(m), "Keep \"", "[p] this project (statusline)", "[b] the branch main", "[d] everywhere (default)")
 	appuyer(m, "échap", "tab")
+	m.os.st.Definir("ssh.short", "yes")
+	m.os.changer()
 	contient("onglet Statusline", ecran(m), " Themes ", "Line 1", "Line 2", "SSH line", "General", "Preview · full (v)")
 	if s := m.Message(); !strings.HasPrefix(s, "Canceled: Tokyo Night stays in effect (built-in).") {
 		t.Errorf("message de sortie : %q", s)

@@ -42,10 +42,18 @@ func TestOngletStyleBascule(t *testing.T) {
 		t.Fatal("Tab doit ouvrir l'onglet Statusline")
 	}
 	e := ecran(m)
-	for _, x := range []string{"Ligne 1", "Ligne 2", "Ligne SSH", "Aperçu · complète", "☑ model", "+ effort", "SSH "} {
+	for _, x := range []string{"Ligne 1", "Ligne 2", "Aperçu · complète", "☑ model", "+ effort"} {
 		if !strings.Contains(e, x) {
 			t.Errorf("%q absent :\n%s", x, e)
 		}
+	}
+	if strings.Contains(e, "Ligne SSH") || strings.Contains(e, "SSH Opus") {
+		t.Errorf("sans ssh.short, ni la ligne SSH ni son aperçu :\n%s", e)
+	}
+	m.os.st.Definir("ssh.short", "yes")
+	m.os.changer()
+	if e := ecran(m); !strings.Contains(e, "Ligne SSH") || !strings.Contains(e, "SSH Opus") {
+		t.Errorf("ssh.short=yes : la ligne SSH et son aperçu :\n%s", e)
 	}
 	appuyer(m, "tab")
 	if m.onglet != 0 {
@@ -92,7 +100,8 @@ func TestOngletStyleItems(t *testing.T) {
 	if m.os.st.Regle("line2") {
 		t.Errorf("g de nouveau : %q", m.os.st.Valeur("line2"))
 	}
-	// ligne SSH : retirer, puis l'item absent revient à la fin
+	// ligne SSH (montrée avec ssh.short=yes) : retirer, puis l'item absent revient à la fin
+	m.os.st.Definir("ssh.short", "yes")
 	aller(t, m, gCourt, "ctx")
 	appuyer(m, "espace")
 	if c := m.os.st.Valeur("short"); c != "model effort | folder git | cost | 5h" || !strings.Contains(ecran(m), "☐ ctx absent") {
@@ -227,6 +236,7 @@ func TestOngletStyleQuitterSansGarder(t *testing.T) {
 // TestOngletStyleApercu : v fait défiler les aperçus ; le thème est celui survolé dans l'onglet Thèmes.
 func TestOngletStyleApercu(t *testing.T) {
 	m, _ := ouvrirStyle(t)
+	m.os.st.Definir("ssh.short", "yes") // l'aperçu SSH n'existe qu'avec la ligne courte
 	for _, n := range nomsApercus[1:] {
 		appuyer(m, "v")
 		if !strings.Contains(ecran(m), "Aperçu · "+n) {

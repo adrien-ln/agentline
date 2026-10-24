@@ -28,6 +28,7 @@ type Options struct {
 	OS         string    // "windows", "darwin", "linux"… (runtime.GOOS ; les tests simulent les autres)
 	Horodatage string    // pour les copies .bak (AAAAMMJJ-HHMMSS)
 	Sortie     io.Writer // le compte rendu
+	Court      bool      // la statusline passe en ligne courte ici (SSH_CONNECTION défini et ssh.short=yes)
 
 	// Ce qui touche au système, injecté (les tests n'ont aucun effet réel) ; nil : rien n'est lu ni lancé.
 	Getenv         func(string) string                              // l'environnement

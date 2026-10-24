@@ -135,3 +135,23 @@ func TestStyleErreurs(t *testing.T) {
 		t.Errorf("set --help : %d %q", code, o)
 	}
 }
+
+// TestLigneCourteOptionnelle : en SSH, la statusline reste complète tant que ssh.short n'est pas à yes.
+func TestLigneCourteOptionnelle(t *testing.T) {
+	configVide(t)
+	t.Setenv("AGENTLINE_STYLE", "")
+	t.Setenv("SSH_CONNECTION", "1.2.3.4 5 6.7.8.9 22")
+	if environnement().SSH {
+		t.Error("par défaut, la statusline complète en SSH")
+	}
+	if _, e, code := lancerStyle(t, "set", "ssh.short", "yes"); code != 0 {
+		t.Fatalf("set ssh.short : %d %q", code, e)
+	}
+	if !environnement().SSH {
+		t.Error("ssh.short=yes : la ligne courte en SSH")
+	}
+	t.Setenv("SSH_CONNECTION", "")
+	if environnement().SSH {
+		t.Error("ssh.short=yes hors SSH : la statusline complète")
+	}
+}

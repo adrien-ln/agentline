@@ -136,7 +136,7 @@ func init() {
 		{mode: enStyle, touches: []string{"right", "l"}, nom: "→", effet: i18n.M("les options de l'item"), libelle: func(*Modele) string { return i18n.T("options") }, rang: 3,
 			faire: func(m *Modele) tea.Cmd { m.os.ouvrir(); return nil }},
 		{mode: enStyle, touches: []string{"v"}, nom: "v", effet: i18n.M("aperçu : complète, tendue (alertes, conflit, plafond), API (coût), SSH"),
-			libelle: func(m *Modele) string { return i18n.T("aperçu (%s)", i18n.T(nomsApercus[m.os.apercu])) }, rang: 7, faire: (*Modele).apercuSuivant},
+			libelle: func(m *Modele) string { return i18n.T("aperçu (%s)", i18n.T(nomsApercus[m.os.apercuVu()])) }, rang: 7, faire: (*Modele).apercuSuivant},
 		{mode: enStyle, touches: []string{"r"}, nom: "r", effet: i18n.M("l'item par défaut (ses options, affiché)"), rang: 9,
 			faire: func(m *Modele) tea.Cmd { m.os.remettre(); return nil }},
 		{mode: enStyle, touches: []string{"R"}, nom: "R", effet: i18n.M("tout le style par défaut"), rang: 9,

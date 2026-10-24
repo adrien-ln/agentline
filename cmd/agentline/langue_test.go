@@ -68,7 +68,7 @@ func TestCouleursEnAnglais(t *testing.T) {
 	f := verifierFond(sources(), getenv, func() (ansi.Fond, bool) { return ansi.Sombre, true })
 	c := verifierCouleurs(func(k string) string {
 		return map[string]string{"AGENTLINE_COLORS": "zut", "TERM": "xterm-256color"}[k]
-	})
+	}, false)
 	texte := f.Sujet + " " + f.Detail + " " + f.Correction + " " + c.Sujet + " " + c.Detail + " " + c.Correction
 	for _, x := range []string{"Background", "light (setting ", "the terminal has a dark background", "Colors", "AGENTLINE_COLORS=zut unknown"} {
 		if !strings.Contains(texte, x) {

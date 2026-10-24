@@ -146,8 +146,11 @@ func (o Options) verifierSSH() Verification {
 	if o.env("SSH_CONNECTION") == "" {
 		return Verification{Niveau: Bon, Sujet: "SSH", Detail: i18n.T("SSH_CONNECTION absent : statusline complète")}
 	}
-	return Verification{Avertissement, "SSH", i18n.T("SSH_CONNECTION défini : statusline sur une ligne courte, sans icônes"),
-		i18n.T("normal en SSH (AGENTLINE_SSH_RICH=1 : les couleurs du thème quand même) ; sinon : unset SSH_CONNECTION")}
+	if !o.Court {
+		return Verification{Niveau: Bon, Sujet: "SSH", Detail: i18n.T("en SSH : statusline complète (ligne courte : agentline style set ssh.short yes)")}
+	}
+	return Verification{Avertissement, "SSH", i18n.T("en SSH : statusline sur une ligne courte, sans icônes (ssh.short=yes)"),
+		i18n.T("AGENTLINE_SSH_RICH=1 : les couleurs du thème quand même ; la statusline complète : agentline style set ssh.short no")}
 }
 
 // Afficher : une ligne par vérification, la correction en dessous ; renvoie le code de sortie (1 s'il

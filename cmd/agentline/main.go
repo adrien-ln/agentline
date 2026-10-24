@@ -20,14 +20,21 @@ import (
 	"github.com/adrien-ln/agentline/internal/theme"
 )
 
+// ligneCourte : la ligne courte de SSH, seulement si le style la demande (ssh.short=yes) ; sinon la
+// statusline complète, en SSH comme ailleurs.
+func ligneCourte(st *style.Style) bool { return getenv("SSH_CONNECTION") != "" && st.Oui("ssh.short") }
+
+// courtIci : ligneCourte avec le style des réglages.
+func courtIci() bool { return ligneCourte(style.Charger(dossierConfig(), getenv)) }
+
 // niveauCouleurs : le niveau de couleurs de la statusline, sa raison, et s'il est imposé par l'utilisateur.
-// En SSH : un niveau imposé (AGENTLINE_COLORS, NO_COLOR) > AGENTLINE_SSH_RICH (24 bits, comme avant) > les
-// couleurs ANSI fixes de la ligne courte (le niveau détecté ne sert alors qu'à TERM=dumb). Hors SSH : la
+// Sur la ligne courte (court) : un niveau imposé (AGENTLINE_COLORS, NO_COLOR) > AGENTLINE_SSH_RICH (24 bits,
+// comme avant) > les couleurs ANSI fixes (le niveau détecté ne sert alors qu'à TERM=dumb). Sinon : la
 // détection de ansi.DetecterNiveau.
-func niveauCouleurs(getenv func(string) string) (ansi.Niveau, string, bool) {
+func niveauCouleurs(getenv func(string) string, court bool) (ansi.Niveau, string, bool) {
 	n, raison := ansi.DetecterNiveau(getenv)
 	impose := ansi.NiveauImpose(raison)
-	if getenv("SSH_CONNECTION") == "" || impose {
+	if !court || impose {
 		return n, raison, impose
 	}
 	if riche, _ := strconv.Atoi(getenv("AGENTLINE_SSH_RICH")); riche != 0 {
@@ -49,17 +56,19 @@ func environnement() render.Env {
 	if s, err := strconv.ParseFloat(getenv("AGENTLINE_GIT_TIMEOUT"), 64); err == nil && s > 0 {
 		delai = time.Duration(s * float64(time.Second))
 	}
-	niveau, _, impose := niveauCouleurs(getenv)
+	st := style.Charger(dossierConfig(), getenv)
+	court := ligneCourte(st)
+	niveau, _, impose := niveauCouleurs(getenv, court)
 	themes := theme.Sources{Config: dossierConfig(), Integre: agentline.Themes, Windows: runtime.GOOS == "windows"}
 	fond, _ := themes.Fond(getenv)
 	return render.Env{
 		Now: now, Loc: time.Local, Columns: colonnes,
-		SSH: getenv("SSH_CONNECTION") != "", SSHRiche: riche != 0,
+		SSH: court, SSHRiche: riche != 0,
 		Couleurs: ansi.Profil{Niveau: niveau, Fond: fond}, CouleursImposees: impose,
 		TempDir: os.TempDir(), GitDelai: delai,
 		Themes: themes,
 		Getenv: getenv,
-		Style:  style.Charger(dossierConfig(), getenv),
+		Style:  st,
 	}
 }
 

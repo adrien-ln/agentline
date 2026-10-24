@@ -65,7 +65,7 @@ func (a *appel) avertir(cle string) {
 	if style.Force(getenv) {
 		fmt.Fprintln(a.sortie, i18n.T("⚠ AGENTLINE_STYLE=default : le style est ignoré tant qu'elle est définie"))
 	}
-	if c, ok := style.Trouver(cle); ok && !c.SSH && getenv("SSH_CONNECTION") != "" {
+	if c, ok := style.Trouver(cle); ok && !c.SSH && courtIci() {
 		fmt.Fprintln(a.sortie, i18n.T("⚠ en SSH, la ligne courte ne tient pas compte de %s (agentline style preview pour la version longue)", cle))
 	}
 }
@@ -110,7 +110,7 @@ func styleMontrer(a *appel) int {
 	if style.Force(getenv) {
 		fmt.Fprintln(a.sortie, i18n.T("⚠ AGENTLINE_STYLE=default : le fichier du style est ignoré, tout est au défaut"))
 	}
-	ssh := getenv("SSH_CONNECTION") != ""
+	ssh := ligneCourte(s)
 	for _, c := range style.Cles() {
 		source := i18n.T("défaut")
 		if s.Regle(c.Nom) {

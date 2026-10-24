@@ -50,20 +50,23 @@ func TestDoctorDansLAide(t *testing.T) {
 	}
 }
 
-// TestNiveauCouleurs : en SSH, le niveau imposé > AGENTLINE_SSH_RICH (24 bits) > couleurs fixes.
+// TestNiveauCouleurs : sur la ligne courte, le niveau imposé > AGENTLINE_SSH_RICH (24 bits) > couleurs
+// fixes ; en SSH sans ligne courte (par défaut), la détection habituelle.
 func TestNiveauCouleurs(t *testing.T) {
 	for _, c := range []struct {
 		env    map[string]string
+		court  bool
 		niveau ansi.Niveau
 		impose bool
 	}{
-		{map[string]string{"TERM": "xterm-256color"}, ansi.Couleurs256, false},
-		{map[string]string{"SSH_CONNECTION": "x", "TERM": "xterm-256color", "AGENTLINE_SSH_RICH": "1"}, ansi.Truecolor, false},
-		{map[string]string{"SSH_CONNECTION": "x", "AGENTLINE_SSH_RICH": "1", "AGENTLINE_COLORS": "16"}, ansi.Couleurs16, true},
-		{map[string]string{"SSH_CONNECTION": "x", "NO_COLOR": "1"}, ansi.SansCouleur, true},
-		{map[string]string{"SSH_CONNECTION": "x", "TERM": "dumb"}, ansi.SansCouleur, false},
+		{map[string]string{"TERM": "xterm-256color"}, false, ansi.Couleurs256, false},
+		{map[string]string{"SSH_CONNECTION": "x", "TERM": "xterm-256color"}, false, ansi.Couleurs256, false},
+		{map[string]string{"SSH_CONNECTION": "x", "TERM": "xterm-256color", "AGENTLINE_SSH_RICH": "1"}, true, ansi.Truecolor, false},
+		{map[string]string{"SSH_CONNECTION": "x", "AGENTLINE_SSH_RICH": "1", "AGENTLINE_COLORS": "16"}, true, ansi.Couleurs16, true},
+		{map[string]string{"SSH_CONNECTION": "x", "NO_COLOR": "1"}, true, ansi.SansCouleur, true},
+		{map[string]string{"SSH_CONNECTION": "x", "TERM": "dumb"}, true, ansi.SansCouleur, false},
 	} {
-		if n, _, i := niveauCouleurs(func(k string) string { return c.env[k] }); n != c.niveau || i != c.impose {
+		if n, _, i := niveauCouleurs(func(k string) string { return c.env[k] }, c.court); n != c.niveau || i != c.impose {
 			t.Errorf("%v : %v %v", c.env, n, i)
 		}
 	}
@@ -84,7 +87,7 @@ func TestVerifierCouleurs(t *testing.T) {
 		{map[string]string{"SSH_CONNECTION": "1 2 3 4", "TERM": "xterm-256color", "AGENTLINE_SSH_RICH": "1"}, installation.Bon, "24 bits (AGENTLINE_SSH_RICH)"},
 		{map[string]string{"SSH_CONNECTION": "1 2 3 4", "AGENTLINE_SSH_RICH": "1", "AGENTLINE_COLORS": "256"}, installation.Bon, "256 couleurs (AGENTLINE_COLORS)"},
 	} {
-		v := verifierCouleurs(func(k string) string { return c.env[k] })
+		v := verifierCouleurs(func(k string) string { return c.env[k] }, c.env["SSH_CONNECTION"] != "") // la ligne courte demandée
 		if v.Niveau != c.niveau || v.Detail != c.detail {
 			t.Errorf("%v : %v %q", c.env, v.Niveau, v.Detail)
 		}

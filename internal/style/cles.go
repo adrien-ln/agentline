@@ -94,6 +94,7 @@ var catalogue = func() []Cle {
 		{Nom: "sep.line1", Genre: Glyphe, Defaut: "│", Aide: i18n.M("séparateur des segments de la 1re ligne")},
 		{Nom: "sep.line2", Genre: Glyphe, Defaut: "·", Aide: i18n.M("séparateur des segments de la 2e ligne")},
 		{Nom: "sep.short", Genre: Glyphe, Defaut: "·", Aide: i18n.M("séparateur de la ligne courte (SSH)"), SSH: true},
+		{Nom: "ssh.short", Genre: Choix, Valeurs: ouiNon, Defaut: Non, Aide: i18n.M("en SSH (SSH_CONNECTION défini) : la ligne courte, sans icônes, au lieu de la statusline complète"), SSH: true},
 	}
 	for _, n := range nomsGlyphes {
 		c = append(c, Cle{Nom: "icon." + n, Genre: Glyphe, Defaut: Auto, Items: itemsGlyphes[n],

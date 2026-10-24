@@ -111,6 +111,9 @@ func (o *ongletStyle) rangees() []rangee {
 	var l []rangee
 	l1, l2, c := o.places(gLigne1), o.places(gLigne2), o.places(gCourt)
 	for g, p := range [][]place{l1, l2, c} {
+		if g == gCourt && !o.court() {
+			continue
+		}
 		l = append(l, rangee{groupe: g, titre: true})
 		for k, x := range p {
 			l = append(l, rangee{groupe: g, item: x.nom, pos: k, colle: x.colle})
@@ -125,6 +128,17 @@ func (o *ongletStyle) rangees() []rangee {
 		}
 	}
 	return append(l, rangee{groupe: gGeneral, titre: true}, rangee{groupe: gGeneral, pos: -1})
+}
+
+// court : la ligne courte de SSH est demandée (ssh.short=yes) ; sinon l'onglet ne la montre pas.
+func (o *ongletStyle) court() bool { return o.st.Oui("ssh.short") }
+
+// apercuVu : l'aperçu montré (celui de SSH seulement avec la ligne courte).
+func (o *ongletStyle) apercuVu() int {
+	if o.apercu == 3 && !o.court() {
+		return 0
+	}
+	return o.apercu
 }
 
 func (o *ongletStyle) courante() rangee {
@@ -465,14 +479,15 @@ func (m *Modele) rendreStyle(nom string, w, k int, ssh bool) []string {
 func (m *Modele) lignesApercu(nom string, w int) []string {
 	var l []string
 	ssh := estompe + "SSH " + z
-	if m.os.apercu == 3 {
+	a := m.os.apercuVu()
+	if a == 3 {
 		for k := 0; k < 3; k++ {
 			x := m.rendreStyle(nom, w-4, k, true)
 			l = append(l, ssh+x[0])
 		}
 		return l
 	}
-	long := m.rendreStyle(nom, w, m.os.apercu, false)
+	long := m.rendreStyle(nom, w, a, false)
 	for k := 0; k < 2; k++ {
 		x := ""
 		if k < len(long) {
@@ -480,13 +495,16 @@ func (m *Modele) lignesApercu(nom string, w int) []string {
 		}
 		l = append(l, x)
 	}
-	return append(l, ssh+m.rendreStyle(nom, w-4, m.os.apercu, true)[0])
+	if !m.os.court() {
+		return l
+	}
+	return append(l, ssh+m.rendreStyle(nom, w-4, a, true)[0])
 }
 
 // boiteApercu : l'aperçu dans un cadre de largeur w, Clawd (ses pattes) posé sur le cadre.
 func (m *Modele) boiteApercu(nom string, w int, pattes string) []string {
 	iw := w - 4
-	titre := "╭─ " + i18n.T("Aperçu · %s (v) ", i18n.T(nomsApercus[m.os.apercu]))
+	titre := "╭─ " + i18n.T("Aperçu · %s (v) ", i18n.T(nomsApercus[m.os.apercuVu()]))
 	if largeur(titre)+2 > w {
 		titre = "╭─"
 	}
@@ -631,7 +649,7 @@ func (m *Modele) panneauOptions(w int) []string {
 	if len(cles) > 0 {
 		c := o.cle()
 		aide := c.Explication()
-		if !c.SSH {
+		if !c.SSH && o.court() {
 			aide += i18n.T(" (pas en SSH)")
 		}
 		if m.d.agencement == compacte { // une ligne : l'aperçu passe avant
@@ -675,8 +693,8 @@ func (m *Modele) blocOptions(w int) []string {
 	return m.indice(w)
 }
 
-// lignesApercuStyle : la hauteur du cadre de l'aperçu.
-const lignesApercuStyle = 5
+// lignesApercuStyle : la hauteur du cadre de l'aperçu (la ligne SSH en plus avec la ligne courte).
+func (m *Modele) lignesApercuStyle() int { return 4 + b2i(m.os.court()) }
 
 // hauteurListeStyle : les rangées visibles de la liste dans la disposition en cours : en empilé et en
 // compact, ce que laissent les options et l'aperçu (une ligne vide, puis le cadre, ou en compact les
@@ -686,9 +704,9 @@ func (m *Modele) hauteurListeStyle() int {
 	if d.agencement == large {
 		return max(d.corps, 3)
 	}
-	apercu := 1 + lignesApercuStyle
+	apercu := 1 + m.lignesApercuStyle()
 	if d.agencement == compacte {
-		apercu = 1 + 3
+		apercu = 1 + m.lignesApercuStyle() - 2
 	}
 	return max(d.corps-apercu-len(m.blocOptions(d.lw-1)), 3)
 }
@@ -701,7 +719,7 @@ func (m *Modele) corpsStyle(nom string) []string {
 		col := m.colonneStyle(d.lw, h)
 		var droite []string
 		pattes := ""
-		if d.clawd && d.corps >= hauteurClawd+lignesApercuStyle+4 {
+		if d.clawd && d.corps >= hauteurClawd+m.lignesApercuStyle()+4 {
 			var cl [hauteurClawd]string
 			cl, pattes, _ = m.Clawd(nom)
 			x := espaces(d.ww - largeurClawd - 3)
@@ -793,7 +811,10 @@ func saut(t string, page int) int {
 }
 
 func (m *Modele) apercuSuivant() tea.Cmd {
-	m.os.apercu = (m.os.apercu + 1) % len(nomsApercus)
+	m.os.apercu = (m.os.apercuVu() + 1) % len(nomsApercus)
+	if m.os.apercu == 3 && !m.os.court() {
+		m.os.apercu = 0
+	}
 	return nil
 }
 

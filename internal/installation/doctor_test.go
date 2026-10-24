@@ -127,7 +127,11 @@ func TestDoctorProblemes(t *testing.T) {
 
 	// SSH
 	s.env["SSH_CONNECTION"] = "1.2.3.4 5 6.7.8.9 22"
-	if m, _, _ := diagnostic(t, s); m["SSH"].Niveau != Avertissement || m["Police"].Niveau != Bon {
-		t.Errorf("SSH : %+v %+v", m["SSH"], m["Police"])
+	if m, _, _ := diagnostic(t, s); m["SSH"].Niveau != Bon || m["Police"].Niveau != Bon {
+		t.Errorf("SSH, statusline complète par défaut : %+v %+v", m["SSH"], m["Police"])
+	}
+	s.Court = true // ssh.short=yes
+	if m, _, _ := diagnostic(t, s); m["SSH"].Niveau != Avertissement || !strings.Contains(m["SSH"].Correction, "ssh.short no") {
+		t.Errorf("SSH, ligne courte : %+v", m["SSH"])
 	}
 }

@@ -20,7 +20,7 @@ func commandeDoctor(a *appel) int {
 		v = append(v, m)
 	}
 	v = append(v, reglagesOrphelins(sources())...)
-	v = append(v, verifierCouleurs(getenv), verifierFond(sources(), getenv, detecterFond))
+	v = append(v, verifierCouleurs(getenv, courtIci()), verifierFond(sources(), getenv, detecterFond))
 	return installation.Afficher(a.sortie, v)
 }
 
@@ -43,8 +43,8 @@ func verifierFond(s theme.Sources, getenv func(string) string, detecter func() (
 
 // verifierCouleurs : le niveau de couleurs retenu et sa raison. Doctor tourne dans le terminal, la
 // statusline sous Claude Code : elle hérite du même environnement s'il a été lancé depuis ce terminal.
-func verifierCouleurs(getenv func(string) string) installation.Verification {
-	n, raison, _ := niveauCouleurs(getenv)
+func verifierCouleurs(getenv func(string) string, court bool) installation.Verification {
+	n, raison, _ := niveauCouleurs(getenv, court)
 	noms := map[ansi.Niveau]string{ansi.Truecolor: i18n.T("24 bits"), ansi.Couleurs256: i18n.T("256 couleurs"),
 		ansi.Couleurs16: i18n.T("16 couleurs"), ansi.SansCouleur: i18n.T("sans couleur")}
 	detail := noms[n] + " (" + i18n.T(raison) + ")" // raison : un nom de variable, ou « défaut »

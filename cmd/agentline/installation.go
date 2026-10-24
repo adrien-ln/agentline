@@ -115,6 +115,7 @@ func optionsReelles(a *appel) installation.Options {
 		Chercher: exec.LookPath, Telecharger: telecharger, PolicesSysteme: installation.PolicesSystemeDe(runtime.GOOS, getenv),
 		Interactif: terminal(os.Stdin) && terminal(os.Stdout), Demander: demander(a.sortie), SansPolice: a.opts["--no-font"]}
 	o.SurPlace = a.opts["--in-place"]
+	o.Court = courtIci()
 	o.Home, _ = os.UserHomeDir()
 	o.Claude = getenv("CLAUDE_CONFIG_DIR")
 	if o.Claude == "" {
