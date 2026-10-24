@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-25
+
 ### Changed
 
 - Releases ship archives instead of bare binaries: `.zip` for Windows, installed with Scoop (`scoop bucket add agentline https://github.com/adrien-ln/scoop-agentline`), `.tar.gz` for macOS and Linux, installed with Homebrew (`brew install adrien-ln/agentline/agentline`) or the install script.
@@ -27,5 +29,6 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/adrien-ln/agentline/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/adrien-ln/agentline/releases/tag/v0.1.0
