@@ -6,7 +6,7 @@ What is left to check, decide or build. These items will move to GitHub issues. 
 
 Everything below is covered by automated tests or simulations only.
 
-- [ ] **The first CI pipeline** (`.gitlab-ci.yml`) has never been looked at; at least check that the `golang:1.27` image exists.
+- [ ] **The GitHub Actions workflows** (`.github/workflows/`) have never run: the tests on Linux and macOS (only cross-compiled and vetted so far), the race detector, the commit check on a first pull request, and the release on a first tag.
 - [ ] **The picker in a real terminal**: keys (including `b`, `u`, `?` and Esc step by step), resizing between the three layouts, smoothness of the animation (Windows Terminal, PowerShell, Git Bash, SSH), emoji width depending on the terminal.
 - [ ] **The Statusline tab in a real terminal**: Shift+↑↓ (some terminals do not send it: K and J replace it), Tab, Space, typing a Nerd Font glyph, and how the glyphs of the `text` set (⎇ ⊕ ▸ ▴ ▿) look depending on the font.
 - [ ] **Claude Code interface colors in the animated scenes** (`internal/selecteur/scenes.go`: orange of the thinking indicator, diff backgrounds): written from memory, to compare with a real session.
@@ -20,9 +20,8 @@ Everything below is covered by automated tests or simulations only.
 
 ## To decide
 
-- [ ] **GitHub distribution**: the module is `github.com/adrien-ln/agentline`, but the CI (`.gitlab-ci.yml`), the scripts and the `packaging/` manifests still publish to the GitLab package registry. Next step: a GitHub Actions workflow, releases and `go install …@latest`.
-- [ ] **Scoop and Homebrew**: the manifests in `packaging/` are ready but need public release downloads. Until then, install with `go install` or from a clone with `go run ./cmd/agentline install`.
-- [ ] **First release**: pushing a `v0.1.0` tag triggers the build and publication by the CI.
+- [ ] **Scoop and Homebrew**: each release carries `agentline.json` and `agentline.rb`, filled from the templates in `packaging/`; they still need a Scoop bucket and a Homebrew tap to live in. Until then, install with `go install`, a release binary, or from a clone with `go run ./cmd/agentline install`.
+- [ ] **First release**: pushing a `v0.1.0` tag triggers `.github/workflows/release.yml` (procedure in CONTRIBUTING.md).
 - [ ] **Clawd in public**: the mascot drawing belongs to Anthropic; check that showing it in a public project is fine.
 - [ ] **`*` branch rule and detached HEAD**: a `*` branch rule also applies on a detached HEAD (the renderer then sees the start of the SHA). Acceptable for now.
 - [ ] **Old `SL_*` names**: read as a fallback, deprecated. Decide when to remove them.

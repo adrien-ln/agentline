@@ -63,6 +63,14 @@ printf '#!/bin/sh\nexec bash scripts/verifier-commits.sh --file "$1"\n' > .git/h
 
 One pull request covers one topic. Fill in the checklist of the template.
 
+## Releasing (maintainers)
+
+1. On an up-to-date `main` with a green CI, preview the notes: `bash scripts/notes-de-version.sh HEAD`.
+2. In `CHANGELOG.md`, move `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD`, commit `docs: prepare vX.Y.Z`, push.
+3. Optionally build locally to check: `bash scripts/construire.sh X.Y.Z` (output in `dist/X.Y.Z/`).
+4. Tag and push: `git tag -a vX.Y.Z -m "agentline vX.Y.Z" && git push origin vX.Y.Z`.
+5. `.github/workflows/release.yml` tests, builds, attests and publishes the release; then update the Scoop and Homebrew manifests from its `agentline.json` and `agentline.rb`.
+
 ## Demos
 
 The GIF and the image of the README are made with [vhs](https://github.com/charmbracelet/vhs). If your change affects what they show, regenerate them:
