@@ -69,7 +69,7 @@ One pull request covers one topic. Fill in the checklist of the template.
 2. In `CHANGELOG.md`, move `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD`, commit `docs: prepare vX.Y.Z`, push.
 3. Optionally build locally to check: `bash scripts/construire.sh X.Y.Z` (output in `dist/X.Y.Z/`).
 4. Tag and push: `git tag -a vX.Y.Z -m "agentline vX.Y.Z" && git push origin vX.Y.Z`.
-5. `.github/workflows/release.yml` tests, builds, attests and publishes the release; then update the Scoop and Homebrew manifests from its `agentline.json` and `agentline.rb`.
+5. `.github/workflows/release.yml` tests, builds the archives, attests and publishes the release, then pushes `agentline.json` to [scoop-agentline](https://github.com/adrien-ln/scoop-agentline) and `agentline.rb` to [homebrew-agentline](https://github.com/adrien-ln/homebrew-agentline) with the `PACKAGING_TOKEN` secret (a fine-grained token with Contents: write on those two repositories). Without the secret, copy them by hand.
 
 ## Demos
 
