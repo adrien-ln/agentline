@@ -5,11 +5,12 @@
 Model, Git, PR, context and quotas on two lines, in the theme of your choice:<br>
 one by default, one per project, one per branch. In English or French.
 
-![Go 1.27](https://img.shields.io/badge/Go-1.27-7dcfff?style=flat-square&logo=go&logoColor=7dcfff&labelColor=1a1b26)
+[![CI](https://img.shields.io/github/actions/workflow/status/adrien-ln/agentline/ci.yml?branch=main&label=CI&style=flat-square&labelColor=1a1b26)](https://github.com/adrien-ln/agentline/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/adrien-ln/agentline?style=flat-square&color=7dcfff&labelColor=1a1b26)](https://github.com/adrien-ln/agentline/releases/latest)
+[![Go Reference](https://img.shields.io/badge/go-reference-9ece6a?style=flat-square&logo=go&logoColor=9ece6a&labelColor=1a1b26)](https://pkg.go.dev/github.com/adrien-ln/agentline)
+[![Go Report Card](https://goreportcard.com/badge/github.com/adrien-ln/agentline?style=flat-square)](https://goreportcard.com/report/github.com/adrien-ln/agentline)
 ![49 themes](https://img.shields.io/badge/themes-49-bb9af7?style=flat-square&labelColor=1a1b26)
-![Windows · Linux · macOS](https://img.shields.io/badge/platforms-Windows%20%C2%B7%20Linux%20%C2%B7%20macOS-9ece6a?style=flat-square&labelColor=1a1b26)
-![2 dependencies](https://img.shields.io/badge/dependencies-2-e0af68?style=flat-square&labelColor=1a1b26)
-[![MIT license](https://img.shields.io/badge/license-MIT-f7768e?style=flat-square&labelColor=1a1b26)](LICENSE)
+[![MIT license](https://img.shields.io/github/license/adrien-ln/agentline?style=flat-square&color=f7768e&labelColor=1a1b26)](LICENSE)
 
 </div>
 
@@ -33,7 +34,9 @@ git clone https://github.com/adrien-ln/agentline.git && cd agentline
 go run ./cmd/agentline install
 ```
 
-Requires Go 1.27+. `agentline install` takes care of the rest: binary on the PATH, statusline declared in `~/.claude/settings.json`, and a [Nerd Font](https://www.nerdfonts.com/) installed and set in your terminal if you don't have one. Every file it changes gets a `.bak` copy; `agentline doctor` checks everything and gives the command that fixes it, `agentline uninstall` removes it all (your settings stay).
+Or, without Go, take the binary for your system from the [latest release](https://github.com/adrien-ln/agentline/releases/latest), check it against `SHA256SUMS` (and its build provenance with `gh attestation verify <file> --repo adrien-ln/agentline`), then run `agentline install`.
+
+Building requires Go 1.27+. `agentline install` takes care of the rest: binary on the PATH, statusline declared in `~/.claude/settings.json`, and a [Nerd Font](https://www.nerdfonts.com/) installed and set in your terminal if you don't have one. Every file it changes gets a `.bak` copy; `agentline doctor` checks everything and gives the command that fixes it, `agentline uninstall` removes it all (your settings stay).
 
 The language follows `AGENTLINE_LANG=en` (or `fr`), otherwise `LC_ALL`, `LC_MESSAGES`, `LANG`, then the Windows display language; English by default.
 
