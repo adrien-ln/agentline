@@ -34,7 +34,7 @@ const (
 	listeMaxEmpilee  = 10 // empilée : la liste n'en montre pas plus, le reste va à la fenêtre
 	fenetreMin       = 9  // la plus petite mini-fenêtre lisible (deux lignes de conversation)
 	fenetreCote      = 46 // largeur minimale de la fenêtre pour qu'elle tienne à côté de la liste
-	lignesLogo       = 3
+	lignesLogo       = 4  // len(logo)
 	lignesInfos      = 2  // la ligne du dépôt (en vigueur, survolé…), puis une ligne vide
 	lignesApercu     = 3  // sans fenêtre : une ligne vide, puis les deux lignes de la statusline
 	cadreListe       = 4  // autour des thèmes : le filtre, « ↑ de plus », « ↓ de plus », les pastilles

@@ -92,11 +92,12 @@ func degradeLigne(ligne string, stops []string) string {
 }
 
 // logo : « agentline » en minuscules pixel, comme la bannière du README (docs/banniere.svg) ; la 1re ligne
-// porte les ascendantes du t et du l et le point du i.
+// porte les ascendantes du t et du l et le point du i, la dernière la barre du g, sous la ligne de base.
 var logo = []string{
 	"                ▄  █  ▀        ",
 	"▄▀█ █▀█ █▀▀ █▀▄ █▀ █  ▄ █▀▄ █▀▀",
-	"▀▄█ ▄▄█ ██▄ █ █ ▀▄ ▀▄ █ █ █ ██▄",
+	"▀▄█ ▀▀█ ██▄ █ █ ▀▄ ▀▄ █ █ █ ██▄",
+	"    ▀▀▀                        ",
 }
 
 func (m *Modele) entete(nom string) []string {
