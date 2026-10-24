@@ -1,18 +1,29 @@
 #!/bin/bash
-# Installe « agentline » sur Linux ou macOS : télécharge le binaire de ce système depuis les versions GitHub
-# du projet, vérifie sa somme SHA-256, le place dans ~/.local/bin puis lance « agentline install ».
-# Usage : bash installer-agentline.sh <version> [source]
-#   <version> : par exemple 0.1.0 (sans « v »)
-#   source : une URL de base (par défaut la version GitHub du tag v<version>), ou un dossier local (dist/<version>)
+# Installe « agentline » sur Linux ou macOS depuis les versions GitHub du projet : télécharge l'archive de ce
+# système, vérifie sa somme SHA-256 (SHA256SUMS), la décompresse, puis lance « agentline install » (binaire
+# dans ~/.local/bin, statusline dans ~/.claude/settings.json avec une copie .bak, Nerd Font proposée).
+# Usage :
+#   curl -fsSL https://raw.githubusercontent.com/adrien-ln/agentline/main/scripts/installer-agentline.sh | bash
+#   bash installer-agentline.sh [version] [source]
+#     version : par exemple 0.1.1 (« v » permis) ; par défaut la dernière
+#     source  : une URL de base (par défaut la version GitHub du tag), ou un dossier local (dist/<version>)
+# Les messages sont en anglais : le script est lu par tout le monde avant d'être lancé.
 set -euo pipefail
 
-version=${1:?usage : bash installer-agentline.sh <version> [source]}
+depot=https://github.com/adrien-ln/agentline
+version=${1:-}
 version=${version#v}
-source=${2:-https://github.com/adrien-ln/agentline/releases/download/v$version}
+if [[ -z $version ]]; then
+  # /releases/latest redirige vers /releases/tag/vX.Y.Z
+  derniere=$(curl --fail --silent --show-error --location --output /dev/null --write-out '%{url_effective}' "$depot/releases/latest")
+  version=${derniere##*/v}
+  [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "agentline: could not find the latest release ($derniere)" >&2; exit 1; }
+fi
+source=${2:-$depot/releases/download/v$version}
 
-case $(uname -s) in Linux) os=linux ;; Darwin) os=darwin ;; *) echo "système non pris en charge : $(uname -s)" >&2; exit 1 ;; esac
-case $(uname -m) in x86_64|amd64) arch=amd64 ;; aarch64|arm64) arch=arm64 ;; *) echo "processeur non pris en charge : $(uname -m)" >&2; exit 1 ;; esac
-fichier=agentline_${version}_${os}_${arch}
+case $(uname -s) in Linux) os=linux ;; Darwin) os=darwin ;; *) echo "agentline: unsupported system: $(uname -s) (on Windows: scoop install agentline)" >&2; exit 1 ;; esac
+case $(uname -m) in x86_64|amd64) arch=amd64 ;; aarch64|arm64) arch=arm64 ;; *) echo "agentline: unsupported processor: $(uname -m)" >&2; exit 1 ;; esac
+archive=agentline_${version}_${os}_${arch}.tar.gz
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
@@ -20,17 +31,24 @@ recuperer() { # nom -> $tmp/nom
   if [[ -d $source ]]; then cp "$source/$1" "$tmp/$1"; return; fi
   curl --fail --silent --show-error --location -o "$tmp/$1" "$source/$1"
 }
-recuperer "$fichier"
+echo "agentline $version ($os/$arch)"
+recuperer "$archive"
 recuperer SHA256SUMS
 
-attendu=$(awk -v f="$fichier" '{ n = $2; sub(/^\*/, "", n) } n == f { print $1 }' "$tmp/SHA256SUMS")
-if command -v sha256sum >/dev/null; then obtenu=$(sha256sum "$tmp/$fichier" | awk '{ print $1 }')
-else obtenu=$(shasum -a 256 "$tmp/$fichier" | awk '{ print $1 }'); fi # macOS
+attendu=$(awk -v f="$archive" '{ n = $2; sub(/^\*/, "", n) } n == f { print $1 }' "$tmp/SHA256SUMS")
+if command -v sha256sum >/dev/null; then obtenu=$(sha256sum "$tmp/$archive" | awk '{ print $1 }')
+else obtenu=$(shasum -a 256 "$tmp/$archive" | awk '{ print $1 }'); fi # macOS
 if [[ -z $attendu || $attendu != "$obtenu" ]]; then
-  echo "somme SHA-256 incorrecte pour $fichier : rien n'est installé" >&2
+  echo "agentline: wrong SHA-256 checksum for $archive: nothing was installed" >&2
   exit 1
 fi
-echo "Somme SHA-256 vérifiée : $fichier"
+echo "SHA-256 checksum verified: $archive"
 
-chmod +x "$tmp/$fichier"
-"$tmp/$fichier" install # copie dans ~/.local/bin/agentline, settings.json (copie .bak avant)
+tar -xzf "$tmp/$archive" -C "$tmp" agentline
+chmod +x "$tmp/agentline"
+# Lancé par « curl | bash », l'entrée standard est le script : la question de la police passe par le terminal.
+if [[ -t 0 ]] || ! { : </dev/tty; } 2>/dev/null; then
+  "$tmp/agentline" install
+else
+  "$tmp/agentline" install </dev/tty
+fi
