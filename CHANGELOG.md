@@ -4,6 +4,15 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Changed
+
+- Over SSH, the full statusline is now the default; the short line is opt-in with `agentline style set ssh.short yes`.
+
+### Fixed
+
+- The g of the picker logo has its descender again.
+- The option panel of the Statusline tab is aligned with the item list and the preview.
+
 ## [0.1.0] - 2026-10-24
 
 First public release.
