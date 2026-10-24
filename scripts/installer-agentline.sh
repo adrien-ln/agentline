@@ -1,13 +1,14 @@
 #!/bin/bash
-# Installe « agentline » sur Linux ou macOS : télécharge le binaire de ce système depuis le registre de paquets
-# GitLab, vérifie sa somme SHA-256, le place dans ~/.local/bin puis lance « agentline install ».
+# Installe « agentline » sur Linux ou macOS : télécharge le binaire de ce système depuis les versions GitHub
+# du projet, vérifie sa somme SHA-256, le place dans ~/.local/bin puis lance « agentline install ».
 # Usage : bash installer-agentline.sh <version> [source]
-#   source : une URL de base (par défaut le registre du projet), ou un dossier local (dist/<version>)
-# Projet privé : exporte GITLAB_TOKEN (jeton personnel ou de déploiement, droit read_package_registry).
+#   <version> : par exemple 0.1.0 (sans « v »)
+#   source : une URL de base (par défaut la version GitHub du tag v<version>), ou un dossier local (dist/<version>)
 set -euo pipefail
 
 version=${1:?usage : bash installer-agentline.sh <version> [source]}
-source=${2:-https://gitlab.com/api/v4/projects/adrien-ln%2Fstatusline/packages/generic/agentline/$version}
+version=${version#v}
+source=${2:-https://github.com/adrien-ln/agentline/releases/download/v$version}
 
 case $(uname -s) in Linux) os=linux ;; Darwin) os=darwin ;; *) echo "système non pris en charge : $(uname -s)" >&2; exit 1 ;; esac
 case $(uname -m) in x86_64|amd64) arch=amd64 ;; aarch64|arm64) arch=arm64 ;; *) echo "processeur non pris en charge : $(uname -m)" >&2; exit 1 ;; esac
@@ -17,9 +18,7 @@ trap 'rm -rf "$tmp"' EXIT
 
 recuperer() { # nom -> $tmp/nom
   if [[ -d $source ]]; then cp "$source/$1" "$tmp/$1"; return; fi
-  local entete=()
-  [[ -n ${GITLAB_TOKEN:-} ]] && entete=(--header "PRIVATE-TOKEN: $GITLAB_TOKEN")
-  curl --fail --silent --show-error --location "${entete[@]}" -o "$tmp/$1" "$source/$1"
+  curl --fail --silent --show-error --location -o "$tmp/$1" "$source/$1"
 }
 recuperer "$fichier"
 recuperer SHA256SUMS

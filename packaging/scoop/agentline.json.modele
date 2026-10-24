@@ -2,11 +2,15 @@
     "version": "@VERSION@",
     "description": "Statusline de Claude Code avec thèmes, sélecteur animé et thème par projet",
     "homepage": "https://github.com/adrien-ln/agentline",
-    "license": "Unlicensed",
+    "license": "MIT",
     "architecture": {
         "64bit": {
             "url": "@BASE@/agentline_@VERSION@_windows_amd64.exe#/agentline.exe",
             "hash": "@SHA_WINDOWS_AMD64@"
+        },
+        "arm64": {
+            "url": "@BASE@/agentline_@VERSION@_windows_arm64.exe#/agentline.exe",
+            "hash": "@SHA_WINDOWS_ARM64@"
         }
     },
     "bin": "agentline.exe",
