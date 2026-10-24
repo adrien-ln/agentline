@@ -1,5 +1,6 @@
-# Sur un tag vX.Y.Z : tests, binaires (Windows, Linux, macOS), SHA256SUMS, manifestes Scoop et Homebrew,
-# attestation de provenance, puis version GitHub dont les notes viennent des messages de commit.
+# Sur un tag vX.Y.Z : tests, archives (Windows, Linux, macOS), SHA256SUMS, manifestes Scoop et Homebrew,
+# attestation de provenance, version GitHub dont les notes viennent des messages de commit, puis mise à jour
+# du bucket Scoop et du tap Homebrew (secret PACKAGING_TOKEN).
 name: Release
 
 on:
@@ -68,3 +69,8 @@ jobs:
         run: |
           gh release create "$TAG" dist/"$VERSION"/* --repo "$GITHUB_REPOSITORY" \
             --verify-tag --title "agentline $TAG" --notes-file notes.md
+      - name: Scoop bucket and Homebrew tap
+        env:
+          PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }} # fine-grained, Contents: write on the bucket and the tap only
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: bash scripts/publier-manifestes.sh "$VERSION"
