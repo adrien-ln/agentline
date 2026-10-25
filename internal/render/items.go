@@ -314,45 +314,7 @@ func (r *rendu) composer(s *etat.Session, d disposition) string {
 	var sortie strings.Builder
 	k := 0 // lignes écrites
 	for _, l := range lignes {
-		var segments []string
-		var places [][]Place // par segment, colonnes relatives au segment
-		for _, seg := range l.segments {
-			texte, alerte, ouvert := "", false, false
-			var ps []Place
-			for _, n := range seg {
-				if r.o.masque[n] {
-					continue
-				}
-				d := items[n]
-				t, a := d.f(r, s, court)
-				switch {
-				case texte == "": // en tête de segment, pas d'espace (une disposition personnelle peut l'y mettre)
-					t = strings.TrimLeft(t, " ")
-				case t != "" && !d.colle:
-					t = " " + t
-				}
-				if v := ansi.Visible(t); strings.TrimSpace(v) != "" {
-					debut := visibles(ansi.Visible(texte)) + visibles(v) - visibles(strings.TrimLeft(v, " "))
-					ps = append(ps, Place{Item: n, Debut: debut, Fin: visibles(ansi.Visible(texte)) + visibles(strings.TrimRight(v, " "))})
-				}
-				texte += t
-				alerte = alerte || a
-				ouvert = ouvert || t != "" && d.ouvert && !court
-			}
-			if texte == "" {
-				continue
-			}
-			if ouvert {
-				texte += z
-			}
-			if alerte {
-				avant := visibles(ansi.Visible(texte))
-				texte = r.signal(texte)
-				decaler(ps, visibles(ansi.Visible(texte))-avant)
-			}
-			segments = append(segments, texte)
-			places = append(places, ps)
-		}
+		segments, places := r.segmentsDe(l, s, court)
 		if len(segments) > 0 {
 			texte, debuts := r.afficher(" "+couleur+l.sep+z+" ", segments)
 			sortie.WriteString(texte)
@@ -368,6 +330,48 @@ func (r *rendu) composer(s *etat.Session, d disposition) string {
 		}
 	}
 	return sortie.String()
+}
+
+// segmentsDe : les segments d'une ligne, chacun avec les colonnes de ses items (relatives au segment).
+func (r *rendu) segmentsDe(l ligne, s *etat.Session, court bool) (segments []string, places [][]Place) {
+	for _, seg := range l.segments {
+		texte, alerte, ouvert := "", false, false
+		var ps []Place
+		for _, n := range seg {
+			if r.o.masque[n] {
+				continue
+			}
+			d := items[n]
+			t, a := d.f(r, s, court)
+			switch {
+			case texte == "": // en tête de segment, pas d'espace (une disposition personnelle peut l'y mettre)
+				t = strings.TrimLeft(t, " ")
+			case t != "" && !d.colle:
+				t = " " + t
+			}
+			if v := ansi.Visible(t); strings.TrimSpace(v) != "" {
+				debut := visibles(ansi.Visible(texte)) + visibles(v) - visibles(strings.TrimLeft(v, " "))
+				ps = append(ps, Place{Item: n, Debut: debut, Fin: visibles(ansi.Visible(texte)) + visibles(strings.TrimRight(v, " "))})
+			}
+			texte += t
+			alerte = alerte || a
+			ouvert = ouvert || t != "" && d.ouvert && !court
+		}
+		if texte == "" {
+			continue
+		}
+		if ouvert {
+			texte += z
+		}
+		if alerte {
+			avant := visibles(ansi.Visible(texte))
+			texte = r.signal(texte)
+			decaler(ps, visibles(ansi.Visible(texte))-avant)
+		}
+		segments = append(segments, texte)
+		places = append(places, ps)
+	}
+	return segments, places
 }
 
 // Place : où un item est dessiné : sa ligne (0 : la première écrite), ses colonnes de début et de fin
