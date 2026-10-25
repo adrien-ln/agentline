@@ -4,7 +4,7 @@ Thanks for your interest. Bug reports, themes and fixes are welcome; for a large
 
 ## Setup
 
-You need Go 1.27 or later. No other tool is required to build and test.
+You need Go 1.26 or later. No other tool is required to build and test.
 
 ```bash
 git clone https://github.com/adrien-ln/agentline.git && cd agentline

@@ -43,7 +43,7 @@ or with the install script (checks the SHA-256 checksum, installs to `~/.local/b
 curl -fsSL https://raw.githubusercontent.com/adrien-ln/agentline/main/scripts/installer-agentline.sh | bash
 ```
 
-**With Go 1.27+**, on any system:
+**With Go 1.26+**, on any system:
 
 ```bash
 go install github.com/adrien-ln/agentline/cmd/agentline@latest

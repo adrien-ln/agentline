@@ -4,6 +4,10 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Changed
+
+- `go install` needs Go 1.26 instead of 1.27.
+
 ### Fixed
 
 - A quota already at 100% no longer shows a projection (`↗103%`).
