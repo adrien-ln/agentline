@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,12 +14,15 @@ import (
 	"github.com/adrien-ln/agentline/internal/render"
 	"github.com/adrien-ln/agentline/internal/selecteur"
 	"github.com/adrien-ln/agentline/internal/style"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // commandesPolice : les sous-commandes de « agentline font ».
 func commandesPolice() []commande {
 	return []commande{
 		{nom: "list", alias: []string{"ls"}, aide: i18n.T("les Nerd Fonts proposées, celles qui sont installées, et la police de chaque terminal"), faire: policeListe},
+		{nom: "preview", aide: i18n.T("essayer les Nerd Fonts installées dans ce terminal, pour de vrai, puis garder l'une ou remettre la tienne"), faire: policeApercu},
 		{nom: "test", aide: i18n.T("les glyphes d'agentline dessinés dans la police de ce terminal : ce qui manque ou déborde se voit"), faire: policeTest},
 		{nom: "set", args: i18n.T("<police>"), aide: i18n.T("installe cette Nerd Font si elle manque et la choisit dans Windows Terminal et VS Code"), min: 1, max: 1, faire: policeChoisir},
 		{nom: "help", alias: []string{"aide"}, aide: i18n.T("cette aide"), faire: func(a *appel) int { io.WriteString(a.sortie, aidePolice()); return 0 }},
@@ -133,4 +137,59 @@ func policeTest(a *appel) int {
 		fmt.Fprintf(w, i18n.T("%s : %s (%s)\n"), r.Terminal, police, r.Fichier)
 	}
 	return 0
+}
+
+// policeApercu : « agentline font preview » : la police du terminal change pour de vrai à chaque choix ;
+// Entrée la garde (comme agentline font set, dans les deux terminaux), Échap remet l'ancienne. Un aperçu
+// interrompu auparavant est d'abord défait.
+func policeApercu(a *appel) int {
+	o := optionsReelles(a)
+	if msg := o.RemettreApercuInterrompu(); msg != "" {
+		fmt.Fprintln(a.sortie, msg)
+	}
+	ap, err := o.PreparerApercu()
+	if errors.Is(err, installation.ErrSansApercu) {
+		return a.echec("%s", i18n.T("l'aperçu en direct marche dans Windows Terminal et VS Code ; ici, « agentline font test » montre les glyphes dans ta police"))
+	}
+	if err != nil {
+		return a.echec("%v", err)
+	}
+	var liste []selecteur.ChoixPolice
+	connue := false
+	for _, p := range installation.Polices {
+		liste = append(liste, selecteur.ChoixPolice{Nom: p.Nom, Titre: p.Titre, Famille: p.Famille, Installee: o.PoliceInstallee(p)})
+		connue = connue || p.Famille == ap.Avant
+	}
+	if ap.Avant != "" && !connue {
+		liste = append([]selecteur.ChoixPolice{{Titre: ap.Avant, Famille: ap.Avant, Installee: true}}, liste...)
+	}
+	m := selecteur.NouvellesPolices(environnement(), liste, ap.Terminal, ap.Avant, ap.Essayer)
+	_, err = tea.NewProgram(m, tea.WithAltScreen()).Run()
+	if err != nil || !m.Garder {
+		if e := ap.Remettre(); e != nil {
+			return a.echec("%v", e)
+		}
+		if err != nil {
+			return a.echec("%v", err)
+		}
+		fmt.Fprint(a.sortie, i18n.T("Police remise : %s (%s).\n", montrePolice(ap.Avant), ap.Terminal))
+		return 0
+	}
+	ap.Garder()
+	if m.Choix.Nom == "" { // la police d'avant, hors de la liste d'agentline : rien d'autre à régler
+		fmt.Fprint(a.sortie, i18n.T("Police gardée : %s (%s).\n", m.Choix.Famille, ap.Terminal))
+		return 0
+	}
+	o.Police, o.PoliceImposee = m.Choix.Nom, true
+	if err := o.AppliquerPolice(); err != nil {
+		return a.echec("%v", err)
+	}
+	return 0
+}
+
+func montrePolice(f string) string {
+	if f == "" {
+		return i18n.T("celle par défaut du terminal")
+	}
+	return f
 }

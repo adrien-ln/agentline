@@ -168,4 +168,9 @@ var cli = map[string]string{
 	"un thème s'appelle déjà %s (agentline theme edit %s)":        "a theme is already called %s (agentline theme edit %s)",
 	"nom de thème invalide : %s (minuscules, chiffres et tirets)": "invalid theme name: %s (lowercase letters, digits and dashes)",
 	"le thème de départ":                                          "the starting theme",
+	"celle par défaut du terminal":                                "the terminal's default",
+	"essayer les Nerd Fonts installées dans ce terminal, pour de vrai, puis garder l'une ou remettre la tienne":                   "try the installed Nerd Fonts in this terminal, for real, then keep one or put yours back",
+	"l'aperçu en direct marche dans Windows Terminal et VS Code ; ici, « agentline font test » montre les glyphes dans ta police": "the live preview works in Windows Terminal and VS Code; here, \"agentline font test\" shows the glyphs in your font",
+	"Police remise : %s (%s).\n": "Font put back: %s (%s).\n",
+	"Police gardée : %s (%s).\n": "Font kept: %s (%s).\n",
 }

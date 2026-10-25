@@ -90,3 +90,14 @@ func TestCommandeThemeNew(t *testing.T) {
 		}
 	}
 }
+
+// TestCommandeFontPreview : hors de Windows Terminal et de VS Code, l'aperçu en direct n'est pas possible et
+// le dit, sans rien modifier.
+func TestCommandeFontPreview(t *testing.T) {
+	t.Setenv("WT_SESSION", "")
+	t.Setenv("TERM_PROGRAM", "")
+	var sortie, erreurs bytes.Buffer
+	if code := principale([]string{"font", "preview"}, &sortie, &erreurs); code != codeEchec || !strings.Contains(erreurs.String(), "agentline font test") {
+		t.Errorf("code %d\n%s%s", code, sortie.String(), erreurs.String())
+	}
+}
