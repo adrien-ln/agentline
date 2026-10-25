@@ -117,13 +117,22 @@ func BrancheDe(d string) string {
 	if r == "" {
 		return ""
 	}
+	b, _ := TeteGit(r)
+	return b
+}
+
+// TeteGit : ce que pointe HEAD dans le dépôt de racine r (worktrees et sous-modules compris, où .git est
+// un fichier) : la branche entière (« feat/x »), ou en HEAD détachée le commit ; vide si illisible.
+func TeteGit(r string) (branche, commit string) {
 	g, _ := dossiersGit(r)
 	l, _ := lignePropre(g + "/HEAD")
-	b, _ := strings.CutPrefix(l, "ref: refs/heads/")
-	if b == l {
-		return ""
+	if b, ok := strings.CutPrefix(l, "ref: refs/heads/"); ok {
+		return b, ""
 	}
-	return b
+	if strings.HasPrefix(l, "ref:") {
+		return "", ""
+	}
+	return "", l
 }
 
 // ProjetID : l'identifiant du projet qui contient le dossier.

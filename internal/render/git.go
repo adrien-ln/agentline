@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/adrien-ln/agentline/internal/theme"
 )
 
 // État git du dépôt, mis en cache 5 s (même fichier que l'ancienne version bash).
@@ -121,24 +123,21 @@ func lireGit(racine, tmp string, now int64, delai time.Duration) etatGit {
 	return brancheDeSecours(e, racine)
 }
 
-// brancheDeSecours : si git n'a rien donné, la branche se lit dans .git/HEAD.
+// brancheDeSecours : si git n'a rien donné, la branche se lit dans HEAD, comme pour les règles de thème
+// (theme.TeteGit : worktrees compris, nom entier, « feat/x » et non « x ») ; en HEAD détachée, le début
+// du commit, comme git.
 func brancheDeSecours(e etatGit, racine string) etatGit {
 	if e.branche != "" {
 		return e
 	}
-	tete := racine + "/.git/HEAD"
-	if fi, err := os.Stat(tete); err != nil || !fi.Mode().IsRegular() {
-		return e
-	}
-	b, _ := os.ReadFile(tete)
-	l, _, _ := strings.Cut(string(b), "\n")
-	l = strings.Trim(l, " \t")
-	if strings.HasPrefix(l, "ref:") {
-		e.branche = l[strings.LastIndex(l, "/")+1:]
-	} else if len(l) > 7 {
-		e.branche = l[:7]
-	} else {
-		e.branche = l
+	branche, commit := theme.TeteGit(racine)
+	switch {
+	case branche != "":
+		e.branche = branche
+	case len(commit) > 7:
+		e.branche = commit[:7]
+	default:
+		e.branche = commit
 	}
 	return e
 }
