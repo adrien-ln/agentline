@@ -155,8 +155,7 @@ func (m *Modele) statusline(nom string, largeur, ctx int) []string {
 // session fictive ; pattes : celles de Clawd, posées sur le cadre du haut (vide : aucune).
 func (m *Modele) fenetre(nom string, w, h int, pattes string) []string {
 	iw := w - 4
-	trait := strings.Repeat("─", max(w, 0))
-	trace := func(n int) string { return string([]rune(trait)[:max(min(n, w), 0)]) }
+	trace := func(n int) string { return strings.Repeat("─", max(min(n, w), 0)) }
 	sc, ts := sceneA(m.scenes, m.t)
 	etat := sc.etatA(ts)
 	titre := "╭─ Claude Code · " + i18n.T("mon-projet") + " "
@@ -220,6 +219,11 @@ func largeur(s string) int {
 				s = s[j+1:]
 				continue
 			}
+		}
+		if c := s[0]; c >= 0x20 && c < 0x7f { // ASCII imprimable : une colonne, sans passer par runewidth
+			n++
+			s = s[1:]
+			continue
 		}
 		r, t := utf8.DecodeRuneInString(s)
 		s = s[t:]
