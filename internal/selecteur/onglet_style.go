@@ -901,6 +901,9 @@ func (m *Modele) corpsStyle(nom string) []string {
 			corps = append(corps, marge+l)
 		}
 		corps = append(corps, marge+"  "+m.ligneChoix(nom, bw-2, bw-4))
+		// centré en hauteur, sur la place du plus long menu : rien ne saute quand un menu s'ouvre
+		haut := max((d.corps-len(corps)-1-hauteurMenuMax())/2, 0)
+		corps = append(make([]string, haut), corps...)
 		corps = append(corps, "")
 		for _, x := range m.blocMenu(bw - 2) {
 			corps = append(corps, marge+"  "+x)
@@ -912,6 +915,16 @@ func (m *Modele) corpsStyle(nom string) []string {
 		corps = append(corps, " "+x)
 	}
 	return corps
+}
+
+// hauteurMenuMax : la hauteur du plus long menu : son titre, ses rangées (options, coller, retirer ; ou les
+// items à ajouter) et trois lignes d'aide.
+func hauteurMenuMax() int {
+	n := max(len(style.DesItems("")), len(style.Items))
+	for _, i := range style.Items {
+		n = max(n, len(style.DesItems(i))+2)
+	}
+	return 1 + n + 3
 }
 
 // blocMenu : le menu ouvert, sinon ce que l'item choisi permet.

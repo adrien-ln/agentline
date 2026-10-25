@@ -438,3 +438,32 @@ func TestSurligner(t *testing.T) {
 		}
 	}
 }
+
+// TestStyleCentre : sur un grand écran, l'aperçu descend vers le milieu, et ne bouge pas quand un menu
+// s'ouvre.
+func TestStyleCentre(t *testing.T) {
+	ligneCadre := func(m *Modele) int {
+		for k, l := range strings.Split(ecran(m), "\n") {
+			if strings.Contains(l, "╭─ Aperçu") {
+				return k
+			}
+		}
+		t.Fatalf("pas d'aperçu :\n%s", ecran(m))
+		return 0
+	}
+	m, _ := ouvrirStyle(t)
+	m.Update(tea.WindowSizeMsg{Width: 150, Height: 30})
+	petit := ligneCadre(m)
+	m.Update(tea.WindowSizeMsg{Width: 150, Height: 60})
+	grand := ligneCadre(m)
+	if grand <= petit {
+		t.Errorf("le bloc doit descendre sur un grand écran : %d puis %d", petit, grand)
+	}
+	for _, menu := range [][]string{{"entrée"}, {"g"}, {"x", "+"}} {
+		appuyer(m, menu...)
+		if k := ligneCadre(m); k != grand {
+			t.Errorf("%v : l'aperçu passe de la ligne %d à %d", menu, grand, k)
+		}
+		appuyer(m, "échap")
+	}
+}
