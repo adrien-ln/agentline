@@ -188,3 +188,20 @@ func TestLCh(t *testing.T) {
 		t.Errorf("chroma excessive : teinte %0.1f devenue %0.1f (%s)", a, a2, r)
 	}
 }
+
+// TestSimuler : la vision normale ne change rien ; en deutéranopie, le rouge et le vert se rapprochent
+// beaucoup, le gris ne bouge pas.
+func TestSimuler(t *testing.T) {
+	if Simuler("ff9e64", VisionNormale) != "ff9e64" {
+		t.Error("vision normale : inchangé")
+	}
+	rouge, vert := "e05050", "50a050"
+	if a, b := Ecart(rouge, vert), Ecart(Simuler(rouge, Deuteranopie), Simuler(vert, Deuteranopie)); b > a/2 {
+		t.Errorf("deutéranopie : écart rouge-vert %.1f -> %.1f, attendu bien plus petit", a, b)
+	}
+	for _, v := range []Vision{Protanopie, Deuteranopie, Tritanopie} {
+		if g := Simuler("808080", v); Ecart(g, "808080") > 2 {
+			t.Errorf("vision %d : le gris doit rester gris (%s)", v, g)
+		}
+	}
+}

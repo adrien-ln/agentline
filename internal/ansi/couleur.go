@@ -330,3 +330,36 @@ func Vers16(r, g, b int, fondClair bool) int {
 	}
 	return base
 }
+
+// Vision : une façon de voir les couleurs, pour simuler le daltonisme dans l'éditeur de thèmes.
+type Vision int
+
+const (
+	VisionNormale Vision = iota
+	Protanopie           // rouge non perçu
+	Deuteranopie         // vert non perçu (la plus courante)
+	Tritanopie           // bleu non perçu
+)
+
+// matricesVision : les matrices de Machado, Oliveira et Fernandes (2009), sévérité maximale, à appliquer au
+// RVB linéaire.
+var matricesVision = map[Vision][3][3]float64{
+	Protanopie:   {{0.152286, 1.052583, -0.204868}, {0.114503, 0.786281, 0.099216}, {-0.003882, -0.048116, 1.051998}},
+	Deuteranopie: {{0.367322, 0.860646, -0.227968}, {0.280085, 0.672501, 0.047413}, {-0.011820, 0.042940, 0.968881}},
+	Tritanopie:   {{1.255528, -0.076749, -0.178779}, {-0.078411, 0.930809, 0.147602}, {0.004733, 0.691367, 0.303900}},
+}
+
+// Simuler : la couleur « rrggbb » telle que la voit une personne de cette vision.
+func Simuler(h string, v Vision) string {
+	m, ok := matricesVision[v]
+	if !ok || h == "" {
+		return h
+	}
+	r, g, b := RGB(h)
+	l := [3]float64{lineaire(r), lineaire(g), lineaire(b)}
+	var o [3]int
+	for i := range o {
+		o[i] = borner(gamma(m[i][0]*l[0] + m[i][1]*l[1] + m[i][2]*l[2]))
+	}
+	return hex(o[0], o[1], o[2])
+}
