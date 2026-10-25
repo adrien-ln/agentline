@@ -37,15 +37,15 @@ func aller(t *testing.T, m *Modele, g int, item string) {
 	}
 }
 
-// surligne : le texte visible surligné (en inverse) sur l'aperçu, hors barre des onglets.
+// surligne : le texte visible surligné (souligné) sur l'aperçu, hors barre des onglets.
 func surligne(m *Modele) string {
 	for _, l := range strings.Split(m.View(), "\n") {
 		if !strings.Contains(l, "│") { // les lignes du cadre de l'aperçu
 			continue
 		}
-		if i := strings.Index(l, inverse); i >= 0 {
+		if i := strings.Index(l, souligne); i >= 0 {
 			reste := l[i:]
-			if j := strings.Index(reste, finInverse); j >= 0 {
+			if j := strings.Index(reste, finSurligne); j >= 0 {
 				reste = reste[:j]
 			}
 			return couleurs.ReplaceAllString(reste, "")
@@ -413,12 +413,12 @@ func TestOptionsAlignees(t *testing.T) {
 	}
 }
 
-// TestSurligner : l'inverse couvre les caractères visibles demandés, remis après chaque séquence de la
+// TestSurligner : la marque couvre les caractères visibles demandés, remis après chaque séquence de la
 // portion, et les séquences (CSI, OSC 8) ne comptent pas comme des colonnes.
 func TestSurligner(t *testing.T) {
 	marquer := func(s string) string {
-		s = strings.ReplaceAll(s, inverse, "⟦")
-		s = strings.ReplaceAll(s, finInverse, "⟧")
+		s = strings.ReplaceAll(s, souligne, "⟦")
+		s = strings.ReplaceAll(s, finSurligne, "⟧")
 		return couleurs.ReplaceAllString(s, "")
 	}
 	for _, c := range []struct {
@@ -431,7 +431,7 @@ func TestSurligner(t *testing.T) {
 		{"abc", 1, 3, "a⟦bc⟧"},
 		{"a\x1b]8;;https://x\x1b\\#12\x1b]8;;\x1b\\b", 1, 4, "a⟦#12⟧b"},
 	} {
-		obtenu := marquer(surligner(c.s, c.debut, c.fin))
+		obtenu := marquer(surligner(c.s, c.debut, c.fin, souligne))
 		obtenu = strings.NewReplacer("\x1b]8;;https://x\x1b\\", "", "\x1b]8;;\x1b\\", "").Replace(obtenu)
 		if obtenu != c.attendu {
 			t.Errorf("%q [%d:%d] : %q, attendu %q", c.s, c.debut, c.fin, obtenu, c.attendu)

@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/adrien-ln/agentline/internal/ansi"
 	"github.com/adrien-ln/agentline/internal/etat"
 	"github.com/adrien-ln/agentline/internal/i18n"
 	"github.com/adrien-ln/agentline/internal/render"
@@ -554,14 +555,14 @@ func (m *Modele) rendreStyle(nom string, w, k int, ssh bool) apercuRendu {
 	return r
 }
 
-// ligne : la ligne k (vide si la statusline en a moins), l'item surligné s'il y est dessiné.
-func (r apercuRendu) ligne(k int, item string) string {
+// ligne : la ligne k (vide si la statusline en a moins), l'item surligné (marque) s'il y est dessiné.
+func (r apercuRendu) ligne(k int, item, marque string) string {
 	if k >= len(r.lignes) {
 		return ""
 	}
 	for _, p := range r.places {
 		if item != "" && p.Item == item && p.Ligne == k {
-			return surligner(r.lignes[k], p.Debut, p.Fin)
+			return surligner(r.lignes[k], p.Debut, p.Fin, marque)
 		}
 	}
 	return r.lignes[k]
@@ -577,9 +578,9 @@ func (r apercuRendu) dessine(item string) bool {
 	return false
 }
 
-// surligner : les caractères visibles de debut à fin (fin exclue) en inverse vidéo ; l'inverse est remis
-// après chaque séquence de la portion (un z l'annule).
-func surligner(s string, debut, fin int) string {
+// surligner : les caractères visibles de debut à fin (fin exclue) surlignés par la séquence marque (finie par
+// finSurligne) ; la marque est remise après chaque séquence de la portion (un z l'annule).
+func surligner(s string, debut, fin int, marque string) string {
 	var b strings.Builder
 	vus := 0
 	dedans := func() bool { return vus >= debut && vus < fin }
@@ -588,15 +589,15 @@ func surligner(s string, debut, fin int) string {
 			b.WriteString(s[:n])
 			s = s[n:]
 			if dedans() && vus > debut {
-				b.WriteString(inverse)
+				b.WriteString(marque)
 			}
 			continue
 		}
 		if vus == debut {
-			b.WriteString(inverse)
+			b.WriteString(marque)
 		}
 		if vus == fin {
-			b.WriteString(finInverse)
+			b.WriteString(finSurligne)
 		}
 		_, t := utf8.DecodeRuneInString(s)
 		b.WriteString(s[:t])
@@ -604,7 +605,7 @@ func surligner(s string, debut, fin int) string {
 		vus++
 	}
 	if vus == fin {
-		b.WriteString(finInverse)
+		b.WriteString(finSurligne)
 	}
 	return b.String()
 }
@@ -640,7 +641,8 @@ func longueurSequence(s string) int {
 func (m *Modele) lignesApercu(nom string, w int) []string {
 	o := &m.os
 	x, _ := o.courant()
-	sur := func(g int) string { // l'item à surligner sur la ligne g
+	marque := ansi.Bg(m.palette(nom).Sep) + souligne // un fond discret : les couleurs de l'item restent
+	sur := func(g int) string {                      // l'item à surligner sur la ligne g
 		if o.g == g {
 			return x.nom
 		}
@@ -651,7 +653,7 @@ func (m *Modele) lignesApercu(nom string, w int) []string {
 	var l []string
 	if a == 3 {
 		for k := 0; k < 3; k++ {
-			l = append(l, ssh+m.rendreStyle(nom, w-4, k, true).ligne(0, sur(gCourt)))
+			l = append(l, ssh+m.rendreStyle(nom, w-4, k, true).ligne(0, sur(gCourt), marque))
 		}
 		return l
 	}
@@ -661,10 +663,10 @@ func (m *Modele) lignesApercu(nom string, w int) []string {
 		if o.g != gCourt {
 			item = x.nom
 		}
-		l = append(l, long.ligne(k, item))
+		l = append(l, long.ligne(k, item, marque))
 	}
 	if o.court() {
-		l = append(l, ssh+m.rendreStyle(nom, w-4, a, true).ligne(0, sur(gCourt)))
+		l = append(l, ssh+m.rendreStyle(nom, w-4, a, true).ligne(0, sur(gCourt), marque))
 	}
 	return l
 }
