@@ -14,6 +14,7 @@ import (
 
 	"github.com/adrien-ln/agentline"
 	"github.com/adrien-ln/agentline/internal/ansi"
+	"github.com/adrien-ln/agentline/internal/entree"
 	"github.com/adrien-ln/agentline/internal/i18n"
 	"github.com/adrien-ln/agentline/internal/installation"
 	"github.com/adrien-ln/agentline/internal/render"
@@ -84,10 +85,11 @@ func optionsInstallation() []option {
 // commandesAgentline : les commandes de « agentline », dans l'ordre de l'aide.
 func commandesAgentline() []commande {
 	return []commande{
-		{nom: "render", args: i18n.T("< entrée.json"), aide: i18n.T("les lignes de la statusline (ce que Claude Code appelle)"), brut: true,
-			faire: func(a *appel) int { // jamais d'erreur : Claude Code l'appelle à chaque événement
-				entree, _ := io.ReadAll(os.Stdin)
-				io.WriteString(a.sortie, render.Render(string(entree), environnement()))
+		{nom: "render", args: i18n.T("[--from claude|antigravity|copilot] < entrée.json"), aide: i18n.T("les lignes de la statusline (ce que l'outil appelle) ; sans --from, l'outil est reconnu d'après le JSON"), brut: true,
+			faire: func(a *appel) int { // jamais d'erreur : l'outil l'appelle à chaque événement
+				j, _ := io.ReadAll(os.Stdin)
+				env := environnement()
+				io.WriteString(a.sortie, render.RenderSession(entree.Lire(j, outilDemande(a.args), env.Now), env))
 				return 0
 			}},
 		{nom: "theme", args: i18n.T("[commande]"), aide: i18n.T("sans commande : le sélecteur interactif ; voir ci-dessous"), brut: true,
@@ -149,4 +151,18 @@ func principale(args []string, sortie, erreurs io.Writer) int {
 func main() {
 	i18n.Detecter(getenv)
 	os.Exit(principale(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+// outilDemande : l'outil de --from claude (ou --from=claude) parmi les arguments de render ; vide sinon, et
+// render le reconnaît d'après le JSON (un argument inconnu est ignoré : l'outil n'affiche pas les erreurs).
+func outilDemande(args []string) string {
+	for k, a := range args {
+		if v, ok := strings.CutPrefix(a, "--from="); ok {
+			return v
+		}
+		if a == "--from" && k+1 < len(args) {
+			return args[k+1]
+		}
+	}
+	return ""
 }
