@@ -4,6 +4,10 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Added
+
+- `agentline font test` draws every glyph agentline uses in the current font, so a missing or too wide glyph shows at a glance.
+
 ## [0.6.0] - 2026-10-25
 
 ### Changed
