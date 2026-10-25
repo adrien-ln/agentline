@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/adrien-ln/agentline/internal/ansi"
 	"github.com/adrien-ln/agentline/internal/i18n"
+	"github.com/adrien-ln/agentline/internal/theme"
 )
 
 // TestMain : aucun test ne lit ni n'écrit les vrais réglages, même s'il oublie configVide : tout part
@@ -108,5 +111,47 @@ func TestRenderMigreSilencieusement(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(xdg, "agentline", "defaut")); err != nil {
 		t.Errorf("copie faite par render : %v", err)
+	}
+}
+
+// TestEmplacementsConfigSansXDG : sans XDG_CONFIG_HOME, les réglages vont dans ~/.config (le dossier
+// personnel du système sous Windows, où HOME peut être au format Git Bash).
+func TestEmplacementsConfigSansXDG(t *testing.T) {
+	sansConfigImposee(t)
+	t.Setenv("XDG_CONFIG_HOME", "")
+	h := t.TempDir()
+	t.Setenv("HOME", h)
+	if runtime.GOOS == "windows" {
+		h, _ = os.UserHomeDir()
+	}
+	if n, a := emplacementsConfig(); n != filepath.Join(h, ".config", "agentline") || a != filepath.Join(h, ".config", "statusline") {
+		t.Errorf("sans XDG : %s %s", n, a)
+	}
+}
+
+// TestSignalerFond : un fond détecté différent du réglage est enregistré et annoncé une fois ; rien
+// sans détection ni quand il est déjà enregistré.
+func TestSignalerFond(t *testing.T) {
+	configVide(t)
+	t.Setenv("AGENTLINE_BACKGROUND", "")
+	s := theme.Sources{Config: t.TempDir()}
+	ancien := detecterFond
+	t.Cleanup(func() { detecterFond = ancien })
+	var sortie bytes.Buffer
+	detecterFond = func() (ansi.Fond, bool) { return ansi.Clair, false }
+	if signalerFond(s, &sortie); sortie.Len() != 0 {
+		t.Errorf("sans détection, rien à dire : %q", sortie.String())
+	}
+	detecterFond = func() (ansi.Fond, bool) { return ansi.Clair, true }
+	signalerFond(s, &sortie)
+	if !strings.Contains(sortie.String(), "détecté") {
+		t.Errorf("fond détecté : %q", sortie.String())
+	}
+	if f, ok := s.FondEnregistre(); !ok || f != ansi.Clair {
+		t.Errorf("fond enregistré : %v %v", f, ok)
+	}
+	sortie.Reset()
+	if signalerFond(s, &sortie); sortie.Len() != 0 {
+		t.Errorf("déjà enregistré : %q", sortie.String())
 	}
 }
