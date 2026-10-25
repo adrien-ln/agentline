@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-25
+
 ### Added
 
 - A statusline style per project: the options set for a project apply over the general style, in that project only (`p` and `d` in the Statusline tab, `--project` on `agentline style set`, `unset`, `reset`, `hide` and `unhide`). `ssh.short` stays a general setting.
@@ -105,7 +107,8 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/adrien-ln/agentline/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/adrien-ln/agentline/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/adrien-ln/agentline/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/adrien-ln/agentline/compare/v0.3.2...v0.4.0
