@@ -4,13 +4,13 @@ What is left to check, decide or build. These items will move to GitHub issues. 
 
 ## To check on real machines
 
-Everything below is covered by automated tests or simulations only.
+Everything below is covered by automated tests or simulations only. The CI runs the tests on Linux (with the race detector), macOS and Windows, and the release workflow has published every version since v0.1.0, with the Scoop bucket and the Homebrew tap updated automatically.
 
-- [ ] **The GitHub Actions workflows** (`.github/workflows/`) have never run: the tests on Linux and macOS (only cross-compiled and vetted so far), the race detector, the commit check on a first pull request, and the release on a first tag.
+- [ ] **The commit check on a pull request** (`.github/workflows/commits.yml`): so far it has only been skipped on Dependabot pull requests, never run on a contributor's.
 - [ ] **The picker in a real terminal**: keys (including `b`, `u`, `?` and Esc step by step), resizing between the three layouts, smoothness of the animation (Windows Terminal, PowerShell, Git Bash, SSH), emoji width depending on the terminal.
 - [ ] **The Statusline tab in a real terminal**: Shift+↑↓ (some terminals do not send it: K and J replace it), Tab, Space, typing a Nerd Font glyph, and how the glyphs of the `text` set (⎇ ⊕ ▸ ▴ ▿) look depending on the font.
 - [ ] **Claude Code interface colors in the animated scenes** (`internal/selecteur/scenes.go`: orange of the thinking indicator, diff backgrounds): written from memory, to compare with a real session.
-- [ ] **macOS**: nothing is tested (build, `agentline install`). Terminal.app is detected as 256 colors (`TERM_PROGRAM=Apple_Terminal`): check the rendering, and whether the macOS 26 version shows 24-bit color (would `COLORTERM` say so?).
+- [ ] **macOS**: only the build and the tests run, in the CI; `brew install`, `agentline install` and the picker are not tried. Terminal.app is detected as 256 colors (`TERM_PROGRAM=Apple_Terminal`): check the rendering, and whether the macOS 26 version shows 24-bit color (would `COLORTERM` say so?).
 - [ ] **Color levels in real terminals**: 256 and 16 colors (`AGENTLINE_COLORS`), `NO_COLOR`, and what Claude Code actually passes to the statusline (`TERM`, `COLORTERM`, `TERM_PROGRAM`, `WT_SESSION`: assumed inherited from the terminal, not verified). mintty (Git Bash) is assumed to set `TERM_PROGRAM=mintty` and show 24-bit color.
 - [ ] **Light background in a real terminal**: the OSC 11 query in the picker, `agentline install`, `agentline theme background` and `agentline doctor` (Windows Terminal, conhost, iTerm2, Terminal.app, GNOME, over SSH), and the readability of corrected dark themes and of the three light themes (`ETEINT=afb8c1` in GitHub Light is from memory, not taken from Primer).
 - [ ] **Installation** (only simulated by the tests): HKCU PATH and `WM_SETTINGCHANGE` (does a new terminal see it without restarting Windows Terminal?), `agentline` in PowerShell, cmd and Git Bash, the PATH block in `~/.zshrc`, `~/.bashrc`, `config.fish`, then `agentline uninstall` undoing everything.
@@ -20,8 +20,6 @@ Everything below is covered by automated tests or simulations only.
 
 ## To decide
 
-- [ ] **Scoop and Homebrew**: each release carries `agentline.json` and `agentline.rb`, filled from the templates in `packaging/`; they still need a Scoop bucket and a Homebrew tap to live in. Until then, install with `go install`, a release binary, or from a clone with `go run ./cmd/agentline install`.
-- [ ] **First release**: pushing a `v0.1.0` tag triggers `.github/workflows/release.yml` (procedure in CONTRIBUTING.md).
 - [ ] **Clawd in public**: the mascot drawing belongs to Anthropic; check that showing it in a public project is fine.
 - [ ] **`*` branch rule and detached HEAD**: a `*` branch rule also applies on a detached HEAD (the renderer then sees the start of the SHA). Acceptable for now.
 - [ ] **Old `SL_*` names**: read as a fallback, deprecated. Decide when to remove them.
