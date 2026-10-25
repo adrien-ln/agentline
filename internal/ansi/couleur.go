@@ -87,6 +87,20 @@ func distance2(p, q lab) float64 {
 	return dl*dl + da*da + db*db
 }
 
+// LCh : la clarté (0 à 100), la chroma (0 : gris) et la teinte (en degrés) CIELAB de « rrggbb ». Changer
+// l'une sans les autres change la couleur comme l'œil s'y attend (l'éditeur de thèmes s'en sert).
+func LCh(h string) (l, c, t float64) {
+	x := versLab(RGB(h))
+	return x.l, x.chroma(), x.teinte()
+}
+
+// DepuisLCh : la couleur « rrggbb » de cette clarté, cette chroma et cette teinte ; hors de sRGB, la chroma
+// est réduite jusqu'à y tenir (la clarté et la teinte restent).
+func DepuisLCh(l, c, t float64) string {
+	a := t * math.Pi / 180
+	return dansGamut(lab{l, c * math.Cos(a), c * math.Sin(a)})
+}
+
 // Teinte : l'angle de teinte CIELAB de « rrggbb », en degrés, et sa chroma (0 : gris).
 func Teinte(h string) (angle, chroma float64) {
 	c := versLab(RGB(h))

@@ -172,3 +172,19 @@ func TestEcart(t *testing.T) {
 		t.Error("l'écart doit séparer l'orange du bleu, même à clarté voisine")
 	}
 }
+
+// TestLCh : une couleur décomposée puis recomposée revient à elle-même (à l'arrondi 8 bits près) ; une
+// chroma trop forte est ramenée dans sRGB sans changer la teinte.
+func TestLCh(t *testing.T) {
+	for _, h := range []string{"bb9af7", "ff9e64", "1a1b26", "ffffff", "000000", "7dcfff", "9ece6a"} {
+		l, c, a := LCh(h)
+		if r := DepuisLCh(l, c, a); Ecart(r, h) > 1 {
+			t.Errorf("%s -> %.1f %.1f %.1f -> %s", h, l, c, a, r)
+		}
+	}
+	l, _, a := LCh("ff9e64")
+	r := DepuisLCh(l, 300, a)
+	if _, a2 := Teinte(r); math.Abs(a2-a) > 3 {
+		t.Errorf("chroma excessive : teinte %0.1f devenue %0.1f (%s)", a, a2, r)
+	}
+}
