@@ -36,7 +36,8 @@ type Verification struct {
 func Diagnostiquer(o Options) []Verification {
 	v := []Verification{o.verifierBinaire(), o.verifierPath(), o.verifierStatusLine()}
 	v = append(v, o.verifierAnciens()...)
-	return append(v, o.verifierPolice(), o.verifierSSH())
+	v = append(v, o.verifierPolice()...)
+	return append(v, o.verifierSSH())
 }
 
 // binaireInstalle : là où « agentline install » l'a mis, ou celui que lance statusLine (Scoop, Homebrew),
@@ -132,14 +133,30 @@ func (o Options) verifierStatusLine() Verification {
 	return Verification{Niveau: Bon, Sujet: "Claude Code", Detail: i18n.T("statusLine : %s", c)}
 }
 
-func (o Options) verifierPolice() Verification {
+// verifierPolice : une Nerd Font est-elle installée ; puis, pour chaque terminal dont agentline lit les
+// réglages (Windows Terminal, VS Code), la police qui y est vraiment choisie.
+func (o Options) verifierPolice() []Verification {
 	if o.env("SSH_CONNECTION") != "" {
-		return Verification{Niveau: Bon, Sujet: i18n.T("Police"), Detail: i18n.T("en SSH, c'est celle du terminal de ta machine qui compte")}
+		return []Verification{{Niveau: Bon, Sujet: i18n.T("Police"), Detail: i18n.T("en SSH, c'est celle du terminal de ta machine qui compte")}}
 	}
-	if o.policeNerdFont() {
-		return Verification{Niveau: Bon, Sujet: i18n.T("Police"), Detail: i18n.T("une Nerd Font est installée (choisie dans ton terminal ?)")}
+	if !o.policeNerdFont() {
+		return []Verification{{Avertissement, i18n.T("Police"), i18n.T("aucune Nerd Font : les icônes s'afficheront mal"), o.CommandePolice()}}
 	}
-	return Verification{Avertissement, i18n.T("Police"), i18n.T("aucune Nerd Font : les icônes s'afficheront mal"), o.CommandePolice()}
+	v := []Verification{{Niveau: Bon, Sujet: i18n.T("Police"), Detail: i18n.T("une Nerd Font est installée (choisie dans ton terminal ?)")}}
+	if p := o.police(); o.PoliceInstallee(p) {
+		v[0].Detail = i18n.T("%s est installée", p.Famille)
+	}
+	for _, r := range o.PolicesReglees() {
+		switch {
+		case strings.Contains(strings.ToLower(r.Police), "nerd font"):
+			v = append(v, Verification{Niveau: Bon, Sujet: r.Terminal, Detail: i18n.T("police %s", r.Police)})
+		case r.Police == "":
+			v = append(v, Verification{Avertissement, r.Terminal, i18n.T("aucune police choisie : pas de Nerd Font, les icônes s'afficheront mal"), "agentline font set " + o.police().Nom})
+		default:
+			v = append(v, Verification{Avertissement, r.Terminal, i18n.T("police « %s », pas une Nerd Font : les icônes s'afficheront mal", r.Police), "agentline font set " + o.police().Nom})
+		}
+	}
+	return v
 }
 
 func (o Options) verifierSSH() Verification {

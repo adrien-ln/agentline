@@ -135,3 +135,25 @@ func TestDoctorProblemes(t *testing.T) {
 		t.Errorf("SSH, ligne courte : %+v", m["SSH"])
 	}
 }
+
+// TestDoctorPoliceDesTerminaux : doctor nomme la police installée et celle de chaque terminal réglable ;
+// un terminal sans Nerd Font est signalé avec la commande qui le corrige.
+func TestDoctorPoliceDesTerminaux(t *testing.T) {
+	s := installe(t, "windows")
+	wt := filepath.Join(s.localAppData(), "Microsoft", "Windows Terminal", "settings.json")
+	vs := filepath.Join(s.Home, "AppData", "Roaming", "Code", "User", "settings.json")
+	for f, c := range map[string]string{wt: `{"profiles": {"defaults": {"font": {"face": "FiraCode Nerd Font"}}}}`, vs: `{"terminal.integrated.fontFamily": "Consolas"}`} {
+		os.MkdirAll(filepath.Dir(f), 0o755)
+		os.WriteFile(f, []byte(c), 0o644)
+	}
+	m, _, texte := diagnostic(t, s)
+	if m["Police"].Niveau != Bon || !strings.Contains(m["Police"].Detail, "FiraCode Nerd Font est installée") {
+		t.Errorf("police installée : %+v", m["Police"])
+	}
+	if m["Windows Terminal"].Niveau != Bon || !strings.Contains(m["Windows Terminal"].Detail, "FiraCode Nerd Font") {
+		t.Errorf("Windows Terminal : %+v", m["Windows Terminal"])
+	}
+	if m["VS Code"].Niveau != Avertissement || !strings.Contains(m["VS Code"].Detail, "Consolas") || m["VS Code"].Correction != "agentline font set firacode" {
+		t.Errorf("VS Code : %+v\n%s", m["VS Code"], texte)
+	}
+}
