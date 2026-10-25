@@ -86,4 +86,7 @@ jobs:
           shellcheck -f gcc scripts/*.sh | awk -F: '{ m = $0; sub(/^[^:]*:[0-9]+:[0-9]+: /, "", m); printf "::error file=%s,line=%s,col=%s::%s\n", $1, $2, $3, m }'
           exit "${PIPESTATUS[0]}"
       - name: actionlint
-        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 # vérifie aussi les run: avec shellcheck
+        # vérifie aussi les run: avec shellcheck ; chaque remarque devient une annotation
+        run: >-
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          -format '{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}}::{{$err.Message}}{{"\n"}}{{end}}'
