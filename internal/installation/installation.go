@@ -120,7 +120,41 @@ func (o Options) modifier(f string, transformer func(string) (string, string), v
 	if err := os.MkdirAll(filepath.Dir(f), 0o755); err != nil {
 		return "", "", err
 	}
-	return resultat, copie, os.WriteFile(f, []byte(nouveau), 0o644) // en place : le fichier garde ses permissions
+	return resultat, copie, remplacer(f, []byte(nouveau))
+}
+
+// remplacer : écrit le fichier d'un coup (fichier temporaire à côté, mêmes droits, puis renommage) : un
+// plantage ou un disque plein ne le laisse jamais à moitié écrit. Un lien symbolique est suivi (sa cible
+// est remplacée, pas le lien) ; si seul le renommage échoue (fichier verrouillé sous Windows), le contenu
+// est écrit en place, comme avant.
+func remplacer(f string, contenu []byte) error {
+	if cible, err := filepath.EvalSymlinks(f); err == nil {
+		f = cible
+	}
+	mode := os.FileMode(0o644)
+	if i, err := os.Stat(f); err == nil {
+		mode = i.Mode().Perm()
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(f), "."+filepath.Base(f)+".*")
+	if err != nil {
+		return err
+	}
+	_, err = tmp.Write(contenu)
+	if e := tmp.Close(); err == nil {
+		err = e
+	}
+	if err == nil {
+		err = os.Chmod(tmp.Name(), mode)
+	}
+	if err != nil {
+		os.Remove(tmp.Name())
+		return err // l'original n'a pas bougé
+	}
+	if os.Rename(tmp.Name(), f) != nil {
+		os.Remove(tmp.Name())
+		return os.WriteFile(f, contenu, mode)
+	}
+	return nil
 }
 
 func jsonValide(s string) error {
