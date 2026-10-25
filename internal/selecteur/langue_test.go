@@ -42,7 +42,14 @@ func TestAnglais(t *testing.T) {
 	appuyer(m, "échap", "tab")
 	m.os.st.Definir("ssh.short", "yes")
 	m.os.changer()
-	contient("onglet Statusline", ecran(m), " Themes ", "Line 1", "Line 2", "SSH line", "General", "Preview · full (v)")
+	contient("onglet Statusline", ecran(m), " Themes ", "▲ model · Line 1", "Preview · full (v)", "SSH Opus", "s keep", "Enter menu")
+	appuyer(m, "↑")
+	contient("ligne SSH", ecran(m), "SSH line")
+	appuyer(m, "g")
+	contient("options générales", ecran(m), "Options · general", "icons")
+	appuyer(m, "échap", "↓", "x", "+") // tous les items sont dans les lignes : en retirer un d'abord
+	contient("ajouter", ecran(m), "Add to line 1")
+	appuyer(m, "échap")
 	if s := m.Message(); !strings.HasPrefix(s, "Canceled: Tokyo Night stays in effect (built-in).") {
 		t.Errorf("message de sortie : %q", s)
 	}

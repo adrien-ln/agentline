@@ -21,18 +21,19 @@ const (
 	enQuestion              // Entrée : où garder le thème ?
 	enAide                  // l'aide complète
 
-	enStyle         // onglet Statusline : la liste des items
-	enStyleOptions  // les options de l'item (→)
+	enStyle         // onglet Statusline : on choisit un item sur l'aperçu
+	enStyleMenu     // le menu de l'item (Entrée) ou les options générales (g)
+	enStyleAjout    // les items à ajouter à la ligne (+)
 	enStyleSaisie   // on tape une valeur (Entrée sur un libellé, un glyphe)
 	enStyleQuestion // Entrée : où garder ce style ?
 )
 
 // nomsModes : les titres des sections de l'aide (en français, traduits à l'affichage).
 var nomsModes = map[mode]string{enListe: i18n.M("Thèmes : liste"), enRecherche: i18n.M("Thèmes : recherche (/)"), enQuestion: i18n.M("Thèmes : validation (Entrée)"), enAide: i18n.M("Aide (?)"),
-	enStyle: i18n.M("Statusline : items"), enStyleOptions: i18n.M("Statusline : options (→)"), enStyleSaisie: i18n.M("Statusline : saisie (Entrée)"), enStyleQuestion: i18n.M("Statusline : validation (Entrée)")}
+	enStyle: i18n.M("Statusline : items"), enStyleMenu: i18n.M("Statusline : menu (Entrée, g)"), enStyleAjout: i18n.M("Statusline : ajouter (+)"), enStyleSaisie: i18n.M("Statusline : saisie (Entrée)"), enStyleQuestion: i18n.M("Statusline : validation (s)")}
 
 // modesAide : les sections de l'aide complète de chaque onglet, dans l'ordre.
-var modesAide = [2][]mode{{enListe, enRecherche, enQuestion}, {enStyle, enStyleOptions, enStyleSaisie, enStyleQuestion}}
+var modesAide = [2][]mode{{enListe, enRecherche, enQuestion}, {enStyle, enStyleMenu, enStyleAjout, enStyleSaisie, enStyleQuestion}}
 
 // raccourci : une touche (ou plusieurs équivalentes) dans un mode.
 type raccourci struct {
@@ -123,59 +124,72 @@ func init() {
 			}},
 		{mode: enQuestion, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter sans rien changer"), faire: quitter},
 
-		{mode: enStyle, touches: []string{"up", "k", "down", "j"}, nom: "↑↓", effet: i18n.M("parcourir les items"), rang: 2,
-			faire: func(m *Modele) tea.Cmd { m.os.parcourir(sens(m.derniere)); return nil }},
-		{mode: enStyle, touches: []string{"pgup", "pgdown", "home", "end"}, nom: i18n.M("PgPréc PgSuiv Début Fin"), effet: i18n.M("sauter"),
-			faire: func(m *Modele) tea.Cmd { m.os.parcourir(saut(m.derniere, m.os.lignesVues)); return nil }},
-		{mode: enStyle, touches: []string{" "}, nom: i18n.M("Espace"), effet: i18n.M("afficher ou masquer (partout) ; ligne SSH : retirer ou ajouter ; un item absent est ajouté"),
-			libelle: func(*Modele) string { return i18n.T("afficher") }, rang: 3, faire: func(m *Modele) tea.Cmd { m.os.basculer(); return nil }},
-		{mode: enStyle, touches: []string{"shift+up", "K", "shift+down", "J"}, nom: i18n.M("Maj+↑↓ K J"), effet: i18n.M("déplacer l'item (de la ligne 1 à la ligne 2 et inversement)"),
-			libelle: func(*Modele) string { return i18n.T("déplacer") }, rang: 5, faire: func(m *Modele) tea.Cmd { m.os.deplacer(sens(m.derniere)); return nil }},
-		{mode: enStyle, touches: []string{"g"}, nom: "g", effet: i18n.M("coller à l'item précédent (même segment, « + ») ou l'en détacher"),
-			libelle: func(*Modele) string { return i18n.T("coller") }, rang: 6, faire: func(m *Modele) tea.Cmd { m.os.coller(); return nil }},
-		{mode: enStyle, touches: []string{"right", "l"}, nom: "→", effet: i18n.M("les options de l'item"), libelle: func(*Modele) string { return i18n.T("options") }, rang: 3,
-			faire: func(m *Modele) tea.Cmd { m.os.ouvrir(); return nil }},
+		{mode: enStyle, touches: []string{"left", "h", "right", "l"}, nom: "←→", effet: i18n.M("choisir l'item (surligné sur l'aperçu)"), libelle: func(*Modele) string { return i18n.T("item") }, rang: 2,
+			faire: func(m *Modele) tea.Cmd { m.os.choisir(sensH(m.derniere)); return nil }},
+		{mode: enStyle, touches: []string{"up", "k", "down", "j"}, nom: "↑↓", effet: i18n.M("changer de ligne"), libelle: func(*Modele) string { return i18n.T("ligne") }, rang: 5,
+			faire: func(m *Modele) tea.Cmd { m.os.changerLigne(sens(m.derniere)); return nil }},
+		{mode: enStyle, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("le menu de l'item : ses options, coller, retirer"), libelle: func(*Modele) string { return i18n.T("menu") }, rang: 1,
+			faire: func(m *Modele) tea.Cmd { m.os.ouvrir(menuItem); return nil }},
+		{mode: enStyle, touches: []string{"shift+left", "H", "shift+right", "L"}, nom: i18n.M("Maj+←→ H L"), effet: i18n.M("déplacer l'item dans sa ligne"),
+			libelle: func(*Modele) string { return i18n.T("déplacer") }, rang: 6, faire: func(m *Modele) tea.Cmd { m.os.deplacer(sensH(m.derniere)); return nil }},
+		{mode: enStyle, touches: []string{"shift+up", "K", "shift+down", "J"}, nom: i18n.M("Maj+↑↓ K J"), effet: i18n.M("passer l'item de la ligne 1 à la ligne 2, et inversement"),
+			faire: func(m *Modele) tea.Cmd { m.os.changerDeLigne(sens(m.derniere)); return nil }},
+		{mode: enStyle, touches: []string{"+", "a"}, nom: "+", effet: i18n.M("ajouter un item à la ligne"), libelle: func(*Modele) string { return i18n.T("ajouter") }, rang: 4,
+			faire: func(m *Modele) tea.Cmd { m.os.ouvrir(menuAjout); return nil }},
+		{mode: enStyle, touches: []string{"x", "delete"}, nom: "x", effet: i18n.M("retirer l'item de la ligne"), libelle: func(*Modele) string { return i18n.T("retirer") }, rang: 6,
+			faire: func(m *Modele) tea.Cmd { m.os.retirer(); return nil }},
+		{mode: enStyle, touches: []string{"g"}, nom: "g", effet: i18n.M("options générales : icônes, séparateurs, SSH"), libelle: func(*Modele) string { return i18n.T("général") }, rang: 5,
+			faire: func(m *Modele) tea.Cmd { m.os.ouvrir(menuGeneral); return nil }},
 		{mode: enStyle, touches: []string{"v"}, nom: "v", effet: i18n.M("aperçu : complète, tendue (alertes, conflit, plafond), API (coût), SSH"),
 			libelle: func(m *Modele) string { return i18n.T("aperçu (%s)", i18n.T(nomsApercus[m.os.apercuVu()])) }, rang: 7, faire: (*Modele).apercuSuivant},
 		{mode: enStyle, touches: []string{"r"}, nom: "r", effet: i18n.M("l'item par défaut (ses options, affiché)"), rang: 9,
 			faire: func(m *Modele) tea.Cmd { m.os.remettre(); return nil }},
 		{mode: enStyle, touches: []string{"R"}, nom: "R", effet: i18n.M("tout le style par défaut"), rang: 9,
-			faire: func(m *Modele) tea.Cmd { m.os.st = style.Defaut(); m.os.changer(); m.os.parcourir(0); return nil }},
+			faire: func(m *Modele) tea.Cmd { m.os.st = style.Defaut(); m.os.changer(); m.os.borner(); return nil }},
 		{mode: enStyle, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet Thèmes (l'aperçu prend le thème survolé)"), libelle: func(*Modele) string { return i18n.T("thèmes") }, rang: 8,
 			faire: (*Modele).basculerOnglet},
-		{mode: enStyle, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("garder ce style"), libelle: func(*Modele) string { return i18n.T("garder") }, rang: 1,
+		{mode: enStyle, touches: []string{"s"}, nom: "s", effet: i18n.M("garder ce style"), libelle: func(*Modele) string { return i18n.T("garder") }, rang: 1,
 			faire: func(m *Modele) tea.Cmd { m.os.confirmer = true; m.reagir("danse"); return nil }},
 		{mode: enStyle, touches: []string{"?"}, nom: "?", effet: i18n.M("cette aide"), libelle: func(*Modele) string { return i18n.T("aide") }, rang: 1,
 			faire: func(m *Modele) tea.Cmd { m.aide = true; return nil }},
 		{mode: enStyle, touches: []string{"esc", "q"}, nom: i18n.M("Échap q"), effet: i18n.M("quitter (modifications non gardées : le dit une fois)"), libelle: func(*Modele) string { return i18n.T("quitter") }, rang: 4, faire: quitter},
 
-		{mode: enStyleOptions, touches: []string{"up", "k", "down", "j"}, nom: "↑↓", effet: i18n.M("choisir l'option"), rang: 3,
+		{mode: enStyleMenu, touches: []string{"up", "k", "down", "j"}, nom: "↑↓", effet: i18n.M("choisir la rangée"), rang: 3,
 			faire: func(m *Modele) tea.Cmd {
-				m.os.opt = min(max(m.os.opt+sens(m.derniere), 0), len(m.os.cles())-1)
+				m.os.opt = min(max(m.os.opt+sens(m.derniere), 0), len(m.os.rangeesMenu())-1)
 				return nil
 			}},
-		{mode: enStyleOptions, touches: []string{"left", "right", "h", "l"}, nom: "←→", effet: i18n.M("changer la valeur"), libelle: func(*Modele) string { return i18n.T("valeur") }, rang: 1,
+		{mode: enStyleMenu, touches: []string{"left", "right", "h", "l"}, nom: "←→", effet: i18n.M("changer la valeur"), libelle: func(*Modele) string { return i18n.T("valeur") }, rang: 1,
 			faire: func(m *Modele) tea.Cmd { m.os.regler(sensH(m.derniere)); return nil }},
-		{mode: enStyleOptions, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("taper la valeur (libellé, glyphe, barre), sinon la suivante"),
+		{mode: enStyleMenu, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("taper la valeur (libellé, glyphe, barre), sinon la suivante ; coller, retirer"),
 			libelle: func(m *Modele) string {
-				if saisissable(m.os.cle()) {
+				switch r := m.os.rangeeMenu(); {
+				case r.action == actionRetirer:
+					return i18n.T("retirer")
+				case r.action == actionColler:
+					return i18n.T("coller")
+				case saisissable(r.cle):
 					return i18n.T("taper")
 				}
 				return i18n.T("suivante")
 			}, rang: 2,
+			faire: func(m *Modele) tea.Cmd { m.os.entrer(); return nil }},
+		{mode: enStyleMenu, touches: []string{"r"}, nom: "r", effet: i18n.M("l'option par défaut"), rang: 5, faire: func(m *Modele) tea.Cmd { m.os.remettre(); return nil }},
+		{mode: enStyleMenu, touches: []string{"v"}, nom: "v", effet: i18n.M("aperçu suivant"), rang: 6, faire: (*Modele).apercuSuivant},
+		{mode: enStyleMenu, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("fermer le menu"), libelle: func(*Modele) string { return i18n.T("fermer") }, rang: 1,
+			faire: func(m *Modele) tea.Cmd { m.os.menu = sansMenu; return nil }},
+		{mode: enStyleMenu, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter"), rang: 7, faire: quitter},
+
+		{mode: enStyleAjout, touches: []string{"up", "k", "down", "j"}, nom: "↑↓", effet: i18n.M("choisir l'item"), rang: 2,
 			faire: func(m *Modele) tea.Cmd {
-				if c := m.os.cle(); saisissable(c) {
-					m.os.saisie, m.os.texte = true, m.os.st.Valeur(c.Nom)
-				} else {
-					m.os.regler(1)
-				}
+				m.os.opt = min(max(m.os.opt+sens(m.derniere), 0), len(m.os.rangeesMenu())-1)
 				return nil
 			}},
-		{mode: enStyleOptions, touches: []string{"r"}, nom: "r", effet: i18n.M("l'option par défaut"), rang: 5, faire: func(m *Modele) tea.Cmd { m.os.remettre(); return nil }},
-		{mode: enStyleOptions, touches: []string{"v"}, nom: "v", effet: i18n.M("aperçu suivant"), rang: 6, faire: (*Modele).apercuSuivant},
-		{mode: enStyleOptions, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("fermer les options"), libelle: func(*Modele) string { return i18n.T("fermer") }, rang: 1,
-			faire: func(m *Modele) tea.Cmd { m.os.options = false; return nil }},
-		{mode: enStyleOptions, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter"), rang: 7, faire: quitter},
+		{mode: enStyleAjout, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("l'ajouter après l'item choisi"), libelle: func(*Modele) string { return i18n.T("ajouter") }, rang: 1,
+			faire: func(m *Modele) tea.Cmd { m.os.entrer(); return nil }},
+		{mode: enStyleAjout, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("fermer sans rien ajouter"), libelle: func(*Modele) string { return i18n.T("fermer") }, rang: 1,
+			faire: func(m *Modele) tea.Cmd { m.os.menu = sansMenu; return nil }},
+		{mode: enStyleAjout, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter"), rang: 3, faire: quitter},
 
 		{mode: enStyleSaisie, nom: i18n.M("lettres"), effet: i18n.M("la valeur ; un caractère large (CJK, emoji) est refusé")},
 		{mode: enStyleSaisie, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("valider"), libelle: func(*Modele) string { return i18n.T("valider") }, rang: 1,
@@ -215,8 +229,10 @@ func (m *Modele) mode() mode {
 		return enStyleSaisie
 	case m.onglet == 1 && m.os.confirmer:
 		return enStyleQuestion
-	case m.onglet == 1 && m.os.options:
-		return enStyleOptions
+	case m.onglet == 1 && m.os.menu == menuAjout:
+		return enStyleAjout
+	case m.onglet == 1 && m.os.menu != sansMenu:
+		return enStyleMenu
 	case m.onglet == 1:
 		return enStyle
 	case m.enRecherche:

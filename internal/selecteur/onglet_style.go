@@ -3,6 +3,7 @@ package selecteur
 import (
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -12,42 +13,67 @@ import (
 	"github.com/adrien-ln/agentline/internal/style"
 )
 
-// L'onglet « Statusline » : les items de la statusline groupés par ligne (affichés ou masqués, dans quel
-// ordre, collés ou non), leurs options, et l'aperçu en direct de la vraie statusline (au thème survolé
-// dans l'onglet Thèmes) avec sa ligne SSH. Rien n'est écrit avant la validation (Entrée, puis d).
+// L'onglet « Statusline » : la vraie statusline en grand, au style en cours et au thème survolé dans
+// l'onglet Thèmes. On y choisit un item sur l'aperçu même (←→ ↑↓, l'item choisi est surligné), Entrée ouvre
+// son menu (ses options, coller au précédent, retirer), + en ajoute un, g ouvre les options générales.
+// Rien n'est écrit avant s (puis d).
 
-// Les groupes de la liste.
+// Les lignes de la statusline (la ligne SSH seulement avec ssh.short=yes).
 const (
 	gLigne1 = iota
 	gLigne2
 	gCourt
-	gGeneral
 )
 
-// nomsGroupes : les titres des groupes (en français, traduits à l'affichage).
-var nomsGroupes = [...]string{i18n.M("Ligne 1"), i18n.M("Ligne 2"), i18n.M("Ligne SSH"), i18n.M("Général")}
+// nomsGroupes : les noms des lignes (en français, traduits à l'affichage).
+var nomsGroupes = [...]string{i18n.M("Ligne 1"), i18n.M("Ligne 2"), i18n.M("Ligne SSH")}
 
-// clesGroupes : l'option de disposition de chaque groupe.
+// clesGroupes : l'option de disposition de chaque ligne.
 var clesGroupes = [...]string{"line1", "line2", "short"}
 
 // Les aperçus (touche v), en français, traduits à l'affichage.
 var nomsApercus = []string{i18n.M("complète"), i18n.M("tendue"), "API", "SSH"}
 
+// Les menus ouverts sous l'aperçu.
+const (
+	sansMenu    = iota
+	menuItem    // Entrée : les options de l'item, coller, retirer
+	menuGeneral // g : les options générales
+	menuAjout   // + : les items à ajouter à la ligne
+)
+
+// Les rangées d'action du menu d'un item (les autres sont ses options).
+const (
+	actionColler  = "coller"
+	actionRetirer = "retirer"
+)
+
+// rangeeMenu : une rangée du menu : une option, ou une action.
+type rangeeMenu struct {
+	cle    style.Cle
+	action string
+}
+
 // ongletStyle : l'état de l'onglet.
 type ongletStyle struct {
-	st, garde  *style.Style // le style en cours, et celui du fichier
-	ver        int          // incrémenté à chaque modification (caches des aperçus)
-	k, haut    int          // rangée choisie, début de la liste affichée
-	options    bool         // le panneau des options de l'item est ouvert
-	opt        int          // option choisie dans le panneau
-	saisie     bool         // on tape une valeur (libellé, glyphe)
-	texte      string       // ce qui est tapé
-	confirmer  bool         // la question « où garder ce style ? » est posée
-	apercu     int          // index dans nomsApercus
-	message    string       // une information ou une erreur, effacée à la touche suivante
-	ignore     bool         // AGENTLINE_STYLE=default : le style gardé ne se verra pas
-	rendus     map[string]string
-	lignesVues int // rangées visibles, selon la disposition (calculé par ajuster)
+	st, garde *style.Style // le style en cours, et celui du fichier
+	ver       int          // incrémenté à chaque modification (caches des aperçus)
+	g, pos    int          // l'item choisi : sa ligne, et sa place dans la ligne
+	menu      int          // sansMenu, menuItem, menuGeneral ou menuAjout
+	opt       int          // rangée choisie dans le menu
+	saisie    bool         // on tape une valeur (libellé, glyphe)
+	texte     string       // ce qui est tapé
+	confirmer bool         // la question « où garder ce style ? » est posée
+	apercu    int          // index dans nomsApercus
+	message   string       // une information ou une erreur, effacée à la touche suivante
+	ignore    bool         // AGENTLINE_STYLE=default : le style gardé ne se verra pas
+	rendus    map[string]apercuRendu
+}
+
+// apercuRendu : une statusline de l'aperçu, ses lignes et la place de chaque item.
+type apercuRendu struct {
+	lignes []string
+	places []render.Place
 }
 
 // place : un item dans une ligne, et s'il est collé à celui d'avant (même segment).
@@ -87,15 +113,6 @@ func (o *ongletStyle) poser(g int, p []place) {
 	o.st.Definir(clesGroupes[g], ecrirePlaces(p))
 }
 
-// rangee : une ligne de la liste : l'en-tête d'un groupe, un item, ou les options générales.
-type rangee struct {
-	groupe int
-	titre  bool
-	item   string
-	pos    int // place dans sa ligne (-1 : absent de la ligne)
-	colle  bool
-}
-
 func contient(p []place, n string) bool {
 	for _, x := range p {
 		if x.nom == n {
@@ -103,31 +120,6 @@ func contient(p []place, n string) bool {
 		}
 	}
 	return false
-}
-
-// rangees : la liste de l'onglet. Ligne 2 finit par les items absents des deux lignes longues, Ligne SSH
-// par ceux absents de la ligne courte (Espace les y ajoute).
-func (o *ongletStyle) rangees() []rangee {
-	var l []rangee
-	l1, l2, c := o.places(gLigne1), o.places(gLigne2), o.places(gCourt)
-	for g, p := range [][]place{l1, l2, c} {
-		if g == gCourt && !o.court() {
-			continue
-		}
-		l = append(l, rangee{groupe: g, titre: true})
-		for k, x := range p {
-			l = append(l, rangee{groupe: g, item: x.nom, pos: k, colle: x.colle})
-		}
-		if g == gLigne1 {
-			continue
-		}
-		for _, n := range style.Items {
-			if g == gLigne2 && !contient(l1, n) && !contient(l2, n) || g == gCourt && !contient(c, n) {
-				l = append(l, rangee{groupe: g, item: n, pos: -1})
-			}
-		}
-	}
-	return append(l, rangee{groupe: gGeneral, titre: true}, rangee{groupe: gGeneral, pos: -1})
 }
 
 // court : la ligne courte de SSH est demandée (ssh.short=yes) ; sinon l'onglet ne la montre pas.
@@ -141,144 +133,203 @@ func (o *ongletStyle) apercuVu() int {
 	return o.apercu
 }
 
-func (o *ongletStyle) courante() rangee {
-	l := o.rangees()
-	return l[min(max(o.k, 0), len(l)-1)]
+// lignes : les lignes qu'on peut parcourir.
+func (o *ongletStyle) lignes() int { return 2 + b2i(o.court()) }
+
+// courant : l'item choisi (vide si sa ligne n'en a aucun).
+func (o *ongletStyle) courant() (place, bool) {
+	p := o.places(o.g)
+	if o.pos < 0 || o.pos >= len(p) {
+		return place{}, false
+	}
+	return p[o.pos], true
 }
 
-// viser : la rangée de cet item dans ce groupe (sinon la plus proche de la position actuelle).
+// borner : la ligne et la place choisies restent valides (après un changement de disposition).
+func (o *ongletStyle) borner() {
+	o.g = min(max(o.g, 0), o.lignes()-1)
+	o.pos = min(max(o.pos, 0), max(len(o.places(o.g))-1, 0))
+}
+
+// viser : l'item dans cette ligne.
 func (o *ongletStyle) viser(g int, item string) {
-	for k, r := range o.rangees() {
-		if !r.titre && r.groupe == g && r.item == item {
-			o.k = k
-			return
+	o.g = g
+	for k, x := range o.places(g) {
+		if x.nom == item {
+			o.pos = k
 		}
 	}
-	o.parcourir(0)
+	o.borner()
 }
 
-// parcourir : d rangées plus bas (ou plus haut), en sautant les en-têtes.
-func (o *ongletStyle) parcourir(d int) {
-	l := o.rangees()
-	k := min(max(o.k+d, 0), len(l)-1)
-	pas := 1
-	if d < 0 {
-		pas = -1
+// choisir : ←→, l'item d'à côté ; en bout de ligne, la ligne voisine.
+func (o *ongletStyle) choisir(d int) {
+	n := len(o.places(o.g))
+	switch j := o.pos + d; {
+	case j >= 0 && j < n:
+		o.pos = j
+	case d > 0 && o.g < o.lignes()-1:
+		o.g, o.pos = o.g+1, 0
+	case d < 0 && o.g > 0:
+		o.g--
+		o.pos = len(o.places(o.g)) - 1
 	}
-	for k >= 0 && k < len(l) && l[k].titre {
-		k += pas
-	}
-	if k < 0 || k >= len(l) { // en bout de liste : la première rangée valide dans l'autre sens
-		k = min(max(o.k, 0), len(l)-1)
-		for l[k].titre {
-			k -= pas
-		}
-	}
-	o.k = k
+	o.borner()
+}
+
+// changerLigne : ↑↓, la ligne du dessus ou du dessous, à la même place si elle existe.
+func (o *ongletStyle) changerLigne(d int) {
+	o.g = (o.g + d + o.lignes()) % o.lignes()
+	o.borner()
 }
 
 func (o *ongletStyle) changer() { o.ver++ }
 
-// basculer : Espace. Lignes longues : masquer ou afficher (partout) ; un item absent est ajouté à la fin
-// de la ligne 2. Ligne SSH : retirer de la ligne courte, ou l'y ajouter.
-func (o *ongletStyle) basculer() {
-	r := o.courante()
-	switch {
-	case r.groupe == gGeneral:
-		o.message = i18n.T("→ : les options générales (icônes, séparateurs)")
-		return
-	case r.groupe == gCourt && r.pos >= 0:
-		p := o.places(gCourt)
-		o.poser(gCourt, append(p[:r.pos:r.pos], p[r.pos+1:]...))
-	case r.pos < 0:
-		o.poser(r.groupe, append(o.places(r.groupe), place{nom: r.item}))
-		o.st.Masquer(r.item, false)
-	default:
-		o.st.Masquer(r.item, !o.st.Masques()[r.item])
-	}
-	o.changer()
-	o.viser(r.groupe, r.item)
-}
-
-// deplacer : Maj+↑↓. L'item échange sa place avec son voisin (les segments gardent leur forme) ; entre
-// la ligne 1 et la ligne 2, il passe d'une ligne à l'autre, seul dans son segment.
+// deplacer : Maj+←→, l'item échange sa place avec son voisin (les segments gardent leur forme).
 func (o *ongletStyle) deplacer(d int) {
-	r := o.courante()
-	if r.titre || r.pos < 0 {
-		o.message = i18n.T("Espace d'abord : cet item n'est pas dans la ligne")
+	x, ok := o.courant()
+	if !ok {
 		return
 	}
-	p := o.places(r.groupe)
-	j := r.pos + d
-	switch {
-	case j >= 0 && j < len(p):
-		p[r.pos].nom, p[j].nom = p[j].nom, p[r.pos].nom
-		o.poser(r.groupe, p)
-		o.changer()
-		o.viser(r.groupe, r.item)
-		return
-	case r.groupe == gLigne1 && d > 0, r.groupe == gLigne2 && d < 0:
-		autre := gLigne2
-		if r.groupe == gLigne2 {
-			autre = gLigne1
-		}
-		q := o.places(autre)
-		if d > 0 {
-			q = append([]place{{nom: r.item}}, q...)
-		} else {
-			q = append(q, place{nom: r.item})
-		}
-		o.poser(r.groupe, append(p[:r.pos:r.pos], p[r.pos+1:]...))
-		o.poser(autre, q)
-		o.changer()
-		o.viser(autre, r.item)
+	p := o.places(o.g)
+	j := o.pos + d
+	if j < 0 || j >= len(p) {
+		o.message = i18n.T("déjà en bout de %s", strings.ToLower(i18n.T(nomsGroupes[o.g])))
 		return
 	}
-	o.message = i18n.T("déjà en bout de %s", strings.ToLower(i18n.T(nomsGroupes[r.groupe])))
+	p[o.pos].nom, p[j].nom = p[j].nom, p[o.pos].nom
+	o.poser(o.g, p)
+	o.changer()
+	o.viser(o.g, x.nom)
 }
 
-// coller : g. L'item rejoint le segment de l'item précédent, ou s'en détache.
-func (o *ongletStyle) coller() {
-	r := o.courante()
-	if r.titre || r.pos < 0 {
+// changerDeLigne : Maj+↑↓, l'item passe de la ligne 1 au début de la ligne 2, ou de la ligne 2 à la fin
+// de la ligne 1, seul dans son segment.
+func (o *ongletStyle) changerDeLigne(d int) {
+	x, ok := o.courant()
+	if !ok {
 		return
 	}
-	if r.pos == 0 {
+	if o.g == gCourt || o.g == gLigne1 && d < 0 || o.g == gLigne2 && d > 0 {
+		o.message = i18n.T("Maj+↑↓ passe un item de la ligne 1 à la ligne 2, et inversement")
+		return
+	}
+	autre := 1 - o.g
+	p, q := o.places(o.g), o.places(autre)
+	if d > 0 {
+		q = append([]place{{nom: x.nom}}, q...)
+	} else {
+		q = append(q, place{nom: x.nom})
+	}
+	o.poser(o.g, append(p[:o.pos:o.pos], p[o.pos+1:]...))
+	o.poser(autre, q)
+	o.changer()
+	o.viser(autre, x.nom)
+}
+
+// retirer : x, l'item quitte sa ligne (+ l'y remet).
+func (o *ongletStyle) retirer() {
+	if _, ok := o.courant(); !ok {
+		return
+	}
+	p := o.places(o.g)
+	o.poser(o.g, append(p[:o.pos:o.pos], p[o.pos+1:]...))
+	o.changer()
+	o.borner()
+}
+
+// coller : l'item rejoint le segment de l'item précédent, ou s'en détache.
+func (o *ongletStyle) coller() {
+	x, ok := o.courant()
+	if !ok {
+		return
+	}
+	if o.pos == 0 {
 		o.message = i18n.T("premier de la ligne : rien à quoi le coller")
 		return
 	}
-	p := o.places(r.groupe)
-	p[r.pos].colle = !p[r.pos].colle
-	o.poser(r.groupe, p)
+	p := o.places(o.g)
+	p[o.pos].colle = !p[o.pos].colle
+	o.poser(o.g, p)
 	o.changer()
-	o.viser(r.groupe, r.item)
+	o.viser(o.g, x.nom)
 }
 
-// cles : les options du panneau (celles de l'item, ou les générales).
-func (o *ongletStyle) cles() []style.Cle {
-	r := o.courante()
-	if r.groupe == gGeneral {
-		return style.DesItems("")
+// candidats : les items qu'on peut ajouter à la ligne choisie (absents des deux lignes longues, ou de la
+// ligne courte).
+func (o *ongletStyle) candidats() []string {
+	var l []string
+	for _, n := range style.Items {
+		if o.g == gCourt && !contient(o.places(gCourt), n) ||
+			o.g != gCourt && !contient(o.places(gLigne1), n) && !contient(o.places(gLigne2), n) {
+			l = append(l, n)
+		}
 	}
-	return style.DesItems(r.item)
+	return l
 }
 
-func (o *ongletStyle) cle() style.Cle {
-	c := o.cles()
-	return c[min(max(o.opt, 0), len(c)-1)]
+// ajouter : l'item après celui choisi (au début d'une ligne vide), seul dans son segment ; masqué
+// partout, il est réaffiché.
+func (o *ongletStyle) ajouter(n string) {
+	p := o.places(o.g)
+	k := min(o.pos+1, len(p))
+	p = append(p[:k:k], append([]place{{nom: n}}, p[k:]...)...)
+	o.poser(o.g, p)
+	o.st.Masquer(n, false)
+	o.changer()
+	o.viser(o.g, n)
 }
 
-// ouvrir : →, le panneau des options de l'item.
-func (o *ongletStyle) ouvrir() {
-	r := o.courante()
-	if r.titre {
+// rangeesMenu : les rangées du menu ouvert.
+func (o *ongletStyle) rangeesMenu() []rangeeMenu {
+	var l []rangeeMenu
+	switch o.menu {
+	case menuGeneral:
+		for _, c := range style.DesItems("") {
+			l = append(l, rangeeMenu{cle: c})
+		}
+	case menuItem:
+		x, _ := o.courant()
+		for _, c := range style.DesItems(x.nom) {
+			l = append(l, rangeeMenu{cle: c})
+		}
+		if o.pos > 0 {
+			l = append(l, rangeeMenu{action: actionColler})
+		}
+		l = append(l, rangeeMenu{action: actionRetirer})
+	case menuAjout:
+		for _, n := range o.candidats() {
+			l = append(l, rangeeMenu{action: n})
+		}
+	}
+	return l
+}
+
+// rangeeMenu : la rangée choisie du menu.
+func (o *ongletStyle) rangeeMenu() rangeeMenu {
+	l := o.rangeesMenu()
+	if len(l) == 0 {
+		return rangeeMenu{}
+	}
+	return l[min(max(o.opt, 0), len(l)-1)]
+}
+
+// cle : l'option de la rangée choisie (vide sur une action).
+func (o *ongletStyle) cle() style.Cle { return o.rangeeMenu().cle }
+
+// ouvrir : un menu, sur sa première rangée.
+func (o *ongletStyle) ouvrir(menu int) {
+	switch {
+	case menu == menuItem:
+		if _, ok := o.courant(); !ok {
+			o.message = i18n.T("cette ligne est vide : + y ajoute un item")
+			return
+		}
+	case menu == menuAjout && len(o.candidats()) == 0:
+		o.message = i18n.T("tous les items sont déjà dans les lignes")
 		return
 	}
-	if len(o.cles()) == 0 {
-		o.message = i18n.T("pas d'option pour %s : Espace l'affiche ou le masque", r.item)
-		return
-	}
-	o.options, o.opt = true, 0
+	o.menu, o.opt = menu, 0
 }
 
 // valeursDe : ce que ←→ fait défiler pour une option (la valeur actuelle comprise).
@@ -314,9 +365,17 @@ func contientTexte(l []string, s string) bool {
 	return false
 }
 
-// regler : ←→ sur l'option choisie.
+// regler : ←→ sur la rangée choisie : la valeur de l'option, ou coller (oui, non).
 func (o *ongletStyle) regler(d int) {
-	c := o.cle()
+	r := o.rangeeMenu()
+	switch {
+	case r.action == actionColler:
+		o.coller()
+		return
+	case r.action != "":
+		return
+	}
+	c := r.cle
 	v := o.st.Valeur(c.Nom)
 	if c.Genre == style.Nombre {
 		n, _ := strconv.Atoi(v)
@@ -338,6 +397,26 @@ func (o *ongletStyle) regler(d int) {
 	o.changer()
 }
 
+// entrer : Entrée dans un menu : taper la valeur (libellé, glyphe, barre), sinon la suivante ; coller,
+// retirer ; ajouter l'item choisi.
+func (o *ongletStyle) entrer() {
+	r := o.rangeeMenu()
+	switch {
+	case o.menu == menuAjout:
+		o.ajouter(r.action)
+		o.menu = sansMenu
+	case r.action == actionRetirer:
+		o.retirer()
+		o.menu = sansMenu
+	case r.action == actionColler:
+		o.coller()
+	case saisissable(r.cle):
+		o.saisie, o.texte = true, o.st.Valeur(r.cle.Nom)
+	case r.cle.Nom != "":
+		o.regler(1)
+	}
+}
+
 // saisissable : l'option se règle aussi en tapant sa valeur.
 func saisissable(c style.Cle) bool {
 	return c.Genre == style.Libelle || c.Genre == style.Glyphe || c.Genre == style.Barre
@@ -354,18 +433,18 @@ func (o *ongletStyle) valider() {
 	o.changer()
 }
 
-// remettre : r, les options de l'item à leur défaut (dans le panneau : l'option choisie seulement).
+// remettre : r, les options de l'item à leur défaut, et l'item réaffiché s'il était masqué (dans un menu :
+// l'option choisie seulement).
 func (o *ongletStyle) remettre() {
-	r := o.courante()
-	if o.options {
-		o.st.Retirer(o.cle().Nom)
-	} else {
-		for _, c := range o.cles() {
+	if o.menu != sansMenu {
+		if c := o.cle(); c.Nom != "" {
 			o.st.Retirer(c.Nom)
 		}
-		if r.item != "" {
-			o.st.Masquer(r.item, false)
+	} else if x, ok := o.courant(); ok {
+		for _, c := range style.DesItems(x.nom) {
+			o.st.Retirer(c.Nom)
 		}
+		o.st.Masquer(x.nom, false)
 	}
 	o.changer()
 }
@@ -378,8 +457,7 @@ func (m *Modele) initStyle() {
 	m.os.garde = style.LireFichier(m.sources.Config)
 	m.os.st = m.os.garde.Copie()
 	m.os.ignore = style.Force(m.getenv)
-	m.os.rendus = map[string]string{}
-	m.os.parcourir(0)
+	m.os.rendus = map[string]apercuRendu{}
 }
 
 // OuvrirStyle : le sélecteur s'ouvre sur l'onglet Statusline (agentline style).
@@ -450,14 +528,15 @@ func sessionApercu(now int64, k int) (etat.Session, *render.GitFictif) {
 	return s, &render.GitFictif{Branche: "main", Neuf: 1}
 }
 
-// rendre : la statusline de la session k au thème donné, avec le style en cours, sur w colonnes.
-func (m *Modele) rendreStyle(nom string, w, k int, ssh bool) []string {
+// rendreStyle : la statusline de la session k au thème donné, avec le style en cours, sur w colonnes, et la
+// place de ses items.
+func (m *Modele) rendreStyle(nom string, w, k int, ssh bool) apercuRendu {
 	cle := nom + "@" + strconv.Itoa(w) + "@" + strconv.Itoa(k) + "@" + strconv.FormatBool(ssh) + "@" + strconv.Itoa(m.os.ver)
 	if r, ok := m.os.rendus[cle]; ok {
-		return strings.Split(r, "\n")
+		return r
 	}
 	if len(m.os.rendus) > 400 {
-		m.os.rendus = map[string]string{}
+		m.os.rendus = map[string]apercuRendu{}
 	}
 	e := m.apercu
 	e.Columns, e.SSH, e.SSHRiche, e.Style = w+4, ssh, ssh, m.os.st
@@ -469,36 +548,145 @@ func (m *Modele) rendreStyle(nom string, w, k int, ssh bool) []string {
 	}
 	s, g := sessionApercu(e.Now, k)
 	e.GitFictif = g
-	r := strings.TrimRight(render.RenderSession(s, e), "\n")
+	sortie, places := render.RenderPlaces(s, e)
+	r := apercuRendu{strings.Split(strings.TrimRight(sortie, "\n"), "\n"), places}
 	m.os.rendus[cle] = r
-	return strings.Split(r, "\n")
+	return r
 }
 
-// lignesApercu : les trois lignes de l'aperçu sur w colonnes : la statusline et sa ligne SSH, ou (aperçu
-// SSH) la ligne courte des trois sessions.
+// ligne : la ligne k (vide si la statusline en a moins), l'item surligné s'il y est dessiné.
+func (r apercuRendu) ligne(k int, item string) string {
+	if k >= len(r.lignes) {
+		return ""
+	}
+	for _, p := range r.places {
+		if item != "" && p.Item == item && p.Ligne == k {
+			return surligner(r.lignes[k], p.Debut, p.Fin)
+		}
+	}
+	return r.lignes[k]
+}
+
+// dessine : l'item est-il dessiné dans cette statusline ?
+func (r apercuRendu) dessine(item string) bool {
+	for _, p := range r.places {
+		if p.Item == item {
+			return true
+		}
+	}
+	return false
+}
+
+// surligner : les caractères visibles de debut à fin (fin exclue) en inverse vidéo ; l'inverse est remis
+// après chaque séquence de la portion (un z l'annule).
+func surligner(s string, debut, fin int) string {
+	var b strings.Builder
+	vus := 0
+	dedans := func() bool { return vus >= debut && vus < fin }
+	for len(s) > 0 {
+		if n := longueurSequence(s); n > 0 {
+			b.WriteString(s[:n])
+			s = s[n:]
+			if dedans() && vus > debut {
+				b.WriteString(inverse)
+			}
+			continue
+		}
+		if vus == debut {
+			b.WriteString(inverse)
+		}
+		if vus == fin {
+			b.WriteString(finInverse)
+		}
+		_, t := utf8.DecodeRuneInString(s)
+		b.WriteString(s[:t])
+		s = s[t:]
+		vus++
+	}
+	if vus == fin {
+		b.WriteString(finInverse)
+	}
+	return b.String()
+}
+
+// longueurSequence : la longueur de la séquence d'échappement en tête de s (CSI, ou OSC fini par BEL ou
+// ESC \), 0 s'il n'y en a pas.
+func longueurSequence(s string) int {
+	if len(s) < 2 || s[0] != 0x1b {
+		return 0
+	}
+	switch s[1] {
+	case '[':
+		for i := 2; i < len(s); i++ {
+			if s[i] >= 0x40 && s[i] <= 0x7e {
+				return i + 1
+			}
+		}
+	case ']':
+		for i := 2; i < len(s); i++ {
+			if s[i] == 0x07 {
+				return i + 1
+			}
+			if s[i] == 0x1b && i+1 < len(s) && s[i+1] == '\\' {
+				return i + 2
+			}
+		}
+	}
+	return len(s)
+}
+
+// lignesApercu : les lignes de l'aperçu sur w colonnes, l'item choisi surligné : la statusline et, avec
+// la ligne courte, sa ligne SSH ; en aperçu SSH, la ligne courte des trois sessions.
 func (m *Modele) lignesApercu(nom string, w int) []string {
-	var l []string
+	o := &m.os
+	x, _ := o.courant()
+	sur := func(g int) string { // l'item à surligner sur la ligne g
+		if o.g == g {
+			return x.nom
+		}
+		return ""
+	}
 	ssh := estompe + "SSH " + z
-	a := m.os.apercuVu()
+	a := o.apercuVu()
+	var l []string
 	if a == 3 {
 		for k := 0; k < 3; k++ {
-			x := m.rendreStyle(nom, w-4, k, true)
-			l = append(l, ssh+x[0])
+			l = append(l, ssh+m.rendreStyle(nom, w-4, k, true).ligne(0, sur(gCourt)))
 		}
 		return l
 	}
 	long := m.rendreStyle(nom, w, a, false)
 	for k := 0; k < 2; k++ {
-		x := ""
-		if k < len(long) {
-			x = long[k]
+		item := ""
+		if o.g != gCourt {
+			item = x.nom
 		}
-		l = append(l, x)
+		l = append(l, long.ligne(k, item))
 	}
-	if !m.os.court() {
-		return l
+	if o.court() {
+		l = append(l, ssh+m.rendreStyle(nom, w-4, a, true).ligne(0, sur(gCourt)))
 	}
-	return append(l, ssh+m.rendreStyle(nom, w-4, a, true)[0])
+	return l
+}
+
+// dessineIci : l'item choisi est-il dessiné dans l'aperçu en cours ?
+func (m *Modele) dessineIci(nom string, w int) bool {
+	o := &m.os
+	x, ok := o.courant()
+	if !ok {
+		return false
+	}
+	a := o.apercuVu()
+	if o.g == gCourt {
+		if a == 3 {
+			a = 0
+		}
+		return m.rendreStyle(nom, w-4, a, true).dessine(x.nom)
+	}
+	if a == 3 {
+		return false
+	}
+	return m.rendreStyle(nom, w, a, false).dessine(x.nom)
 }
 
 // boiteApercu : l'aperçu dans un cadre de largeur w, Clawd (ses pattes) posé sur le cadre.
@@ -525,73 +713,7 @@ func (m *Modele) boiteApercu(nom string, w int, pattes string) []string {
 
 // --- Dessin ----------------------------------------------------------------------------------------
 
-// ligneRangee : une rangée de la liste, sur w colonnes.
-func (m *Modele) ligneRangee(r rangee, sel bool, w int) string {
-	o := &m.os
-	if r.titre {
-		return remplir(gras+" "+i18n.T(nomsGroupes[r.groupe])+z, w)
-	}
-	t, suite := "", ""
-	switch {
-	case r.groupe == gGeneral:
-		t = "  " + i18n.T("icônes, séparateurs")
-	case r.groupe == gCourt:
-		boite := "☑ "
-		if r.pos < 0 {
-			boite, suite = "☐ ", i18n.T("absent")
-		} else if o.st.Masques()[r.item] {
-			suite = i18n.T("masqué")
-		}
-		t = boite + colle(r) + r.item
-	default:
-		boite := "☑ "
-		if r.pos < 0 {
-			boite, suite = "☐ ", i18n.T("absent")
-		} else if o.st.Masques()[r.item] {
-			boite = "☐ "
-		}
-		t = boite + colle(r) + r.item
-	}
-	if suite != "" && largeur(t)+largeur(suite)+6 <= w {
-		t += " " + estompe + suite + z
-		if sel {
-			t += inverse
-		}
-	}
-	t = tronquer(t, w-4)
-	if sel {
-		return inverse + " › " + t + espaces(w-3-largeur(t)) + z
-	}
-	return "   " + t + espaces(w-3-largeur(t))
-}
-
-func colle(r rangee) string {
-	if r.colle {
-		return "+ "
-	}
-	return ""
-}
-
-// colonneStyle : la liste des rangées, h lignes de w colonnes à partir de os.haut.
-func (m *Modele) colonneStyle(w, h int) []string {
-	l := m.os.rangees()
-	var c []string
-	for k := m.os.haut; k < len(l) && len(c) < h; k++ {
-		c = append(c, m.ligneRangee(l[k], k == m.os.k, w))
-	}
-	if m.os.haut > 0 && len(c) > 0 {
-		c[0] = indicateur(i18n.T("↑ %d de plus", m.os.haut), w)
-	}
-	if reste := len(l) - m.os.haut - h; reste > 0 && len(c) > 0 {
-		c[len(c)-1] = indicateur(i18n.T("↓ %d de plus", reste+1), w)
-	}
-	for len(c) < h {
-		c = append(c, espaces(w))
-	}
-	return c
-}
-
-// valeurAffichee : la valeur d'une option, telle que le panneau la montre.
+// valeurAffichee : la valeur d'une option, telle que le menu la montre.
 func (m *Modele) valeurAffichee(c style.Cle) string {
 	v := m.os.st.Valeur(c.Nom)
 	if n, ok := strings.CutPrefix(c.Nom, "icon."); ok && v == style.Auto {
@@ -610,48 +732,85 @@ func montre(v string) string {
 	return v
 }
 
-// panneauOptions : le titre, une ligne par option (◂ valeur ▸ sur celle choisie), puis l'aide de l'option
-// choisie, repliée sur w colonnes.
-func (m *Modele) panneauOptions(w int) []string {
+// ligneChoix : sous l'aperçu, l'item choisi, sa ligne et ce qu'il faut savoir de lui.
+func (m *Modele) ligneChoix(nom string, w, wApercu int) string {
 	o := &m.os
-	r := o.courante()
-	quoi := r.item
-	if r.groupe == gGeneral {
-		quoi = i18n.T("générales")
+	x, ok := o.courant()
+	ligne := i18n.T(nomsGroupes[o.g])
+	if !ok {
+		return tronquer(estompe+i18n.T("%s : vide, + y ajoute un item", ligne)+z, w)
 	}
-	l := []string{gras + tronquer(i18n.T("Options · %s", quoi), w) + z}
-	cles := o.cles()
+	var notes []string
+	switch {
+	case o.st.Masques()[x.nom]:
+		notes = append(notes, i18n.T("masqué partout (r le réaffiche)"))
+	case !m.dessineIci(nom, wApercu):
+		notes = append(notes, i18n.T("vide dans cet aperçu (v : un autre)"))
+	}
+	if x.colle {
+		notes = append(notes, i18n.T("collé au précédent"))
+	}
+	t := "▲ " + gras + x.nom + z + estompe + " · " + ligne
+	for _, n := range notes {
+		t += " · " + n
+	}
+	return tronquer(t+z, w)
+}
+
+// panneauMenu : le menu ouvert, une rangée par option ou action (◂ valeur ▸ sur celle choisie), puis l'aide
+// de la rangée choisie, repliée sur w colonnes.
+func (m *Modele) panneauMenu(w int) []string {
+	o := &m.os
+	x, _ := o.courant()
+	titre := i18n.T("Options · %s", x.nom)
+	switch o.menu {
+	case menuGeneral:
+		titre = i18n.T("Options · %s", i18n.T("générales"))
+	case menuAjout:
+		titre = i18n.T("Ajouter à la %s", strings.ToLower(i18n.T(nomsGroupes[o.g])))
+	}
+	l := []string{gras + tronquer(titre, w) + z}
+	rangees := o.rangeesMenu()
 	gauche := 0
-	for _, c := range cles {
-		gauche = max(gauche, largeur(c.Nom))
+	for _, r := range rangees {
+		gauche = max(gauche, largeur(m.nomRangee(r)))
 	}
 	gauche = min(gauche, w/2)
-	for k, c := range cles {
-		v := m.valeurAffichee(c)
-		nom := tronquer(c.Nom, gauche)
-		x := "  " + nom + espaces(gauche-largeur(nom)) + "  "
-		switch {
-		case k == o.opt && o.saisie:
-			x += "› " + gras + o.texte + z + "▏"
-		case k == o.opt:
-			x += "◂ " + gras + v + z + " ▸"
-		default:
-			x += estompe + v + z
+	for k, r := range rangees {
+		nom := tronquer(m.nomRangee(r), gauche)
+		t := "  " + nom
+		if v, ok := m.valeurRangee(r); ok {
+			t += espaces(gauche-largeur(nom)) + "  "
+			switch {
+			case k == o.opt && o.saisie:
+				t += "› " + gras + o.texte + z + "▏"
+			case k == o.opt:
+				t += "◂ " + gras + v + z + " ▸"
+			default:
+				t += estompe + v + z
+			}
 		}
-		if o.st.Regle(c.Nom) && !(k == o.opt && o.saisie) {
-			x += estompe + " •" + z
+		if r.cle.Nom != "" && o.st.Regle(r.cle.Nom) && !(k == o.opt && o.saisie) {
+			t += estompe + " •" + z
 		}
-		if k == o.opt { // le curseur devant le nom, comme dans la liste ; l'aide en dessous sur la même colonne
-			x = "› " + x[2:]
+		if k == o.opt { // le curseur devant le nom ; l'aide en dessous sur la même colonne
+			t = "› " + t[2:]
 		}
-		l = append(l, tronquer(x, w))
+		l = append(l, tronquer(t, w))
 	}
-	if len(cles) > 0 {
-		c := o.cle()
-		aide := c.Explication()
-		if !c.SSH && o.court() {
+	aide := ""
+	switch r := o.rangeeMenu(); {
+	case r.cle.Nom != "":
+		aide = r.cle.Explication()
+		if !r.cle.SSH && o.court() {
 			aide += i18n.T(" (pas en SSH)")
 		}
+	case r.action == actionColler:
+		aide = i18n.T("même segment que l'item précédent, sans séparateur entre eux")
+	case r.action == actionRetirer:
+		aide = i18n.T("l'item quitte la ligne ; + l'y remet")
+	}
+	if aide != "" {
 		if m.d.agencement == compacte { // une ligne : l'aperçu passe avant
 			return append(l, "  "+estompe+tronquer(aide, w-2)+z)
 		}
@@ -662,21 +821,46 @@ func (m *Modele) panneauOptions(w int) []string {
 	return l
 }
 
-// indice : sous l'aperçu, quand le panneau est fermé : ce que l'item choisi permet.
-func (m *Modele) indice(w int) []string {
-	r := m.os.courante()
-	var t string
+// nomRangee : le nom d'une rangée du menu.
+func (m *Modele) nomRangee(r rangeeMenu) string {
 	switch {
-	case r.groupe == gGeneral:
-		t = i18n.T("→ : jeu d'icônes, séparateurs, signal d'alerte")
-	case len(m.os.cles()) > 0:
-		var n []string
-		for _, c := range m.os.cles() {
-			n = append(n, c.Nom)
+	case r.cle.Nom != "":
+		return r.cle.Nom
+	case r.action == actionColler:
+		return i18n.T("coller au précédent")
+	case r.action == actionRetirer:
+		return i18n.T("retirer de la ligne")
+	}
+	return r.action // un item à ajouter
+}
+
+// valeurRangee : la valeur montrée à droite d'une rangée (aucune pour retirer ou un item à ajouter).
+func (m *Modele) valeurRangee(r rangeeMenu) (string, bool) {
+	switch {
+	case r.cle.Nom != "":
+		return m.valeurAffichee(r.cle), true
+	case r.action == actionColler:
+		if x, _ := m.os.courant(); x.colle {
+			return style.Oui, true
 		}
-		t = i18n.T("→ : %s", strings.Join(n, ", "))
-	default:
-		t = i18n.T("%s n'a pas d'option", r.item)
+		return style.Non, true
+	}
+	return "", false
+}
+
+// indice : sous l'aperçu, quand aucun menu n'est ouvert : ce que l'item choisi permet.
+func (m *Modele) indice(w int) []string {
+	x, ok := m.os.courant()
+	if !ok {
+		return nil
+	}
+	var n []string
+	for _, c := range style.DesItems(x.nom) {
+		n = append(n, c.Nom)
+	}
+	t := i18n.T("Entrée : coller, retirer")
+	if len(n) > 0 {
+		t = i18n.T("Entrée : %s, coller, retirer", strings.Join(n, ", "))
 	}
 	var l []string
 	for _, x := range replier(strings.Fields(t), " ", w) {
@@ -685,80 +869,68 @@ func (m *Modele) indice(w int) []string {
 	return l
 }
 
-// hauteurOptions : les lignes du panneau (ou de l'indice) sous la liste, en empilé et en compact.
-func (m *Modele) blocOptions(w int) []string {
-	if m.os.options {
-		return m.panneauOptions(w)
+// corpsStyle : le corps de l'onglet : l'aperçu (dans son cadre, Clawd posé dessus, sauf en compact),
+// l'item choisi, puis le menu ouvert ou ce que l'item permet.
+func (m *Modele) corpsStyle(nom string) []string {
+	d := m.d
+	w := max(m.largeur, largeurMin) - 1
+	var corps []string
+	if d.agencement == compacte {
+		for _, x := range m.lignesApercu(nom, w-1) {
+			corps = append(corps, " "+tronquer(x+z, w-1))
+		}
+		corps = append(corps, " "+m.ligneChoix(nom, w-1, w-1))
+	} else {
+		bw := w
+		if l := m.largeurNaturelle(nom); l+4 < bw {
+			bw = max(l+4, min(w, 72))
+		}
+		marge := espaces((w - bw) / 2)
+		pattes := ""
+		if d.clawd && d.corps >= hauteurClawd+m.lignesApercuStyle()+6 {
+			var cl [hauteurClawd]string
+			cl, pattes, _ = m.Clawd(nom)
+			x := marge + espaces(bw-largeurClawd-3)
+			for _, l := range cl {
+				corps = append(corps, x+l)
+			}
+		}
+		for _, l := range m.boiteApercu(nom, bw, pattes) {
+			corps = append(corps, marge+l)
+		}
+		corps = append(corps, marge+"  "+m.ligneChoix(nom, bw-2, bw-4))
+		corps = append(corps, "")
+		for _, x := range m.blocMenu(bw - 2) {
+			corps = append(corps, marge+"  "+x)
+		}
+		return corps
+	}
+	corps = append(corps, "")
+	for _, x := range m.blocMenu(w - 1) {
+		corps = append(corps, " "+x)
+	}
+	return corps
+}
+
+// blocMenu : le menu ouvert, sinon ce que l'item choisi permet.
+func (m *Modele) blocMenu(w int) []string {
+	if m.os.menu != sansMenu {
+		return m.panneauMenu(w)
 	}
 	return m.indice(w)
 }
 
+// largeurNaturelle : la plus longue ligne de l'aperçu sans limite de largeur (le cadre s'y ajuste).
+func (m *Modele) largeurNaturelle(nom string) int {
+	n := 0
+	for _, l := range m.lignesApercu(nom, 400) {
+		n = max(n, largeur(l))
+	}
+	return n
+}
+
 // lignesApercuStyle : la hauteur du cadre de l'aperçu (la ligne SSH en plus avec la ligne courte).
 func (m *Modele) lignesApercuStyle() int { return 4 + b2i(m.os.court()) }
-
-// hauteurListeStyle : les rangées visibles de la liste dans la disposition en cours : en empilé et en
-// compact, ce que laissent les options et l'aperçu (une ligne vide, puis le cadre, ou en compact les
-// trois lignes seules).
-func (m *Modele) hauteurListeStyle() int {
-	d := m.d
-	if d.agencement == large {
-		return max(d.corps, 3)
-	}
-	apercu := 1 + m.lignesApercuStyle()
-	if d.agencement == compacte {
-		apercu = 1 + m.lignesApercuStyle() - 2
-	}
-	return max(d.corps-apercu-len(m.blocOptions(d.lw-1)), 3)
-}
-
-// corpsStyle : le corps de l'onglet, selon la disposition.
-func (m *Modele) corpsStyle(nom string) []string {
-	d := m.d
-	h := m.hauteurListeStyle()
-	if d.agencement == large {
-		col := m.colonneStyle(d.lw, h)
-		var droite []string
-		pattes := ""
-		if d.clawd && d.corps >= hauteurClawd+m.lignesApercuStyle()+4 {
-			var cl [hauteurClawd]string
-			cl, pattes, _ = m.Clawd(nom)
-			x := espaces(d.ww - largeurClawd - 3)
-			for _, l := range cl {
-				droite = append(droite, x+l)
-			}
-		}
-		droite = append(droite, m.boiteApercu(nom, d.ww, pattes)...)
-		droite = append(droite, "")
-		for _, x := range m.blocOptions(d.ww - 2) { // sur la colonne du texte de l'aperçu
-			droite = append(droite, "  "+x)
-		}
-		var corps []string
-		for k := 0; k < max(len(col), len(droite)); k++ {
-			l := espaces(d.lw)
-			if k < len(col) {
-				l = col[k]
-			}
-			if k < len(droite) {
-				l += "  " + droite[k]
-			}
-			corps = append(corps, l)
-		}
-		return corps
-	}
-	w := d.lw
-	corps := m.colonneStyle(w, h)
-	for _, x := range m.blocOptions(w - 1) {
-		corps = append(corps, " "+x)
-	}
-	corps = append(corps, "")
-	if d.agencement == compacte {
-		for _, x := range m.lignesApercu(nom, w-1) {
-			corps = append(corps, tronquer(x+z, w))
-		}
-		return corps
-	}
-	return append(corps, m.boiteApercu(nom, w, "")...)
-}
 
 // barreOnglets : « Thèmes   Statusline », l'onglet actif en inverse.
 func (m *Modele) barreOnglets(w int) string {
@@ -791,23 +963,11 @@ func sens(t string) int {
 
 // sensH : +1 pour une touche vers la droite, -1 vers la gauche.
 func sensH(t string) int {
-	if t == "right" || t == "l" {
+	switch t {
+	case "right", "l", "shift+right", "L":
 		return 1
 	}
 	return -1
-}
-
-// saut : le déplacement des touches Page préc./suiv., Début, Fin.
-func saut(t string, page int) int {
-	switch t {
-	case "pgup":
-		return -max(page-1, 1)
-	case "pgdown":
-		return max(page-1, 1)
-	case "home":
-		return -1000
-	}
-	return 1000
 }
 
 func (m *Modele) apercuSuivant() tea.Cmd {
@@ -818,24 +978,13 @@ func (m *Modele) apercuSuivant() tea.Cmd {
 	return nil
 }
 
-// ajusterStyle : la rangée choisie reste visible.
+// ajusterStyle : le choix reste valide, la rangée du menu aussi.
 func (m *Modele) ajusterStyle() {
 	o := &m.os
-	vis := m.hauteurListeStyle()
-	o.lignesVues = vis
-	n := len(o.rangees())
-	o.k = min(max(o.k, 0), n-1)
-	// les indicateurs « de plus » prennent la première et la dernière ligne quand la liste défile
-	if o.k < o.haut+1 && o.haut > 0 {
-		o.haut = max(o.k-1, 0)
-	}
-	if o.k >= o.haut+vis-1 && o.haut+vis < n {
-		o.haut = o.k - vis + 2
-	}
-	if o.haut+vis > n {
-		o.haut = max(n-vis, 0)
-	}
-	if o.k == 1 { // la première rangée : son en-tête aussi
-		o.haut = 0
+	o.borner()
+	if n := len(o.rangeesMenu()); o.menu != sansMenu && n == 0 {
+		o.menu = sansMenu
+	} else {
+		o.opt = min(max(o.opt, 0), max(n-1, 0))
 	}
 }

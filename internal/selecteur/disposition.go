@@ -108,7 +108,7 @@ func b2i(b bool) int {
 func (m *Modele) lignesPied(w int) []string {
 	var avant []string // un avertissement, un message de l'onglet Statusline, au-dessus du pied
 	if m.avertiQuitter {
-		for _, x := range replier(strings.Fields(i18n.T("⚠ Modifications du style non gardées : encore une fois pour quitter sans les garder, Entrée (onglet Statusline) pour les garder.")), " ", w) {
+		for _, x := range replier(strings.Fields(i18n.T("⚠ Modifications du style non gardées : encore une fois pour quitter sans les garder, s (onglet Statusline) pour les garder.")), " ", w) {
 			avant = append(avant, gras+x+z)
 		}
 	}

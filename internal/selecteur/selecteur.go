@@ -28,6 +28,8 @@ const (
 	estompe = "\x1b[2m"
 	gras    = "\x1b[1m"
 	inverse = "\x1b[7m"
+	// finInverse : la fin de l'inverse vidéo seule (surlignage de l'item choisi sur l'aperçu)
+	finInverse = "\x1b[27m"
 )
 
 // Filtres, dans l'ordre de ← → ; ceux qui n'ont aucun thème sont sautés. Ce sont les tags des thèmes, en
