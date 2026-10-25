@@ -43,22 +43,22 @@ const (
 
 type disposition struct {
 	agencement
-	logo    bool     // le titre en grandes lettres
-	fenetre bool     // la mini-fenêtre (sinon l'aperçu de la statusline seule)
-	clawd   bool     // la place de Clawd au-dessus de la fenêtre
-	lw, ww  int      // largeurs de la colonne de la liste et de la fenêtre
-	liste   int      // thèmes visibles
-	wh      int      // hauteur de la fenêtre
-	corps   int      // lignes entre l'en-tête et le pied
-	pied    []string // le pied de page (aide courte, recherche, ou panneau de validation)
+	logo     bool     // le titre en grandes lettres
+	fenetre  bool     // la mini-fenêtre (sinon l'aperçu de la statusline seule)
+	mascotte bool     // la place de Clawd au-dessus de la fenêtre
+	lw, ww   int      // largeurs de la colonne de la liste et de la fenêtre
+	liste    int      // thèmes visibles
+	wh       int      // hauteur de la fenêtre
+	corps    int      // lignes entre l'en-tête et le pied
+	pied     []string // le pied de page (aide courte, recherche, ou panneau de validation)
 }
 
 func (m *Modele) disposer() disposition {
 	w, h := max(m.largeur, largeurMin), max(m.hauteur, hauteurMin)
-	d := disposition{pied: m.lignesPied(w - 1), clawd: m.mascotte != 2}
+	d := disposition{pied: m.lignesPied(w - 1), mascotte: m.mascotte != 2}
 	reste := h - len(d.pied) - 1 // une ligne vide au-dessus du pied
 	if w < compacteLargeur || h < compacteHauteur {
-		d.agencement, d.lw, d.clawd = compacte, w-1, false
+		d.agencement, d.lw, d.mascotte = compacte, w-1, false
 		d.corps = reste - lignesInfos
 		d.liste = max(d.corps-(cadreListe-1)-lignesApercu, 1) // pas de pastilles
 		return d
@@ -78,7 +78,7 @@ func (m *Modele) disposer() disposition {
 	d.logo = !m.aide && reste-lignesInfos-lignesLogo >= besoin
 	d.corps = reste - lignesInfos - lignesLogo*b2i(d.logo)
 	if d.fenetre = d.corps >= besoin; !d.fenetre {
-		d.clawd = false
+		d.mascotte = false
 		d.liste = max(d.corps-cadreListe-lignesApercu, 1)
 		return d
 	}
@@ -89,10 +89,10 @@ func (m *Modele) disposer() disposition {
 
 // poserFenetre : la fenêtre dans la hauteur donnée, avec Clawd au-dessus s'il reste sa place.
 func (d *disposition) poserFenetre(place int) {
-	if d.clawd && place-hauteurClawd >= fenetreMin {
-		d.wh = place - hauteurClawd
+	if d.mascotte && place-hauteurMascotte >= fenetreMin {
+		d.wh = place - hauteurMascotte
 	} else {
-		d.clawd, d.wh = false, max(place, fenetreMin)
+		d.mascotte, d.wh = false, max(place, fenetreMin)
 	}
 }
 

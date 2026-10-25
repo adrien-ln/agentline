@@ -700,8 +700,8 @@ func (m *Modele) boiteApercu(nom string, w int, pattes string) []string {
 	}
 	cadre := []rune(titre + strings.Repeat("─", max(w-largeur(titre)-1, 0)) + "╮")
 	haut := string(cadre)
-	if x := w - largeurClawd - 3; pattes != "" && x > largeur(titre) {
-		haut = string(cadre[:x]) + strings.ReplaceAll(pattes, " ", "─") + z + string(cadre[x+largeurClawd:])
+	if x := w - largeurMascotte - 3; pattes != "" && x > largeur(titre) {
+		haut = string(cadre[:x]) + strings.ReplaceAll(pattes, " ", "─") + z + string(cadre[x+largeurMascotte:])
 	}
 	l := []string{haut}
 	for _, c := range m.lignesApercu(nom, iw) {
@@ -889,10 +889,10 @@ func (m *Modele) corpsStyle(nom string) []string {
 		}
 		marge := espaces((w - bw) / 2)
 		pattes := ""
-		if d.clawd && d.corps >= hauteurClawd+m.lignesApercuStyle()+6 {
-			var cl [hauteurClawd]string
-			cl, pattes, _ = m.Clawd(nom)
-			x := marge + espaces(bw-largeurClawd-3)
+		if d.mascotte && d.corps >= hauteurMascotte+m.lignesApercuStyle()+6 {
+			var cl [hauteurMascotte]string
+			cl, pattes, _ = m.Mascotte(nom)
+			x := marge + espaces(bw-largeurMascotte-3)
 			for _, l := range cl {
 				corps = append(corps, x+l)
 			}

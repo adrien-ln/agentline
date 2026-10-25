@@ -16,11 +16,11 @@ import (
 var modesMascotte = []string{i18n.M("dégradé"), i18n.M("unie"), i18n.M("aucune")} // traduits à l'affichage
 
 const (
-	largeurClawd = 9
-	hauteurClawd = 3 // une ligne de place (sauts, « z »), puis la tête et le corps ; les pattes vont sur le cadre
-	visageSombre = "16161e"
-	sommeil      = 20000 // ms sans touche avant de s'endormir
-	paupiere     = '▂'
+	largeurMascotte = 9
+	hauteurMascotte = 3 // une ligne de place (sauts, « z »), puis la tête et le corps ; les pattes vont sur le cadre
+	visageSombre    = "16161e"
+	sommeil         = 20000 // ms sans touche avant de s'endormir
+	paupiere        = '▂'
 	// paupière à mi-hauteur, quand le corps est monté d'une demi-ligne
 	paupiereHaute = '─'
 )
@@ -75,7 +75,7 @@ const (
 func dessiner(b, y, p string) [3]string {
 	a := bras[b]
 	tete := a[0] + yeux[y] + a[1]
-	return [3]string{tete + espaces(largeurClawd-len([]rune(tete))), a[2] + "█████" + a[3], pieds[p]}
+	return [3]string{tete + espaces(largeurMascotte-len([]rune(tete))), a[2] + "█████" + a[3], pieds[p]}
 }
 
 // expression : la pose (bras, yeux, pattes) et les effets.
@@ -285,17 +285,17 @@ func (m *Modele) pose(h string) (expression, int) {
 	return e, 0
 }
 
-// clawdCouleurs : la couleur de chacune des 9 colonnes du corps.
-func (m *Modele) clawdCouleurs(nom string) [largeurClawd]string {
+// mascotteCouleurs : la couleur de chacune des 9 colonnes du corps.
+func (m *Modele) mascotteCouleurs(nom string) [largeurMascotte]string {
 	p := m.palette(nom)
-	var c [largeurClawd]string
+	var c [largeurMascotte]string
 	for k := range c {
 		c[k] = p.Modele
 		if m.mascotte == 0 {
 			a, b := p.Modele, p.FinDegrade()
 			r1, g1, b1 := ansi.RGB(a)
 			r2, g2, b2 := ansi.RGB(b)
-			c[k] = fmt.Sprintf("%02x%02x%02x", r1+(r2-r1)*k/(largeurClawd-1), g1+(g2-g1)*k/(largeurClawd-1), b1+(b2-b1)*k/(largeurClawd-1))
+			c[k] = fmt.Sprintf("%02x%02x%02x", r1+(r2-r1)*k/(largeurMascotte-1), g1+(g2-g1)*k/(largeurMascotte-1), b1+(b2-b1)*k/(largeurMascotte-1))
 		}
 	}
 	return c
@@ -303,7 +303,7 @@ func (m *Modele) clawdCouleurs(nom string) [largeurClawd]string {
 
 // Clawd : ses 3 lignes au-dessus de la fenêtre (place pour sauter comprise) et ses pattes, posées sur le
 // cadre ou dans le vide pendant un bond. Rien si la mascotte est masquée.
-func (m *Modele) Clawd(nom string) (lignes [hauteurClawd]string, pattes string, ok bool) {
+func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes string, ok bool) {
 	if m.mascotte == 2 {
 		return lignes, "", false
 	}
@@ -320,7 +320,7 @@ func (m *Modele) Clawd(nom string) (lignes [hauteurClawd]string, pattes string, 
 		d = dessiner(e.bras, e.yeux, e.pieds)
 	}
 
-	c := m.clawdCouleurs(nom)
+	c := m.mascotteCouleurs(nom)
 	colorer := func(l string) string {
 		var s strings.Builder
 		for k, r := range []rune(l) {
@@ -336,7 +336,7 @@ func (m *Modele) Clawd(nom string) (lignes [hauteurClawd]string, pattes string, 
 		return s.String()
 	}
 
-	dessus := espaces(largeurClawd)
+	dessus := espaces(largeurMascotte)
 	if e.sommeil { // des « z » qui montent, au rythme de la respiration
 		z1 := []string{"     z   ", "      z  ", "      Z  ", "       Z "}[(m.t/600)%4]
 		dessus = estompe + z1 + z
@@ -350,24 +350,24 @@ func (m *Modele) Clawd(nom string) (lignes [hauteurClawd]string, pattes string, 
 	if p != "" {
 		p = colorer(p)
 	}
-	return [hauteurClawd]string{l[0], colorer(l[1]), colorer(l[2])}, p, true
+	return [hauteurMascotte]string{l[0], colorer(l[1]), colorer(l[2])}, p, true
 }
 
 // poser : Clawd (tête, corps, pattes) monté de haut demi-lignes au-dessus du cadre : ses 3 lignes et ce qui
 // reste posé sur le cadre (vide : les pattes sont en l'air). À 2, le corps monte d'une ligne entière.
-func poser(d [3]string, haut int) (lignes [hauteurClawd]string, pattes string) {
+func poser(d [3]string, haut int) (lignes [hauteurMascotte]string, pattes string) {
 	switch {
 	case haut >= 2:
-		return [hauteurClawd]string{d[0], d[1], d[2]}, ""
+		return [hauteurMascotte]string{d[0], d[1], d[2]}, ""
 	case haut == 1: // à mi-hauteur : chaque ligne prend le bas de celle du dessous et le haut de la suivante
-		var r [hauteurClawd + 1][]rune
-		prec := []rune(espaces(largeurClawd))
+		var r [hauteurMascotte + 1][]rune
+		prec := []rune(espaces(largeurMascotte))
 		for i := range r {
-			suiv := []rune(espaces(largeurClawd))
+			suiv := []rune(espaces(largeurMascotte))
 			if i < len(d) {
 				suiv = []rune(d[i])
 			}
-			r[i] = make([]rune, largeurClawd)
+			r[i] = make([]rune, largeurMascotte)
 			for k := range r[i] {
 				b := points(prec[k])>>2 | (points(suiv[k])&3)<<2
 				r[i][k] = quadrants[b]
@@ -377,12 +377,12 @@ func poser(d [3]string, haut int) (lignes [hauteurClawd]string, pattes string) {
 			}
 			prec = suiv
 		}
-		if p := string(r[hauteurClawd]); strings.TrimSpace(p) != "" {
+		if p := string(r[hauteurMascotte]); strings.TrimSpace(p) != "" {
 			pattes = p
 		}
-		return [hauteurClawd]string{string(r[0]), string(r[1]), string(r[2])}, pattes
+		return [hauteurMascotte]string{string(r[0]), string(r[1]), string(r[2])}, pattes
 	}
-	return [hauteurClawd]string{espaces(largeurClawd), d[0], d[1]}, d[2]
+	return [hauteurMascotte]string{espaces(largeurMascotte), d[0], d[1]}, d[2]
 }
 
 // quadrants : les blocs du dessin, indexés par leurs quarts pleins (1 haut gauche, 2 haut droite, 4 bas

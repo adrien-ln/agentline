@@ -164,8 +164,8 @@ func (m *Modele) fenetre(nom string, w, h int, pattes string) []string {
 	}
 	cadre := []rune(titre + trace(w-largeur(titre)-1) + "╮")
 	haut := string(cadre)
-	if x := w - largeurClawd - 3; pattes != "" && x > largeur(titre) {
-		haut = string(cadre[:x]) + strings.ReplaceAll(pattes, " ", "─") + z + string(cadre[x+largeurClawd:])
+	if x := w - largeurMascotte - 3; pattes != "" && x > largeur(titre) {
+		haut = string(cadre[:x]) + strings.ReplaceAll(pattes, " ", "─") + z + string(cadre[x+largeurMascotte:])
 	}
 	l := []string{haut}
 	for _, c := range etat.lignesConversation(ts, max(h-7, 1), iw, historique(m.scenes, m.t)) {
@@ -426,10 +426,10 @@ func (m *Modele) apercuSeul(nom string, w int) []string {
 func (m *Modele) colonneFenetre(nom string) []string {
 	var droite []string
 	pattes := ""
-	if m.d.clawd {
-		var cl [hauteurClawd]string
-		cl, pattes, _ = m.Clawd(nom)
-		x := espaces(m.d.ww - largeurClawd - 3)
+	if m.d.mascotte {
+		var cl [hauteurMascotte]string
+		cl, pattes, _ = m.Mascotte(nom)
+		x := espaces(m.d.ww - largeurMascotte - 3)
 		for _, l := range cl {
 			droite = append(droite, x+l)
 		}
