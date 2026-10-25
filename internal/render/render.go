@@ -107,6 +107,9 @@ type rendu struct {
 	g    etatGit
 	sale bool   // modifications en cours (indexées, non indexées, nouveaux fichiers, conflits)
 	nom  string // nom du dossier courant
+
+	indice     bool // un indice facultatif (/compact) a été mis dans la ligne en cours
+	sansIndice bool // la ligne ne tenait pas : la recomposer sans indice
 }
 
 func (r *rendu) degrade(p int) string {

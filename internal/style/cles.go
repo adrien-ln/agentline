@@ -114,6 +114,7 @@ var catalogue = func() []Cle {
 		Cle{Nom: "ctx.bar", Genre: Barre, Valeurs: []string{"lines", "blocks", "dots", "none"}, Defaut: "lines", Items: []string{"ctx"}, Aide: i18n.M("barre du contexte : lines, blocks, dots, none, ou 3 caractères (plein, moitié, vide)")},
 		Cle{Nom: "ctx.width", Genre: Nombre, Min: 4, Max: 20, Defaut: "8", Items: []string{"ctx"}, Aide: i18n.M("cases de la barre du contexte")},
 		Cle{Nom: "ctx.alert", Genre: Nombre, Min: 1, Max: 100, Defaut: "85", Items: []string{"ctx"}, Aide: i18n.M("seuil d'alerte du contexte, en %"), SSH: true},
+		Cle{Nom: "ctx.compact", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"ctx"}, Aide: i18n.M("contexte en alerte : rappeler /compact (Claude Code)")},
 		Cle{Nom: "ctx.label", Genre: Libelle, Defaut: "ctx", Items: []string{"ctx"}, Aide: i18n.M("libellé du contexte"), SSH: true},
 		Cle{Nom: "quota.alert", Genre: Nombre, Min: 1, Max: 100, Defaut: "90", Items: quotas, Aide: i18n.M("seuil d'alerte des quotas, en %"), SSH: true},
 		Cle{Nom: "quota.projection", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: quotas, Aide: i18n.M("projection à la fin de la fenêtre (↗)")},

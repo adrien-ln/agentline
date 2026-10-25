@@ -22,8 +22,9 @@ type options struct {
 
 	barre        [3]string // cases pleine, à moitié, éteinte
 	sansBarre    bool
-	largeurBarre int // nombre de cases
-	ctxAlerte    int // seuil d'alerte du contexte, en %
+	largeurBarre int  // nombre de cases
+	ctxAlerte    int  // seuil d'alerte du contexte, en %
+	ctxCompact   bool // en alerte, rappeler /compact (Claude Code)
 	ctxLibelle   string
 
 	quotaAlerte               int // seuil d'alerte des quotas, en %
@@ -47,6 +48,7 @@ func optionsDefaut() options {
 		barre:        [3]string{"━", "╸", "─"},
 		largeurBarre: largeurBarre,
 		ctxAlerte:    85,
+		ctxCompact:   true,
 		ctxLibelle:   "ctx",
 		quotaAlerte:  90,
 		projection:   true,
@@ -102,6 +104,7 @@ func lireOptions(st *style.Style, ssh bool) options {
 	}
 	o.largeurBarre = entierDe(v("ctx.width"))
 	o.ctxAlerte, o.ctxLibelle = entierDe(v("ctx.alert")), v("ctx.label")
+	o.ctxCompact = v("ctx.compact") == style.Oui
 	o.quotaAlerte = entierDe(v("quota.alert"))
 	o.projection, o.plafond, o.reset = v("quota.projection") == style.Oui, v("quota.limit") == style.Oui, v("quota.reset")
 	o.lib5h, o.lib7j = v("5h.label"), style.LibelleEnVigueur("7d.label", v("7d.label"))

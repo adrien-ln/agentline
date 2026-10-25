@@ -8,8 +8,39 @@ import (
 	"testing"
 
 	"github.com/adrien-ln/agentline/internal/ansi"
+	"github.com/adrien-ln/agentline/internal/etat"
 	"github.com/adrien-ln/agentline/internal/style"
 )
+
+// TestIndiceCompact : /compact suit l'alerte du contexte, pour Claude Code seulement, et cède sa place quand
+// la ligne serait trop large (le quota en alerte reste).
+func TestIndiceCompact(t *testing.T) {
+	rendre := func(s etat.Session, colonnes int, regles string) string {
+		e := env(t, mode{colonnes: colonnes}, t.TempDir())
+		e.Style = style.Lire([]byte(regles))
+		e.GitFictif = &GitFictif{Branche: "dev"}
+		return ansi.Visible(RenderSession(s, e))
+	}
+	s := etat.Session{Harness: "claude", Modele: "Opus", Contexte: "91", Quotas: etat.Quotas{H5: etat.Quota{Utilise: "95"}}}
+	if v := rendre(s, 200, ""); !strings.Contains(v, "91% /compact") {
+		t.Errorf("contexte en alerte : /compact attendu :\n%s", v)
+	}
+	for _, regles := range []string{"ctx.compact=no", "ctx.alert=95"} {
+		if v := rendre(s, 200, regles); strings.Contains(v, "/compact") {
+			t.Errorf("%s : pas de /compact :\n%s", regles, v)
+		}
+	}
+	c := s
+	c.Harness = "copilot"
+	if v := rendre(c, 200, ""); strings.Contains(v, "/compact") {
+		t.Errorf("Copilot CLI : pas de /compact (commande de Claude Code) :\n%s", v)
+	}
+	// juste la place de la ligne sans indice : l'indice part, le quota reste
+	sans := strings.Split(rendre(s, 200, "ctx.compact=no"), "\n")[1]
+	if v := rendre(s, len([]rune(sans))+4, ""); strings.Contains(v, "/compact") || !strings.Contains(v, "5h 95%") {
+		t.Errorf("ligne trop étroite : l'indice doit céder sa place au quota :\n%s", v)
+	}
+}
 
 // TestItemsDuStyle : le registre du rendu et la liste des items du style ont les mêmes noms.
 func TestItemsDuStyle(t *testing.T) {

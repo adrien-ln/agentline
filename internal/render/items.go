@@ -237,7 +237,13 @@ func itemCtx(r *rendu, s *etat.Session, court bool) (string, bool) {
 		t += r.barre(n, r.o.largeurBarre) + z + " "
 	}
 	alerte := n >= r.o.ctxAlerte
-	return t + r.valeur(p, alerte), alerte
+	t += r.valeur(p, alerte)
+	// le geste qui libère le contexte, avant que l'auto-compact ne le fasse : une commande de Claude Code
+	if alerte && r.o.ctxCompact && !court && !r.sansIndice && s.Harness == "claude" {
+		r.indice = true
+		t += " " + r.discret + "/compact" + z
+	}
+	return t, alerte
 }
 
 func itemQuota5h(r *rendu, s *etat.Session, _ bool) (string, bool) {
@@ -314,9 +320,17 @@ func (r *rendu) composer(s *etat.Session, d disposition) string {
 	var sortie strings.Builder
 	k := 0 // lignes écrites
 	for _, l := range lignes {
+		r.indice = false
 		segments, places := r.segmentsDe(l, s, court)
 		if len(segments) > 0 {
-			texte, debuts := r.afficher(" "+couleur+l.sep+z+" ", segments)
+			sep := " " + couleur + l.sep + z + " "
+			texte, debuts := r.afficher(sep, segments)
+			if len(debuts) < len(segments) && r.indice { // trop large : les indices cèdent leur place aux segments
+				r.sansIndice = true
+				segments, places = r.segmentsDe(l, s, court)
+				r.sansIndice = false
+				texte, debuts = r.afficher(sep, segments)
+			}
 			sortie.WriteString(texte)
 			if r.places != nil {
 				for i, d := range debuts {

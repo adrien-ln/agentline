@@ -185,7 +185,7 @@ func TestEcrireRelire(t *testing.T) {
 }
 
 func TestDesItems(t *testing.T) {
-	if l := DesItems("ctx"); len(l) != 4 {
+	if l := DesItems("ctx"); len(l) != 5 {
 		t.Errorf("ctx : %d options", len(l))
 	}
 	for _, c := range DesItems("") {

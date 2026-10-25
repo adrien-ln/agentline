@@ -24,6 +24,7 @@ var style = map[string]string{
 	"longueur du nom de session avant coupure":                                                 "session name length before it is cut",
 	"barre du contexte : lines, blocks, dots, none, ou 3 caractères (plein, moitié, vide)":     "context bar: lines, blocks, dots, none, or 3 characters (full, half, empty)",
 	"cases de la barre du contexte":                                                            "cells of the context bar",
+	"contexte en alerte : rappeler /compact (Claude Code)":                                     "context in alert: suggest /compact (Claude Code)",
 	"seuil d'alerte du contexte, en %":                                                         "context alert threshold, in %",
 	"branches où des changements non commités mettent la statusline en alerte (vide : jamais)": "branches where uncommitted changes put the statusline in alert (empty: never)",
 	"libellé du contexte":                                                                      "context label",
