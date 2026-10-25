@@ -235,3 +235,18 @@ func (o Options) RemettreApercuInterrompu() string {
 	}
 	return i18n.T("Un aperçu de police avait été interrompu : %s est remise dans %s%s.", r.Avant, r.Fichier, avecCopie(copie))
 }
+
+// ApercuInterrompu : le fichier de réglages dont un aperçu de police a été interrompu (son repère est resté),
+// vide sinon. Rien n'est modifié (doctor) : agentline font preview remettra la police.
+func (o Options) ApercuInterrompu() string {
+	if o.Reglages == "" {
+		return ""
+	}
+	b, err := os.ReadFile(filepath.Join(o.Reglages, fichierRepere))
+	if err != nil {
+		return ""
+	}
+	var r repere
+	json.Unmarshal(b, &r)
+	return r.Fichier
+}

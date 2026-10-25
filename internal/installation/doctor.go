@@ -147,6 +147,9 @@ func (o Options) verifierPolice() []Verification {
 	if p := o.police(); o.PoliceInstallee(p) {
 		v[0].Detail = i18n.T("%s est installée", p.Famille)
 	}
+	if f := o.ApercuInterrompu(); f != "" {
+		v = append(v, Verification{Avertissement, i18n.T("Police"), i18n.T("un aperçu de police a été interrompu : %s garde la police d'essai", f), "agentline font preview"})
+	}
 	for _, r := range o.PolicesReglees() {
 		switch {
 		case strings.Contains(strings.ToLower(r.Police), "nerd font"):

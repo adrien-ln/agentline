@@ -72,6 +72,9 @@ func TestApercuInterrompu(t *testing.T) {
 	s, f := windowsTerminal(t, "{2222}")
 	a, _ := s.PreparerApercu()
 	a.Essayer("Hack Nerd Font") // puis plus rien : interrompu
+	if s.ApercuInterrompu() != f {
+		t.Error("le repère doit désigner le fichier")
+	}
 	msg := s.RemettreApercuInterrompu()
 	if v, _ := ChaineJSONC(lire(t, f), "profiles", "defaults", "font", "face"); v != "Cascadia Mono" || !strings.Contains(msg, "Cascadia Mono est remise") {
 		t.Errorf("remise après interruption : %q\n%s", msg, lire(t, f))

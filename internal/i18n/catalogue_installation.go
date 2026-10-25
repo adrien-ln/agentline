@@ -120,4 +120,5 @@ var installation = map[string]string{
 	"Un aperçu de police a été interrompu : %s":                                                                           "A font preview was interrupted: %s",
 	"%s a changé pendant l'aperçu : remets sa police à la main":                                                           "%s changed during the preview: set its font back by hand",
 	"Un aperçu de police avait été interrompu : %s est remise dans %s%s.":                                                 "A font preview had been interrupted: %s is set back in %s%s.",
+	"un aperçu de police a été interrompu : %s garde la police d'essai":                                                   "a font preview was interrupted: %s keeps the trial font",
 }
