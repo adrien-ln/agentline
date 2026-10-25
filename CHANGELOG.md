@@ -4,6 +4,15 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Changed
+
+- The picker draws 2 frames per second instead of 20 while the mascot sleeps, and each frame is about 20% faster to build.
+
+### Fixed
+
+- When `git status` gives nothing, the branch is read correctly in worktrees and submodules, with its full name (`feat/x`), so branch theme rules keep applying.
+- The git cache shared by sessions in the same repository is written atomically.
+
 ## [0.3.1] - 2026-10-25
 
 ### Changed
