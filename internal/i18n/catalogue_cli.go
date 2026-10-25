@@ -154,4 +154,12 @@ var cli = map[string]string{
 	"retenue":              "remembered",
 	"aucune police réglée": "no font set",
 	"%s : %s (%s)\n":       "%s: %s (%s)\n",
+	"les glyphes d'agentline dessinés dans la police de ce terminal : ce qui manque ou déborde se voit":                                                                                  "agentline's glyphs drawn in this terminal's font: what is missing or too wide shows",
+	"Chaque glyphe doit tenir entre ses deux barres, toutes alignées : un carré ou un vide, la police n'a pas ce glyphe ; une barre décalée, il est trop large (police non « Mono »).\n": "Each glyph must fit between its two bars, all aligned: a box or a blank means the font lacks the glyph; a shifted bar means it is too wide (font not \"Mono\").\n",
+	"Icônes de la statusline (icons=nerd)":      "Statusline icons (icons=nerd)",
+	"Touches du sélecteur":                      "Picker keys",
+	"Pip (demi-blocs)":                          "Pip (half blocks)",
+	"barres du contexte":                        "context bars",
+	"cadres et flèches":                         "frames and arrows",
+	"La statusline avec ce thème et ce style :": "The statusline with this theme and style:",
 }

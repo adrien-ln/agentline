@@ -3,16 +3,23 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/adrien-ln/agentline/internal/etat"
 	"github.com/adrien-ln/agentline/internal/i18n"
 	"github.com/adrien-ln/agentline/internal/installation"
+	"github.com/adrien-ln/agentline/internal/render"
+	"github.com/adrien-ln/agentline/internal/selecteur"
+	"github.com/adrien-ln/agentline/internal/style"
 )
 
 // commandesPolice : les sous-commandes de « agentline font ».
 func commandesPolice() []commande {
 	return []commande{
 		{nom: "list", alias: []string{"ls"}, aide: i18n.T("les Nerd Fonts proposées, celles qui sont installées, et la police de chaque terminal"), faire: policeListe},
+		{nom: "test", aide: i18n.T("les glyphes d'agentline dessinés dans la police de ce terminal : ce qui manque ou déborde se voit"), faire: policeTest},
 		{nom: "set", args: i18n.T("<police>"), aide: i18n.T("installe cette Nerd Font si elle manque et la choisit dans Windows Terminal et VS Code"), min: 1, max: 1, faire: policeChoisir},
 		{nom: "help", alias: []string{"aide"}, aide: i18n.T("cette aide"), faire: func(a *appel) int { io.WriteString(a.sortie, aidePolice()); return 0 }},
 	}
@@ -76,6 +83,54 @@ func policeChoisir(a *appel) int {
 	o.Police, o.PoliceImposee = p.Nom, true
 	if err := o.AppliquerPolice(); err != nil {
 		return a.echec(i18n.T("police non installée (%s). À la main : %s"), err.Error(), o.CommandePolice())
+	}
+	return 0
+}
+
+// glyphesDivers : les caractères des barres, cadres, flèches et de Pip, par groupe (un caractère par case).
+var glyphesDivers = [][2]string{
+	{i18n.M("Pip (demi-blocs)"), "▘▝▀▖▌▞▛▗▚▐▜▄▙▟█▂─"},
+	{i18n.M("barres du contexte"), "━╸─█▌░●◐○"},
+	{i18n.M("cadres et flèches"), "╭╮╰╯│↑↓←→↗↻✓×·"},
+}
+
+// policeTest : « agentline font test » : chaque glyphe qu'utilise agentline entre deux barres, dans la police
+// du terminal, puis la statusline d'exemple et la police réglée dans chaque terminal. Rien n'est modifié.
+func policeTest(a *appel) int {
+	w := a.sortie
+	fmt.Fprint(w, i18n.T("Chaque glyphe doit tenir entre ses deux barres, toutes alignées : un carré ou un vide, la police n'a pas ce glyphe ; une barre décalée, il est trop large (police non « Mono »).\n"))
+	noms := func(titre string, l [][2]string) {
+		fmt.Fprintf(w, "\n%s\n", titre)
+		for _, g := range l {
+			fmt.Fprintf(w, "  |%s|  %s\n", g[1], g[0])
+		}
+	}
+	var icones [][2]string
+	for _, c := range style.Cles() {
+		if n, ok := strings.CutPrefix(c.Nom, "icon."); ok {
+			icones = append(icones, [2]string{n, style.GlypheDuJeu("nerd", n)})
+		}
+	}
+	noms(i18n.T("Icônes de la statusline (icons=nerd)"), icones)
+	noms(i18n.T("Touches du sélecteur"), selecteur.GlyphesTouches())
+	for _, g := range glyphesDivers {
+		cases := []rune(g[1])
+		regle := strings.Repeat("|-", len(cases)) + "|"
+		fmt.Fprintf(w, "\n%s\n  %s\n  |%s|\n", i18n.T(g[0]), regle, strings.Join(strings.Split(g[1], ""), "|"))
+	}
+	e := environnement()
+	if e.Columns == 0 {
+		e.Columns = 120
+	}
+	d, _ := os.Getwd()
+	fmt.Fprintf(w, "\n%s\n%s", i18n.T("La statusline avec ce thème et ce style :"), render.RenderSession(etat.Exemple(e.Now, filepath.ToSlash(d), 42), e))
+	o := optionsReelles(a)
+	for _, r := range o.PolicesReglees() {
+		police := r.Police
+		if police == "" {
+			police = i18n.T("aucune police réglée")
+		}
+		fmt.Fprintf(w, i18n.T("%s : %s (%s)\n"), r.Terminal, police, r.Fichier)
 	}
 	return 0
 }

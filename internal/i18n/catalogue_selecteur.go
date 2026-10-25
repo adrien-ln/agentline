@@ -4,6 +4,7 @@ package i18n
 // onglet Statusline, session fictive de la mini-fenêtre.
 var selecteur = map[string]string{
 	// Noms des touches
+	"Maj":                     "Shift",
 	"Entrée":                  "Enter",
 	"Échap":                   "Esc",
 	"Échap ?":                 "Esc ?",

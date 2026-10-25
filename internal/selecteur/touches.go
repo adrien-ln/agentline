@@ -93,6 +93,13 @@ func (m *Modele) capsule(nom string) string {
 	return strings.Join(l, " ")
 }
 
+// GlyphesTouches : les touches dessinées avec un glyphe Nerd Font, nom traduit et glyphe, pour « agentline font
+// test ».
+func GlyphesTouches() [][2]string {
+	return [][2]string{{i18n.T("Entrée"), glyphesTouches["Entrée"]}, {"Tab", glyphesTouches["Tab"]},
+		{i18n.T("Échap"), glyphesTouches["Échap"]}, {"⌫", glyphesTouches["⌫"]}, {i18n.T("Maj"), glypheMaj}}
+}
+
 // rappel : une touche et ce qu'elle fait, l'effet estompé.
 func (m *Modele) rappel(nom, effet string) string { return m.capsule(nom) + " " + estompe + effet + z }
 

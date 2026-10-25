@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/adrien-ln/agentline/internal/selecteur"
+	"github.com/adrien-ln/agentline/internal/style"
 )
 
 // TestOptionAvecValeur : une option qui prend une valeur la lit après elle ou après « = » ; une option sans
@@ -50,6 +53,20 @@ func TestCommandeFont(t *testing.T) {
 		erreurs.Reset()
 		if code := principale([]string{"font", args[0], args[1]}, &sortie, &erreurs); code != codeUsage || !strings.Contains(erreurs.String(), texte) {
 			t.Errorf("font %v : code %d\n%s", args, code, erreurs.String())
+		}
+	}
+}
+
+// TestCommandeFontTest : « agentline font test » dessine chaque glyphe d'agentline entre deux barres, puis la
+// statusline d'exemple ; rien n'est modifié.
+func TestCommandeFontTest(t *testing.T) {
+	var sortie, erreurs bytes.Buffer
+	if code := principale([]string{"font", "test"}, &sortie, &erreurs); code != 0 {
+		t.Fatalf("agentline font test : code %d\n%s", code, erreurs.String())
+	}
+	for _, x := range []string{"|" + style.GlypheDuJeu("nerd", "branch") + "|", "|" + selecteur.GlyphesTouches()[0][1] + "|", "|▟|", "|━|", "ctx"} {
+		if !strings.Contains(sortie.String(), x) {
+			t.Errorf("%q absent\n%s", x, sortie.String())
 		}
 	}
 }
