@@ -448,3 +448,26 @@ func BenchmarkImageAnimee(b *testing.B) {
 		m.View()
 	}
 }
+
+// TestAnimationEndormie : quand la mascotte dort, l'animation ralentit (l'image suivante vient plus tard) ;
+// une touche la réveille et le rythme normal reprend à l'image suivante.
+func TestAnimationEndormie(t *testing.T) {
+	m, _ := nouveau(t)
+	m.Init()
+	attente := func(cmd tea.Cmd) time.Duration {
+		debut := time.Now()
+		cmd()
+		return time.Since(debut)
+	}
+	_, cmd := m.Update(tic(m.debut.Add(1000 * time.Millisecond)))
+	if d := attente(cmd); d > 300*time.Millisecond {
+		t.Errorf("éveillé : image suivante après %v", d)
+	}
+	_, cmd = m.Update(tic(m.debut.Add(time.Duration(sommeil+1000) * time.Millisecond)))
+	if !m.dort() {
+		t.Fatal("la mascotte doit dormir")
+	}
+	if d := attente(cmd); d < 300*time.Millisecond {
+		t.Errorf("endormi : image suivante après %v seulement", d)
+	}
+}

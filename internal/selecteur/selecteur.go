@@ -84,9 +84,15 @@ type Modele struct {
 
 type tic time.Time
 
-// image : ~20 images par seconde, seulement tant que le sélecteur est ouvert.
-func image() tea.Cmd {
-	return tea.Tick(50*time.Millisecond, func(t time.Time) tea.Msg { return tic(t) })
+// image : ~20 images par seconde, seulement tant que le sélecteur est ouvert ; 2 par seconde quand la
+// mascotte dort (personne ne touche le clavier : seuls ses « z » bougent encore). Une touche est dessinée
+// tout de suite ; l'animation reprend son rythme à l'image suivante.
+func image(lent bool) tea.Cmd {
+	d := 50 * time.Millisecond
+	if lent {
+		d = 500 * time.Millisecond
+	}
+	return tea.Tick(d, func(t time.Time) tea.Msg { return tic(t) })
 }
 
 // Nouveau : le sélecteur pour le dossier courant (chemin tel que Claude Code l'enverra).
@@ -184,7 +190,7 @@ func (m *Modele) ailleurs() int {
 
 func (m *Modele) Init() tea.Cmd {
 	m.debut = time.Now()
-	return image()
+	return image(false)
 }
 
 // Update : une touche, un redimensionnement ou une image de l'animation -> le nouvel état.
@@ -192,7 +198,7 @@ func (m *Modele) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tic:
 		m.t = int(time.Time(msg).Sub(m.debut).Milliseconds())
-		return m, image()
+		return m, image(m.dort())
 	case tea.WindowSizeMsg:
 		m.largeur, m.hauteur = msg.Width, msg.Height
 		m.ajuster()
