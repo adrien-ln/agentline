@@ -77,3 +77,13 @@ func TestSansCommentaires(t *testing.T) {
 		t.Errorf("%q", s)
 	}
 }
+
+// TestJeuDuProfil : le jeu du profil, sinon celui de defaults, sinon Campbell.
+func TestJeuDuProfil(t *testing.T) {
+	if j, err := JeuDuProfil(fichierImport(t, "settings.json"), "{absent}"); err != nil || j.Nom != "Solarized Light" {
+		t.Errorf("defaults : %q %v", j.Nom, err)
+	}
+	if j, _ := JeuDuProfil([]byte(`{"profiles": {"defaults": {}, "list": []}}`), ""); j.Nom != "Campbell" {
+		t.Errorf("sans jeu réglé : %q", j.Nom)
+	}
+}

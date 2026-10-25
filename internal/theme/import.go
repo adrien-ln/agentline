@@ -282,3 +282,35 @@ func melange(a, b string, t float64) string {
 	m := func(x, y int) int { return int(math.Round(float64(x) + (float64(y)-float64(x))*t)) }
 	return fmt.Sprintf("%02x%02x%02x", m(r1, r2), m(g1, g2), m(b1, b2))
 }
+
+// JeuDuProfil : le jeu de couleurs du profil guid de Windows Terminal (celui de defaults, sinon Campbell, le
+// jeu par défaut), d'après son settings.json. Un colorScheme { "light", "dark" } prend le jeu sombre.
+func JeuDuProfil(contenu []byte, guid string) (JeuANSI, error) {
+	var s struct {
+		Profiles struct {
+			Defaults map[string]any   `json:"defaults"`
+			List     []map[string]any `json:"list"`
+		} `json:"profiles"`
+	}
+	json.Unmarshal([]byte(sansCommentaires(string(contenu))), &s) // un fichier inattendu : Campbell
+	nom := func(m map[string]any) string {
+		switch v := m["colorScheme"].(type) {
+		case string:
+			return v
+		case map[string]any:
+			d, _ := v["dark"].(string)
+			return d
+		}
+		return ""
+	}
+	jeu := nom(s.Profiles.Defaults)
+	for _, p := range s.Profiles.List {
+		if g, _ := p["guid"].(string); guid != "" && strings.EqualFold(g, guid) && nom(p) != "" {
+			jeu = nom(p)
+		}
+	}
+	if jeu == "" || strings.EqualFold(jeu, "Campbell") {
+		return Campbell, nil
+	}
+	return LireWindowsTerminal(contenu, jeu)
+}

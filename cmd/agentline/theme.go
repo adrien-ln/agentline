@@ -35,6 +35,10 @@ func commandesTheme() []commande {
 		{nom: "new", args: i18n.T("<nom> [--from <thème>]"), aide: i18n.T("créer un thème dans l'éditeur, à partir de celui en vigueur ici (ou de --from)"), min: 1, max: 1,
 			options: []option{{nom: "--from", valeur: "theme", aide: i18n.T("le thème de départ")}}, faire: themeNouveau},
 		{nom: "edit", args: i18n.T("<thème>"), aide: i18n.T("modifier un thème dans l'éditeur (un thème intégré : une copie)"), min: 1, max: 1, faire: themeEditer},
+		{nom: "import", args: i18n.T("<fichier> | --terminal"), aide: i18n.T("un jeu de couleurs de terminal (Windows Terminal, iTerm2, base16) ouvert dans l'éditeur"), max: 1,
+			options: []option{{nom: "--scheme", valeur: "name", aide: i18n.T("le jeu à prendre dans un settings.json qui en a plusieurs")},
+				{nom: "--terminal", aide: i18n.T("le jeu de couleurs du profil Windows Terminal en cours")}}, faire: themeImporter},
+		{nom: "export", args: i18n.T("<thème>"), aide: i18n.T("le fichier du thème, avec les noms anglais documentés, à partager"), min: 1, max: 1, faire: themeExporter},
 		{nom: "preview", args: i18n.T("[thème]"), aide: i18n.T("aperçu réel de la statusline ici"), max: 1, faire: themeApercu},
 		{nom: "background", args: "[dark|light|auto]", aide: i18n.T("fond du terminal, clair ou sombre (sans argument : celui retenu)"), max: 1, faire: themeFond},
 		{nom: "help", alias: []string{"aide"}, aide: i18n.T("cette aide"), faire: func(a *appel) int { io.WriteString(a.sortie, aideTheme()); return 0 }},
@@ -202,6 +206,63 @@ func themeEditer(a *appel) int {
 		return codeUsage
 	}
 	return lancerSelecteur(a, func(m *selecteur.Modele) { m.OuvrirEditeur(nom, "") })
+}
+
+// themeImporter : « agentline theme import <fichier> [--scheme <nom>] » ou « --terminal » : le jeu de couleurs
+// devient un thème, ouvert dans l'éditeur pour le retoucher ; s le crée.
+func themeImporter(a *appel) int {
+	var j theme.JeuANSI
+	var err error
+	titre := ""
+	switch {
+	case a.opts["--terminal"]:
+		if getenv("WT_SESSION") == "" {
+			return a.echec("%s", i18n.T("--terminal lit le jeu de couleurs de Windows Terminal : lance-le dans Windows Terminal, ou donne le fichier du jeu"))
+		}
+		f := ""
+		for _, r := range optionsReelles(a).PolicesReglees() {
+			if r.Terminal == "Windows Terminal" && f == "" {
+				f = r.Fichier
+			}
+		}
+		b, e := os.ReadFile(f)
+		if e != nil {
+			return a.echec("%v", e)
+		}
+		j, err = theme.JeuDuProfil(b, getenv("WT_PROFILE_ID"))
+	case len(a.args) == 1:
+		b, e := os.ReadFile(a.args[0])
+		if e != nil {
+			return a.echec("%v", e)
+		}
+		j, err = theme.LireJeu(b, a.vals["--scheme"])
+		titre = strings.TrimSuffix(filepath.Base(a.args[0]), filepath.Ext(a.args[0]))
+	default:
+		return a.usage("%s", i18n.T("il faut un fichier de jeu de couleurs, ou --terminal"))
+	}
+	if err != nil {
+		return a.echec("%v", err)
+	}
+	if j.Nom != "" {
+		titre = j.Nom
+	}
+	if titre == "" {
+		titre = i18n.T("Terminal")
+	}
+	return lancerSelecteur(a, func(m *selecteur.Modele) { m.OuvrirImport(theme.DepuisJeu(j), titre) })
+}
+
+// themeExporter : « agentline theme export <thème> » : son fichier, avec les noms anglais documentés.
+func themeExporter(a *appel) int {
+	s := sources()
+	nom, ok := a.themeArg(s, a.args[0])
+	if !ok {
+		return codeUsage
+	}
+	p, _ := s.Charger(nom)
+	titre, tags := s.Entete(nom)
+	a.sortie.Write(theme.Format(p, titre, tags))
+	return 0
 }
 
 func themeListe(a *appel) int {

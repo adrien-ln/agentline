@@ -173,4 +173,12 @@ var cli = map[string]string{
 	"l'aperçu en direct marche dans Windows Terminal et VS Code ; ici, « agentline font test » montre les glyphes dans ta police": "the live preview works in Windows Terminal and VS Code; here, \"agentline font test\" shows the glyphs in your font",
 	"Police remise : %s (%s).\n": "Font put back: %s (%s).\n",
 	"Police gardée : %s (%s).\n": "Font kept: %s (%s).\n",
+	"<fichier> | --terminal":     "<file> | --terminal",
+	"Terminal":                   "Terminal",
+	"un jeu de couleurs de terminal (Windows Terminal, iTerm2, base16) ouvert dans l'éditeur":                            "a terminal color scheme (Windows Terminal, iTerm2, base16) opened in the editor",
+	"le fichier du thème, avec les noms anglais documentés, à partager":                                                  "the theme's file, with the documented English names, to share",
+	"--terminal lit le jeu de couleurs de Windows Terminal : lance-le dans Windows Terminal, ou donne le fichier du jeu": "--terminal reads the Windows Terminal color scheme: run it in Windows Terminal, or give the scheme file",
+	"le jeu de couleurs du profil Windows Terminal en cours":                                                             "the color scheme of the current Windows Terminal profile",
+	"il faut un fichier de jeu de couleurs, ou --terminal":                                                               "a color scheme file is needed, or --terminal",
+	"le jeu à prendre dans un settings.json qui en a plusieurs":                                                          "the scheme to take from a settings.json that has several",
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -99,5 +101,32 @@ func TestCommandeFontPreview(t *testing.T) {
 	var sortie, erreurs bytes.Buffer
 	if code := principale([]string{"font", "preview"}, &sortie, &erreurs); code != codeEchec || !strings.Contains(erreurs.String(), "agentline font test") {
 		t.Errorf("code %d\n%s%s", code, sortie.String(), erreurs.String())
+	}
+}
+
+// TestCommandeThemeImportExport : l'import refuse ce qu'il ne peut pas lire avant d'ouvrir l'éditeur ;
+// l'export écrit le thème avec les noms anglais.
+func TestCommandeThemeImportExport(t *testing.T) {
+	t.Setenv("WT_SESSION", "")
+	vide := filepath.Join(t.TempDir(), "vide.json")
+	os.WriteFile(vide, []byte("pas un jeu"), 0o644)
+	for _, c := range []struct {
+		args  []string
+		code  int
+		texte string
+	}{
+		{[]string{"theme", "import"}, codeUsage, "il faut un fichier de jeu de couleurs"},
+		{[]string{"theme", "import", filepath.Join(t.TempDir(), "absent.json")}, codeEchec, "absent.json"},
+		{[]string{"theme", "import", vide}, codeEchec, "format inconnu"},
+		{[]string{"theme", "import", "--terminal"}, codeEchec, "Windows Terminal"},
+	} {
+		var sortie, erreurs bytes.Buffer
+		if code := principale(c.args, &sortie, &erreurs); code != c.code || !strings.Contains(erreurs.String(), c.texte) {
+			t.Errorf("%v : code %d\n%s", c.args, code, erreurs.String())
+		}
+	}
+	var sortie, erreurs bytes.Buffer
+	if code := principale([]string{"theme", "export", "tokyo"}, &sortie, &erreurs); code != 0 || !strings.HasPrefix(sortie.String(), "# Tokyo Night\n# tags: ") || !strings.Contains(sortie.String(), "TEXT=c0caf5") {
+		t.Errorf("export : code %d\n%s%s", code, sortie.String(), erreurs.String())
 	}
 }
