@@ -4,6 +4,10 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Added
+
+- Antigravity CLI and Copilot CLI: `agentline render --from antigravity|copilot` reads their statusline input (recognized from the JSON without `--from`), and `agentline install` offers to set their statusline when they are installed.
+
 ## [0.3.2] - 2026-10-25
 
 ### Changed

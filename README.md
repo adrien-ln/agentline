@@ -16,7 +16,7 @@ Model, Git, PR, context and quotas on two lines, in 49 themes: one by default, o
 
 | | |
 |---|---|
-| **Claude Code** | the statusline is declared in `~/.claude/settings.json` |
+| **Claude Code** | the statusline is declared in `~/.claude/settings.json`. Antigravity CLI and Copilot CLI work too (see below) |
 | **A Nerd Font, set in your terminal** | for the icons. `agentline install` offers to install one (Fira Code, JetBrains Mono, Cascadia Code, Hack or Meslo) and sets it in Windows Terminal and VS Code; `agentline font set <name>` changes it later; other terminals: choose it in their settings. No Nerd Font: `agentline style set icons text` |
 | **A modern terminal** | Windows: **Windows Terminal** or the VS Code terminal (not the old console window). macOS, Linux: any terminal; 24-bit color is best |
 | **Git** on the PATH | for the branch and its status |
@@ -78,7 +78,8 @@ agentline help     # every command
 - **Language**: English or French, from your system; force it with `AGENTLINE_LANG=en` or `fr`.
 - **Light background**: detected by `agentline install`; otherwise `agentline theme background light`.
 - **Over SSH**: the full statusline, with the font of the terminal on your own machine. For one short line without icons: `agentline style set ssh.short yes`.
-- **No network calls** from the statusline: everything comes from what Claude Code sends and from `git`.
+- **Other tools**: `agentline install` also offers to set the statusline of **Antigravity CLI** and **Copilot CLI** when they are installed (Copilot: turn the statusline on with `/experimental`). By hand: `agentline render --from antigravity` or `--from copilot` as their `statusLine` command. Copilot sends no quotas or cost.
+- **No network calls** from the statusline: everything comes from what the tool sends and from `git`.
 
 ## Uninstall
 
