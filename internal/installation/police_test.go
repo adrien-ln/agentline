@@ -344,3 +344,21 @@ func TestPoliceImposee(t *testing.T) {
 		t.Errorf("déjà installée et choisie : rien à refaire (%v)\n%s", s.lancees, s.sortie)
 	}
 }
+
+// TestPolicesReglees : la police lue dans chaque terminal réglable présent, sans rien modifier.
+func TestPolicesReglees(t *testing.T) {
+	s := simuler(t, "windows")
+	wt := filepath.Join(s.localAppData(), "Microsoft", "Windows Terminal", "settings.json")
+	vs := filepath.Join(s.Home, "AppData", "Roaming", "Code", "User", "settings.json")
+	for f, c := range map[string]string{wt: `{"profiles": {"defaults": {"font": {"face": "Hack Nerd Font"}}}}`, vs: "{}"} {
+		os.MkdirAll(filepath.Dir(f), 0o755)
+		os.WriteFile(f, []byte(c), 0o644)
+	}
+	r := s.PolicesReglees()
+	if len(r) != 2 || r[0].Terminal != "Windows Terminal" || r[0].Police != "Hack Nerd Font" || r[1].Terminal != "VS Code" || r[1].Police != "" {
+		t.Errorf("polices réglées : %+v", r)
+	}
+	if copies(wt) != 0 || copies(vs) != 0 {
+		t.Error("rien ne doit être modifié")
+	}
+}

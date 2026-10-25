@@ -77,7 +77,7 @@ func PoliceNommee(nom string) (Police, bool) {
 // police : la Nerd Font à installer et à choisir dans les terminaux : celle demandée (--font), sinon celle
 // retenue dans les réglages, sinon la première.
 func (o Options) police() Police {
-	for _, n := range []string{o.Police, o.policeRetenue()} {
+	for _, n := range []string{o.Police, o.PoliceRetenue()} {
 		if p, ok := PoliceNommee(n); ok {
 			return p
 		}
@@ -85,8 +85,8 @@ func (o Options) police() Police {
 	return Polices[0]
 }
 
-// policeRetenue : le nom de la police retenue dans les réglages ; vide s'il n'y en a pas.
-func (o Options) policeRetenue() string {
+// PoliceRetenue : le nom de la police retenue dans les réglages ; vide s'il n'y en a pas.
+func (o Options) PoliceRetenue() string {
 	if o.Reglages == "" {
 		return ""
 	}
@@ -99,7 +99,7 @@ func (o Options) policeRetenue() string {
 
 // retenirPolice : écrit la police choisie dans les réglages (atomiquement), pour les installations suivantes.
 func (o Options) retenirPolice(p Police) {
-	if o.Reglages == "" || o.policeRetenue() == p.Nom {
+	if o.Reglages == "" || o.PoliceRetenue() == p.Nom {
 		return
 	}
 	f := filepath.Join(o.Reglages, fichierPolice)
@@ -177,8 +177,8 @@ func (o Options) policeNerdFont() bool {
 	return o.chercherPolice(estNerdFont, "nerd font")
 }
 
-// policeInstallee : la police p est-elle installée (ses fichiers, ou sa famille pour fc-list) ?
-func (o Options) policeInstallee(p Police) bool {
+// PoliceInstallee : la police p est-elle installée (ses fichiers, ou sa famille pour fc-list) ?
+func (o Options) PoliceInstallee(p Police) bool {
 	debut := strings.ToLower(p.Fichiers)
 	return o.chercherPolice(func(nom string) bool { return estNerdFont(nom) && strings.HasPrefix(strings.ToLower(nom), debut) }, strings.ToLower(p.Famille))
 }
@@ -248,7 +248,7 @@ func (o Options) proposerPolice() {
 		return
 	}
 	// sans police demandée ni retenue, on demande d'abord si l'on installe, puis laquelle
-	choix := o.Police == "" && o.policeRetenue() == "" && o.Choisir != nil
+	choix := o.Police == "" && o.PoliceRetenue() == "" && o.Choisir != nil
 	question := i18n.T("Installer %s et régler ton terminal ? [O/n] ", o.police().Famille)
 	if choix {
 		question = i18n.T("Installer une Nerd Font et régler ton terminal ? [O/n] ")
@@ -283,7 +283,7 @@ func (o Options) AppliquerPolice() error {
 		o.etape(i18n.T("Police"), i18n.T("en SSH, c'est celle du terminal de ta machine qui compte"))
 		return nil
 	}
-	if o.policeInstallee(p) {
+	if o.PoliceInstallee(p) {
 		o.etape(i18n.T("Police"), i18n.T("%s déjà installée", p.Famille))
 	} else {
 		if o.Interactif && o.Demander != nil && !o.Demander(i18n.T("Installer %s et régler ton terminal ? [O/n] ", p.Famille)) {
@@ -450,6 +450,27 @@ func (o Options) reglagesTerminaux() []reglage {
 			c = filepath.Join(o.Home, ".config")
 		}
 		ajouter("VS Code", filepath.Join(c, "Code", "User", "settings.json"), vscode)
+	}
+	return r
+}
+
+// ReglagePolice : la police réglée dans un terminal dont agentline sait lire les réglages.
+type ReglagePolice struct {
+	Terminal, Fichier string
+	Police            string // vide : aucune police réglée (celle par défaut du terminal)
+}
+
+// PolicesReglees : la police de chaque terminal réglable présent (Windows Terminal, VS Code) ; rien n'est
+// modifié.
+func (o Options) PolicesReglees() []ReglagePolice {
+	var r []ReglagePolice
+	for _, t := range o.reglagesTerminaux() {
+		b, err := os.ReadFile(t.fichier)
+		if err != nil {
+			continue
+		}
+		v, _ := ChaineJSONC(string(b), t.chemin...)
+		r = append(r, ReglagePolice{Terminal: t.terminal, Fichier: t.fichier, Police: v})
 	}
 	return r
 }

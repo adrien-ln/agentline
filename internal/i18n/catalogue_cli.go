@@ -139,4 +139,17 @@ var cli = map[string]string{
 	"copie le dossier à la main, puis : agentline doctor":                       "copy the folder by hand, then: agentline doctor",
 	"copiés de %s vers %s (l'ancien dossier est gardé tel quel)":                "copied from %s to %s (the old folder is kept as is)",
 	"ancien dossier %s gardé, plus lu (les réglages sont dans %s)":              "old folder %s kept, no longer read (the settings are in %s)",
+
+	// agentline font
+	"\nPolice :\n": "\nFont:\n",
+	"<police>":     "<font>",
+	"la Nerd Font des icônes : sans commande, les polices et celle de chaque terminal ; voir ci-dessous":      "the Nerd Font for the icons: no command, the fonts and the one of each terminal; see below",
+	"les Nerd Fonts proposées, celles qui sont installées, et la police de chaque terminal":                   "the offered Nerd Fonts, the installed ones, and the font of each terminal",
+	"installe cette Nerd Font si elle manque et la choisit dans Windows Terminal et VS Code":                  "install this Nerd Font if it is missing and select it in Windows Terminal and VS Code",
+	"Les icônes de la statusline demandent une Nerd Font ; c'est le terminal qui l'affiche, pas agentline.\n": "The statusline icons need a Nerd Font; the terminal displays it, not agentline.\n",
+	"agentline font : commande inconnue : %s (voir « agentline font help »)\n":                                "agentline font: unknown command: %s (see \"agentline font help\")\n",
+	"installée":            "installed",
+	"retenue":              "remembered",
+	"aucune police réglée": "no font set",
+	"%s : %s (%s)\n":       "%s: %s (%s)\n",
 }

@@ -94,6 +94,8 @@ func commandesAgentline() []commande {
 			faire: func(a *appel) int { return commandeTheme(a.args, a.sortie, a.erreurs) }},
 		{nom: "style", args: i18n.T("[commande]"), aide: i18n.T("sans commande : les items de la statusline, dans le sélecteur ; voir ci-dessous"), brut: true,
 			faire: func(a *appel) int { return commandeStyle(a.args, a.sortie, a.erreurs) }},
+		{nom: "font", args: i18n.T("[commande]"), aide: i18n.T("la Nerd Font des icônes : sans commande, les polices et celle de chaque terminal ; voir ci-dessous"), brut: true,
+			faire: func(a *appel) int { return commandePolice(a.args, a.sortie, a.erreurs) }},
 		{nom: "install", args: "[options]", aide: i18n.T("installe agentline et déclare la statusline dans Claude Code"), max: 0,
 			options: append(optionsInstallation(), option{nom: "--font", valeur: "name",
 				aide: i18n.T("installe cette Nerd Font et la choisit dans tes terminaux, même à la place d'une autre (%s)", strings.Join(installation.NomsPolices(), ", "))}),
@@ -114,7 +116,8 @@ func aideGenerale() string {
 	return i18n.T("agentline : la statusline de Claude Code et ses thèmes.\n\nCommandes :\n") +
 		ligneAide("agentline", i18n.T("sans commande : le sélecteur interactif (thèmes ; Tab : la statusline)")) +
 		aideTable(commandesAgentline(), "agentline") +
-		i18n.T("\nThèmes :\n") + aideTheme() + i18n.T("\nStyle :\n") + aideStyle() + i18n.T("\nOptions de install et uninstall : agentline install --help\n") +
+		i18n.T("\nThèmes :\n") + aideTheme() + i18n.T("\nStyle :\n") + aideStyle() + i18n.T("\nPolice :\n") + aidePolice() +
+		i18n.T("\nOptions de install et uninstall : agentline install --help\n") +
 		i18n.T("Variables : %s. Leurs anciens noms (SL_THEME…) sont encore lus, en secours : obsolètes.\n", "AGENTLINE_"+strings.Join(variables, ", AGENTLINE_")) +
 		i18n.T("Langue : AGENTLINE_LANG=en ou fr ; sinon LC_ALL, LC_MESSAGES, LANG, puis la langue du système.\n")
 }

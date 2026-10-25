@@ -29,3 +29,27 @@ func TestOptionAvecValeur(t *testing.T) {
 		t.Errorf("l'aide de install doit montrer la valeur de --font\n%s", sortie.String())
 	}
 }
+
+// TestCommandeFont : la liste nomme chaque police proposée ; un nom inconnu ou une sous-commande inconnue
+// sont des erreurs d'usage, avant toute installation.
+func TestCommandeFont(t *testing.T) {
+	var sortie, erreurs bytes.Buffer
+	if code := principale([]string{"font"}, &sortie, &erreurs); code != 0 {
+		t.Fatalf("agentline font : code %d\n%s", code, erreurs.String())
+	}
+	for _, n := range []string{"firacode", "jetbrainsmono", "cascadia", "hack", "meslo"} {
+		if !strings.Contains(sortie.String(), n) {
+			t.Errorf("la liste doit nommer %s\n%s", n, sortie.String())
+		}
+	}
+	for args, texte := range map[[2]string]string{
+		{"set", "comic"}:  "police inconnue : comic",
+		{"choose", "x"}:   "commande inconnue : choose",
+		{"set", "--font"}: "option inconnue : --font",
+	} {
+		erreurs.Reset()
+		if code := principale([]string{"font", args[0], args[1]}, &sortie, &erreurs); code != codeUsage || !strings.Contains(erreurs.String(), texte) {
+			t.Errorf("font %v : code %d\n%s", args, code, erreurs.String())
+		}
+	}
+}

@@ -40,7 +40,7 @@ func TestAnciensNoms(t *testing.T) {
 			t.Errorf("%v : code %d, options %v (%s)", args, code, vues, erreurs.String())
 		}
 	}
-	for _, sous := range []string{"theme", "style"} {
+	for _, sous := range []string{"theme", "style", "font"} {
 		for _, aide := range []string{"help", "aide"} {
 			sortie.Reset()
 			if code := principale([]string{sous, aide}, &sortie, &erreurs); code != 0 || !strings.Contains(sortie.String(), "agentline "+sous+" help") ||
