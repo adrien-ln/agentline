@@ -4,6 +4,15 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Changed
+
+- The Nerd Font is downloaded with `curl` instead of a network stack built into the binary: the binary is about 40% smaller and each statusline render starts faster.
+
+### Fixed
+
+- `agentline theme set` and `theme background` write their setting atomically, so a render at the same moment never reads an empty file.
+- `agentline install` replaces `settings.json` and the other files it changes atomically, following symbolic links, so a crash never leaves them half written.
+
 ## [0.3.0] - 2026-10-25
 
 ### Added
