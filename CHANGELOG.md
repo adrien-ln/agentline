@@ -4,6 +4,10 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Changed
+
+- The Statusline tab edits the statusline in place: ←→ and ↑↓ pick an item on the live preview, Enter opens its menu (options, join, remove), + adds an item, g opens the general options, s keeps the style.
+
 ## [0.1.1] - 2026-10-25
 
 ### Changed

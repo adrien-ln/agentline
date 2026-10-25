@@ -42,16 +42,19 @@ Sleep 3s
 Escape
 Sleep 1s
 
-# l'onglet Statusline : chaque élément se règle à part
+# l'onglet Statusline : on choisit un élément sur la statusline même
 Tab
 Sleep 2.5s
-# masquer la PR
-Down@400ms 6
-Space
+# aller jusqu'à la PR, puis la retirer
+Right@450ms 6
+Sleep 1s
+Type "x"
 Sleep 1.5s
-# la barre du contexte : son style, puis sa largeur
-Down@300ms 4
-Right
+# la barre du contexte, sur la ligne 2 : son menu, son style, puis sa largeur
+Down
+Left@400ms 3
+Sleep 800ms
+Enter
 Sleep 1.2s
 Right@900ms 2
 Sleep 1s
@@ -63,7 +66,7 @@ Escape
 Type "v"
 Sleep 2.5s
 # garder pour tous les projets
-Enter
+Type "s"
 Sleep 1.5s
 Type "d"
 Sleep 2.5s
