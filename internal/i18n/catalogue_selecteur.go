@@ -33,7 +33,6 @@ var selecteur = map[string]string{
 	"aide":                             "help",
 	"mascotte : dégradé, unie, aucune": "mascot: gradient, solid, none",
 	"mascotte (%s)":                    "mascot (%s)",
-	"dégradé":                          "gradient",
 	"unie":                             "solid",
 	"aucune":                           "none",
 	"onglet Statusline : les items de la statusline": "Statusline tab: the statusline items",

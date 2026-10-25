@@ -6,7 +6,7 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ### Changed
 
-- The picker mascot is now Pip, a chick perched on the window like a bird on a wire, in the theme colors. It replaces Clawd, whose drawing belongs to Anthropic.
+- The picker mascot is now Pip, a chick perched on the window like a bird on a wire, in one color of the theme. The `m` key switches it between solid and hidden. It replaces Clawd, whose drawing belongs to Anthropic.
 - `go install` needs Go 1.26 instead of 1.27.
 
 ### Fixed

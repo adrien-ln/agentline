@@ -1,7 +1,6 @@
 package selecteur
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/adrien-ln/agentline/internal/ansi"
@@ -10,11 +9,14 @@ import (
 
 // Pip, la mascotte d'agentline, perché sur le bord de la mini-fenêtre comme un oiseau sur un fil. Il est dessiné
 // en pixels, 18 de large sur 6 de haut, soit 9 colonnes et 3 lignes de terminal (2 × 2 pixels par cellule) : la
-// tête, le corps, puis les pattes posées sur le cadre. Le corps prend les couleurs du thème (dégradé MODELE →
-// fin du dégradé du nom, ou couleur unie), le bec et les pattes la couleur D75. Les creux forment les yeux ;
-// « ▂ » est une paupière. Son humeur dépend de ce qui se passe : tes actions, la session fictive, ou l'ennui.
+// tête, le corps, puis les pattes posées sur le cadre. Le corps est toujours d'une seule couleur, MODELE du
+// thème ; le bec et les pattes prennent D75 (D100 quand elle se confond avec le corps). Les creux forment les
+// yeux ; « ▂ » est une paupière. Son humeur dépend de ce qui se passe : tes actions, la session fictive, ou l'ennui.
 
-var modesMascotte = []string{i18n.M("dégradé"), i18n.M("unie"), i18n.M("aucune")} // traduits à l'affichage
+var modesMascotte = []string{i18n.M("unie"), i18n.M("aucune")} // traduits à l'affichage
+
+// mascotteMasquee : le mode « aucune », où Pip n'est pas dessiné.
+const mascotteMasquee = 1
 
 const (
 	largeurMascotte = 9
@@ -289,26 +291,10 @@ func (m *Modele) pose(h string) (expression, int) {
 	return e, 0
 }
 
-// mascotteCouleurs : la couleur de chacune des 9 colonnes du corps.
-func (m *Modele) mascotteCouleurs(nom string) [largeurMascotte]string {
-	p := m.palette(nom)
-	var c [largeurMascotte]string
-	for k := range c {
-		c[k] = p.Modele
-		if m.mascotte == 0 {
-			a, b := p.Modele, p.FinDegrade()
-			r1, g1, b1 := ansi.RGB(a)
-			r2, g2, b2 := ansi.RGB(b)
-			c[k] = fmt.Sprintf("%02x%02x%02x", r1+(r2-r1)*k/(largeurMascotte-1), g1+(g2-g1)*k/(largeurMascotte-1), b1+(b2-b1)*k/(largeurMascotte-1))
-		}
-	}
-	return c
-}
-
 // Mascotte : ses 3 lignes au-dessus de la fenêtre (place pour sauter comprise) et ses pattes, posées sur le
 // cadre ou dans le vide pendant un bond. Rien si la mascotte est masquée.
 func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes string, ok bool) {
-	if m.mascotte == 2 {
+	if m.mascotte == mascotteMasquee {
 		return lignes, "", false
 	}
 	h := m.humeur()
@@ -323,8 +309,8 @@ func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes st
 		}
 		d = composer(e.ailes, e.yeux, e.pieds)
 	}
-	p, c := m.palette(nom), m.mascotteCouleurs(nom)
-	l := colorer(poser(d, haut), c, couleurBec(p.D75, p.D100, c[largeurMascotte/2]))
+	p := m.palette(nom)
+	l := colorer(poser(d, haut), p.Modele, couleurBec(p.D75, p.D100, p.Modele))
 	if haut == 0 {
 		l[0] = espaces(largeurMascotte)
 		if e.sommeil { // des « z » qui montent, au rythme de la respiration
@@ -340,7 +326,7 @@ func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes st
 // ecartBec : en dessous de cet écart CIELAB avec le corps, le bec ne se distingue plus (Tropique : 23).
 const ecartBec = 30
 
-// couleurBec : D75, sauf quand elle se confond avec le corps sous le bec (thèmes chauds : Tropique, Gruvbox) ;
+// couleurBec : D75, sauf quand elle se confond avec le corps (thèmes chauds : Tropique, Gruvbox) ;
 // D100, le rouge des seuils, la remplace alors si elle s'en écarte davantage.
 func couleurBec(d75, d100, corps string) string {
 	if e := ansi.Ecart(d75, corps); e < ecartBec && ansi.Ecart(d100, corps) > e {
@@ -413,16 +399,16 @@ func cellule(p [4]byte) (r rune, texte, fond byte, ok bool) {
 	return quadrants[b], '#', 0, true
 }
 
-// colorer : les 4 lignes de la grille, chaque cellule à la couleur de sa colonne (corps), du bec ou de la paupière.
-func colorer(g [8]string, c [largeurMascotte]string, bec string) (l [4]string) {
-	couleur := func(x byte, k int) string {
+// colorer : les 4 lignes de la grille, chaque cellule à la couleur du corps, du bec ou de la paupière.
+func colorer(g [8]string, corps, bec string) (l [4]string) {
+	couleur := func(x byte) string {
 		switch x {
 		case 'a':
 			return bec
 		case 'p':
 			return visageSombre
 		}
-		return c[k]
+		return corps
 	}
 	for i := range l {
 		var s strings.Builder
@@ -432,9 +418,9 @@ func colorer(g [8]string, c [largeurMascotte]string, bec string) (l [4]string) {
 			case r == ' ':
 				s.WriteString(" ")
 			case fond != 0:
-				s.WriteString(ansi.Bg(couleur(fond, k)) + ansi.Fg(couleur(texte, k)) + string(r) + z)
+				s.WriteString(ansi.Bg(couleur(fond)) + ansi.Fg(couleur(texte)) + string(r) + z)
 			default:
-				s.WriteString(ansi.Fg(couleur(texte, k)) + string(r) + z)
+				s.WriteString(ansi.Fg(couleur(texte)) + string(r) + z)
 			}
 		}
 		l[i] = s.String()

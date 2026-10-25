@@ -55,7 +55,7 @@ type disposition struct {
 
 func (m *Modele) disposer() disposition {
 	w, h := max(m.largeur, largeurMin), max(m.hauteur, hauteurMin)
-	d := disposition{pied: m.lignesPied(w - 1), mascotte: m.mascotte != 2}
+	d := disposition{pied: m.lignesPied(w - 1), mascotte: m.mascotte != mascotteMasquee}
 	reste := h - len(d.pied) - 1 // une ligne vide au-dessus du pied
 	if w < compacteLargeur || h < compacteHauteur {
 		d.agencement, d.lw, d.mascotte = compacte, w-1, false

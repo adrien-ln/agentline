@@ -8,6 +8,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/adrien-ln/agentline/internal/ansi"
 )
 
 func TestScenesRealistes(t *testing.T) {
@@ -146,13 +148,10 @@ func TestMascotteModes(t *testing.T) {
 	if !strings.Contains(m.View(), strings.ReplaceAll(pattes, " ", "─")) {
 		t.Error("les pattes de Pip doivent être posées sur le cadre de la fenêtre")
 	}
-	c := m.mascotteCouleurs(m.noms[m.i])
-	if c[0] == c[len(c)-1] {
-		t.Error("dégradé : la première et la dernière colonne devraient différer")
-	}
-	appuyer(m, "m")
-	if c := m.mascotteCouleurs(m.noms[m.i]); c[0] != c[len(c)-1] || !strings.Contains(m.View(), "m mascotte (unie)") {
-		t.Error("mode uni : Pip doit être d'une seule couleur")
+	// toujours d'une seule couleur : chaque cellule de la tête (sans bec) est en MODELE
+	tete := strings.ReplaceAll(visible(l[1]), " ", "")
+	if n := strings.Count(l[1], ansi.Fg(m.palette(m.noms[m.i]).Modele)); n != len([]rune(tete)) || !strings.Contains(m.View(), "m mascotte (unie)") {
+		t.Errorf("Pip doit être d'une seule couleur : %d cellules en MODELE sur %d", n, len([]rune(tete)))
 	}
 	appuyer(m, "m")
 	if _, _, ok := m.Mascotte(m.noms[m.i]); ok || strings.Contains(ecran(m), "▟▜█▛▙") {
@@ -406,11 +405,7 @@ func TestDemiLigne(t *testing.T) {
 			}
 		}
 	}
-	c := [largeurMascotte]string{}
-	for k := range c {
-		c[k] = "c0caf5"
-	}
-	l := colorer(poser(composer("bas", "fermés", "deux"), 1), c, "ff9e64")
+	l := colorer(poser(composer("bas", "fermés", "deux"), 1), "c0caf5", "ff9e64")
 	if strings.TrimSpace(visible(l[3])) != "" || !strings.ContainsRune(l[1], paupiereHaute) {
 		t.Errorf("à mi-hauteur, les pattes rentrent et les paupières suivent le corps :\n%s", visible(strings.Join(l[:], "\n")))
 	}
