@@ -8,7 +8,7 @@
 set -euo pipefail
 cd "${BASH_SOURCE[0]%/*}/.."
 
-tag=${1:?usage : bash scripts/notes-de-version.sh <tag> [tag précédent]}
+tag=${1:?usage: bash scripts/notes-de-version.sh <tag> [previous tag]}
 precedent=${2:-$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' "$tag^" 2>/dev/null || true)}
 plage=$tag
 [[ -n $precedent ]] && plage=$precedent..$tag

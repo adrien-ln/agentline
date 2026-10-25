@@ -72,7 +72,16 @@ verifier_message() {
   fi
 }
 
-usage() { sed -n '5,9p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() {
+  cat >&2 <<'FIN'
+Usage:
+  bash scripts/verifier-commits.sh origin/main..HEAD     every commit of the range (merge commits included)
+  bash scripts/verifier-commits.sh --title "<title>"     a pull request title
+  bash scripts/verifier-commits.sh --file <file>         a message in a file (.git/hooks/commit-msg: --file "$1")
+Options combine. Exit code: 0 all good, 1 a message does not follow the convention, 2 usage.
+FIN
+  exit 2
+}
 (( $# )) || usage
 
 while (( $# )); do

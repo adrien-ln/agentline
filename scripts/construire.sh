@@ -9,7 +9,7 @@
 # Il faut zip (ou 7z) pour les archives Windows.
 set -euo pipefail
 
-version=${1:?usage : bash scripts/construire.sh <version> [url de base]}
+version=${1:?usage: bash scripts/construire.sh <version> [base url]}
 depot=$(cd "${BASH_SOURCE[0]%/*}/.." && pwd)
 base=${2:-https://github.com/adrien-ln/agentline/releases/download/v$version}
 dist=$depot/dist/$version
@@ -21,7 +21,7 @@ trap 'rm -rf "$tmp"' EXIT
 zipper() {
   if command -v zip >/dev/null; then (cd "$2" && zip -qX "$1" ./*)
   elif command -v 7z >/dev/null; then (cd "$2" && 7z a -bso0 -bsp0 "$1" ./* >/dev/null)
-  else echo "zip ou 7z introuvable : archives Windows impossibles" >&2; exit 1; fi
+  else echo "zip or 7z not found: cannot build the Windows archives" >&2; exit 1; fi
 }
 
 cibles=(windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64)
@@ -41,7 +41,7 @@ for c in "${cibles[@]}"; do
     tar -C "$d" -czf "$dist/$f" --owner=0 --group=0 agentline LICENSE README.md 2>/dev/null ||
       tar -C "$d" -czf "$dist/$f" agentline LICENSE README.md # bsdtar (macOS) : sans --owner
   fi
-  printf '%-40s %s\n' "$f" "$(wc -c < "$dist/$f") octets"
+  printf '%-40s %s\n' "$f" "$(wc -c < "$dist/$f") bytes"
 done
 
 (cd "$dist" && sha256sum agentline_* > SHA256SUMS)
@@ -56,5 +56,5 @@ remplir() {
 }
 remplir "$depot/packaging/scoop/agentline.json.modele" > "$dist/agentline.json"
 remplir "$depot/packaging/homebrew/agentline.rb.modele" > "$dist/agentline.rb"
-grep -qE '@[A-Z_]+@|""' "$dist/agentline.json" "$dist/agentline.rb" && { echo "manifeste incomplet (champ ou somme manquante)" >&2; exit 1; }
-echo "dist/$version : $(ls "$dist" | wc -l) fichiers (archives, SHA256SUMS, agentline.json pour Scoop, agentline.rb pour Homebrew)"
+grep -qE '@[A-Z_]+@|""' "$dist/agentline.json" "$dist/agentline.rb" && { echo "incomplete manifest (missing field or checksum)" >&2; exit 1; }
+echo "dist/$version: $(ls "$dist" | wc -l) files (archives, SHA256SUMS, agentline.json for Scoop, agentline.rb for Homebrew)"
