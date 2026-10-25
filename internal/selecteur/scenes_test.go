@@ -480,3 +480,17 @@ func TestAnimationEndormie(t *testing.T) {
 		t.Errorf("endormi : image suivante après %v seulement", d)
 	}
 }
+
+// TestCouleurBec : le bec reste en D75, sauf quand elle se confond avec le corps (Tropique) ; D100 ne la
+// remplace que si elle s'en distingue mieux.
+func TestCouleurBec(t *testing.T) {
+	for _, c := range []struct{ d75, d100, corps, voulu string }{
+		{"fab387", "f38ba8", "a0b6f2", "fab387"}, // Catppuccin : le bec orange se voit sur le corps bleu
+		{"ff8800", "ff1744", "ff8a4b", "ff1744"}, // Tropique : orange sur orange, le rouge prend la place
+		{"ff8800", "ff8a4b", "ff8a4b", "ff8800"}, // D100 encore plus proche : D75 reste
+	} {
+		if b := couleurBec(c.d75, c.d100, c.corps); b != c.voulu {
+			t.Errorf("couleurBec(%s, %s, %s) = %s, attendu %s", c.d75, c.d100, c.corps, b, c.voulu)
+		}
+	}
+}

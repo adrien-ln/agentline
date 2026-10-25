@@ -93,6 +93,10 @@ func Teinte(h string) (angle, chroma float64) {
 	return c.teinte(), c.chroma()
 }
 
+// Ecart : la distance CIELAB (ΔE 1976) entre deux couleurs « rrggbb » : 0 pour la même, une centaine entre
+// deux couleurs franchement différentes. Contrairement au contraste, elle sépare deux teintes de même clarté.
+func Ecart(h1, h2 string) float64 { return math.Sqrt(distance2(versLab(RGB(h1)), versLab(RGB(h2)))) }
+
 // Contraste : le rapport de contraste WCAG 2 entre deux couleurs « rrggbb » (1 à 21).
 func Contraste(h1, h2 string) float64 {
 	y1, y2 := luminance(RGB(h1)), luminance(RGB(h2))

@@ -323,7 +323,8 @@ func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes st
 		}
 		d = composer(e.ailes, e.yeux, e.pieds)
 	}
-	l := colorer(poser(d, haut), m.mascotteCouleurs(nom), m.palette(nom).D75)
+	p, c := m.palette(nom), m.mascotteCouleurs(nom)
+	l := colorer(poser(d, haut), c, couleurBec(p.D75, p.D100, c[largeurMascotte/2]))
 	if haut == 0 {
 		l[0] = espaces(largeurMascotte)
 		if e.sommeil { // des « z » qui montent, au rythme de la respiration
@@ -334,6 +335,18 @@ func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes st
 		pattes = l[3]
 	}
 	return [hauteurMascotte]string{l[0], l[1], l[2]}, pattes, true
+}
+
+// ecartBec : en dessous de cet écart CIELAB avec le corps, le bec ne se distingue plus (Tropique : 23).
+const ecartBec = 30
+
+// couleurBec : D75, sauf quand elle se confond avec le corps sous le bec (thèmes chauds : Tropique, Gruvbox) ;
+// D100, le rouge des seuils, la remplace alors si elle s'en écarte davantage.
+func couleurBec(d75, d100, corps string) string {
+	if e := ansi.Ecart(d75, corps); e < ecartBec && ansi.Ecart(d100, corps) > e {
+		return d100
+	}
+	return d75
 }
 
 // poser : le dessin (6 rangées) dans une grille de 8, soit 4 lignes de terminal : la ligne de place, la tête, le

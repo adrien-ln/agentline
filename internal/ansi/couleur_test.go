@@ -159,3 +159,16 @@ func TestLireNiveau(t *testing.T) {
 		}
 	}
 }
+
+func TestEcart(t *testing.T) {
+	if e := Ecart("777777", "777777"); e != 0 {
+		t.Errorf("même couleur : %.2f", e)
+	}
+	if e := Ecart("000000", "ffffff"); math.Abs(e-100) > 0.5 {
+		t.Errorf("noir et blanc : %.2f, attendu 100", e)
+	}
+	// deux teintes de même clarté : contraste faible, écart net
+	if Contraste("ff8800", "00b0ff") > 1.5 || Ecart("ff8800", "00b0ff") < 50 {
+		t.Error("l'écart doit séparer l'orange du bleu, même à clarté voisine")
+	}
+}
