@@ -60,7 +60,7 @@ func TestPoliceDejaInstallee(t *testing.T) {
 	for _, os_ := range []string{"windows", "darwin", "linux"} {
 		s := simuler(t, os_)
 		s.avecPolice(t, true)
-		d := s.dossierPolicesUtilisateur()
+		d := s.dossierPolicesUtilisateur(Polices[0])
 		os.MkdirAll(d, 0o755)
 		os.WriteFile(filepath.Join(d, "MesloLGMNerdFont-Regular.ttf"), nil, 0o644)
 		if err := Installer(s.Options); err != nil {
@@ -120,7 +120,7 @@ func TestPoliceCommandes(t *testing.T) {
 			t.Errorf("CommandePolice %s : %s", os_, s.CommandePolice())
 		}
 		if os_ == "darwin" {
-			if !s.lance("brew install --cask font-fira-code-nerd-font") || s.lance("télécharger "+ArchivePolice) {
+			if !s.lance("brew install --cask font-fira-code-nerd-font") || s.lance("télécharger "+Polices[0].Archive) {
 				t.Errorf("darwin : %v", s.lancees)
 			}
 			if !strings.Contains(s.sortie.String(), "iTerm2 : Settings > Profiles > Text > Font : FiraCode Nerd Font") {
@@ -176,7 +176,7 @@ func TestPoliceWindows(t *testing.T) {
 		if err := Installer(s.Options); err != nil {
 			t.Fatal(err)
 		}
-		if scoop != s.lance("scoop install nerd-fonts/FiraCode-NF") || scoop == s.lance("télécharger "+ArchivePolice) {
+		if scoop != s.lance("scoop install nerd-fonts/FiraCode-NF") || scoop == s.lance("télécharger "+Polices[0].Archive) {
 			t.Errorf("scoop=%v : %v", scoop, s.lancees)
 		}
 		if !scoop {
@@ -189,10 +189,10 @@ func TestPoliceWindows(t *testing.T) {
 				t.Errorf("WM_FONTCHANGE : %v", s.diffuse)
 			}
 		}
-		if v, _ := ChaineJSONC(lire(t, wt), "profiles", "defaults", "font", "face"); v != NomPolice || copies(wt) != 1 || !strings.Contains(lire(t, wt), "// à moi") {
+		if v, _ := ChaineJSONC(lire(t, wt), "profiles", "defaults", "font", "face"); v != Polices[0].Famille || copies(wt) != 1 || !strings.Contains(lire(t, wt), "// à moi") {
 			t.Errorf("Windows Terminal (%d copies) :\n%s", copies(wt), lire(t, wt))
 		}
-		if v, _ := ChaineJSONC(lire(t, vs), "terminal.integrated.fontFamily"); v != NomPolice || copies(vs) != 1 {
+		if v, _ := ChaineJSONC(lire(t, vs), "terminal.integrated.fontFamily"); v != Polices[0].Famille || copies(vs) != 1 {
 			t.Errorf("VS Code :\n%s", lire(t, vs))
 		}
 		out := s.sortie.String()

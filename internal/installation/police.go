@@ -17,14 +17,30 @@ import (
 // --- La police : une Nerd Font, pour les icônes de la statusline ---
 
 const (
-	NomPolice = "FiraCode Nerd Font" // le nom de famille, celui que les terminaux attendent
-	// ArchivePolice : l'archive officielle de la dernière version de Nerd Fonts.
-	ArchivePolice = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip"
-	caskPolice    = "font-fira-code-nerd-font"                           // Homebrew (dépôt principal des casks depuis 2024)
-	scoopPolice   = "nerd-fonts/FiraCode-NF"                             // Scoop, dépôt « nerd-fonts »
-	clePolices    = `Software\Microsoft\Windows NT\CurrentVersion\Fonts` // polices de l'utilisateur (HKCU)
-	tailleMaxZip  = 200 << 20
+	clePolices   = `Software\Microsoft\Windows NT\CurrentVersion\Fonts` // polices de l'utilisateur (HKCU)
+	tailleMaxZip = 200 << 20
+	// archivesPolices : les archives officielles de la dernière version de Nerd Fonts.
+	archivesPolices = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/"
 )
+
+// Police : une Nerd Font proposée, avec ce qu'il faut pour l'installer et la choisir dans un terminal.
+type Police struct {
+	Nom      string // le nom court, pour la ligne de commande
+	Famille  string // le nom de famille, celui que les terminaux attendent
+	Archive  string // l'archive officielle de Nerd Fonts
+	Fichiers string // le début du nom des .ttf de la famille principale (ni Mono ni Propo)
+	Scoop    string // Scoop, dépôt « nerd-fonts »
+	Cask     string // Homebrew (dépôt principal des casks depuis 2024)
+}
+
+// Polices : les Nerd Fonts proposées ; la première est celle par défaut.
+var Polices = []Police{
+	{Nom: "firacode", Famille: "FiraCode Nerd Font", Archive: archivesPolices + "FiraCode.zip", Fichiers: "FiraCodeNerdFont-",
+		Scoop: "nerd-fonts/FiraCode-NF", Cask: "font-fira-code-nerd-font"},
+}
+
+// police : la Nerd Font à installer et à choisir dans les terminaux.
+func (o Options) police() Police { return Polices[0] }
 
 // PolicesSystemeDe : les dossiers de polices communs à tous les utilisateurs, selon l'OS.
 func PolicesSystemeDe(goos string, getenv func(string) string) []string {
@@ -45,10 +61,8 @@ func PolicesSystemeDe(goos string, getenv func(string) string) []string {
 func (o Options) dossiersPolices() []string {
 	var d []string
 	switch o.OS {
-	case "windows":
-		d = []string{o.dossierPolicesUtilisateur()}
-	case "darwin":
-		d = []string{o.dossierPolicesUtilisateur()}
+	case "windows", "darwin":
+		d = []string{o.dossierPolicesUtilisateur(o.police())}
 	default:
 		donnees := o.env("XDG_DATA_HOME")
 		if donnees == "" {
@@ -59,8 +73,9 @@ func (o Options) dossiersPolices() []string {
 	return append(d, o.PolicesSysteme...)
 }
 
-// dossierPolicesUtilisateur : où installer la police sans droits d'administrateur.
-func (o Options) dossierPolicesUtilisateur() string {
+// dossierPolicesUtilisateur : où installer la police p sans droits d'administrateur (sous Linux, un
+// dossier par police).
+func (o Options) dossierPolicesUtilisateur(p Police) string {
 	switch o.OS {
 	case "windows":
 		return filepath.Join(o.localAppData(), "Microsoft", "Windows", "Fonts")
@@ -71,7 +86,7 @@ func (o Options) dossierPolicesUtilisateur() string {
 	if donnees == "" {
 		donnees = filepath.Join(o.Home, ".local", "share")
 	}
-	return filepath.Join(donnees, "fonts", "FiraCodeNerdFont")
+	return filepath.Join(donnees, "fonts", strings.TrimSuffix(p.Fichiers, "-"))
 }
 
 func (o Options) localAppData() string {
@@ -121,16 +136,17 @@ func (o Options) policeNerdFont() bool {
 
 // CommandePolice : ce que l'utilisateur peut lancer lui-même pour installer la police.
 func (o Options) CommandePolice() string {
+	p := o.police()
 	switch o.OS {
 	case "windows":
 		if o.trouve("scoop") {
-			return "scoop bucket add nerd-fonts ; scoop install " + scoopPolice
+			return "scoop bucket add nerd-fonts ; scoop install " + p.Scoop
 		}
-		return i18n.T("agentline install (réponds O), ou télécharge %s et installe les .ttf (clic droit > Installer)", ArchivePolice)
+		return i18n.T("agentline install (réponds O), ou télécharge %s et installe les .ttf (clic droit > Installer)", p.Archive)
 	case "darwin":
-		return "brew install --cask " + caskPolice
+		return "brew install --cask " + p.Cask
 	}
-	return i18n.T("agentline install (réponds O), ou télécharge %s dans ~/.local/share/fonts, puis fc-cache -f", ArchivePolice)
+	return i18n.T("agentline install (réponds O), ou télécharge %s dans ~/.local/share/fonts, puis fc-cache -f", p.Archive)
 }
 
 func (o Options) trouve(programme string) bool {
@@ -152,7 +168,7 @@ func (o Options) proposerPolice() {
 		o.etape(i18n.T("Police"), manque)
 		return
 	}
-	if !o.Demander(i18n.T("Installer %s et régler ton terminal ? [O/n] ", NomPolice)) {
+	if !o.Demander(i18n.T("Installer %s et régler ton terminal ? [O/n] ", o.police().Famille)) {
 		o.etape(i18n.T("Police"), i18n.T("pas installée. Plus tard : %s", o.CommandePolice()))
 		return
 	}
@@ -166,19 +182,20 @@ func (o Options) proposerPolice() {
 // installerPolice : par le gestionnaire de paquets s'il y en a un (Scoop, Homebrew), sinon par
 // l'archive officielle, dans les polices de l'utilisateur.
 func (o Options) installerPolice() error {
+	p := o.police()
 	switch {
 	case o.windows() && o.trouve("scoop"):
 		o.lancer("scoop", "bucket", "add", "nerd-fonts") // déjà ajouté : une erreur sans conséquence
-		if s, err := o.lancer("scoop", "install", scoopPolice); err != nil {
-			return fmt.Errorf("scoop install %s : %v %s", scoopPolice, err, dernieresLignes(s))
+		if s, err := o.lancer("scoop", "install", p.Scoop); err != nil {
+			return fmt.Errorf("scoop install %s : %v %s", p.Scoop, err, dernieresLignes(s))
 		}
-		o.etape(i18n.T("Police"), i18n.T("%s installée par %s", NomPolice, "Scoop"))
+		o.etape(i18n.T("Police"), i18n.T("%s installée par %s", p.Famille, "Scoop"))
 		return nil
 	case o.OS == "darwin" && o.trouve("brew"):
-		if s, err := o.lancer("brew", "install", "--cask", caskPolice); err != nil {
-			return fmt.Errorf("brew install --cask %s : %v %s", caskPolice, err, dernieresLignes(s))
+		if s, err := o.lancer("brew", "install", "--cask", p.Cask); err != nil {
+			return fmt.Errorf("brew install --cask %s : %v %s", p.Cask, err, dernieresLignes(s))
 		}
-		o.etape(i18n.T("Police"), i18n.T("%s installée par %s", NomPolice, "Homebrew"))
+		o.etape(i18n.T("Police"), i18n.T("%s installée par %s", p.Famille, "Homebrew"))
 		return nil
 	}
 	return o.installerArchivePolice()
@@ -195,11 +212,12 @@ func dernieresLignes(s string) string {
 // installerArchivePolice : télécharge l'archive, en copie les .ttf de la famille principale (ni Mono ni
 // Propo) dans les polices de l'utilisateur ; sous Windows, les déclare dans HKCU ; sous Linux, fc-cache.
 func (o Options) installerArchivePolice() error {
+	p := o.police()
 	if o.Telecharger == nil {
 		return errors.New(i18n.T("téléchargement impossible"))
 	}
-	o.etape(i18n.T("Police"), i18n.T("téléchargement de %s", ArchivePolice))
-	b, err := o.Telecharger(ArchivePolice)
+	o.etape(i18n.T("Police"), i18n.T("téléchargement de %s", p.Archive))
+	b, err := o.Telecharger(p.Archive)
 	if err != nil {
 		return err
 	}
@@ -209,14 +227,14 @@ func (o Options) installerArchivePolice() error {
 	}
 	var choisis []*zip.File
 	for _, f := range z.File {
-		if n := filepath.Base(f.Name); strings.HasPrefix(n, "FiraCodeNerdFont-") && strings.HasSuffix(n, ".ttf") {
+		if n := filepath.Base(f.Name); strings.HasPrefix(n, p.Fichiers) && strings.HasSuffix(n, ".ttf") {
 			choisis = append(choisis, f)
 		}
 	}
 	if len(choisis) == 0 {
-		return errors.New(i18n.T("aucune police FiraCodeNerdFont-*.ttf dans l'archive"))
+		return errors.New(i18n.T("aucune police %s*.ttf dans l'archive", p.Fichiers))
 	}
-	dossier := o.dossierPolicesUtilisateur()
+	dossier := o.dossierPolicesUtilisateur(p)
 	if err := os.MkdirAll(dossier, 0o755); err != nil {
 		return err
 	}
@@ -252,7 +270,7 @@ func (o Options) installerArchivePolice() error {
 			o.etape(i18n.T("Attention"), i18n.T("fc-cache -f a échoué : lance-le, ou ferme ta session"))
 		}
 	}
-	o.etape(i18n.T("Police"), i18n.T("%s installée (%d fichiers) dans %s", NomPolice, len(choisis), dossier))
+	o.etape(i18n.T("Police"), i18n.T("%s installée (%d fichiers) dans %s", p.Famille, len(choisis), dossier))
 	return nil
 }
 
@@ -319,13 +337,14 @@ func (o Options) reglagesTerminaux() []reglage {
 // reglerTerminaux : la police dans Windows Terminal et VS Code (copie .bak avant) ; pour le terminal en
 // cours, s'il n'est ni l'un ni l'autre, ce qu'il faut faire à la main.
 func (o Options) reglerTerminaux() {
+	famille := o.police().Famille
 	regle := map[string]bool{}
 	for _, r := range o.reglagesTerminaux() {
 		res, copie, err := o.modifier(r.fichier, func(c string) (string, string) {
 			if v, ok := ChaineJSONC(c, r.chemin...); ok && strings.Contains(strings.ToLower(v), "nerd font") {
 				return c, "identique" // déjà une Nerd Font
 			}
-			n, res, err := PoserChaineJSONC(c, NomPolice, r.chemin...)
+			n, res, err := PoserChaineJSONC(c, famille, r.chemin...)
 			if err != nil {
 				return c, "identique"
 			}
@@ -336,16 +355,16 @@ func (o Options) reglerTerminaux() {
 			o.etape(i18n.T("Attention"), i18n.T("%s : %s", r.terminal, err.Error()))
 		case res == identique:
 			if c, _ := os.ReadFile(r.fichier); jsoncValide(string(c)) != nil {
-				o.etape(i18n.T("Attention"), i18n.T("%s : %s illisible, choisis la police %s à la main", r.terminal, r.fichier, NomPolice))
+				o.etape(i18n.T("Attention"), i18n.T("%s : %s illisible, choisis la police %s à la main", r.terminal, r.fichier, famille))
 			} else if v, _ := ChaineJSONC(string(c), r.chemin...); !strings.Contains(strings.ToLower(v), "nerd font") {
-				o.etape(i18n.T("Attention"), i18n.T("%s : %s introuvable dans %s, choisis la police %s à la main", r.terminal, strings.Join(r.chemin, "."), r.fichier, NomPolice))
+				o.etape(i18n.T("Attention"), i18n.T("%s : %s introuvable dans %s, choisis la police %s à la main", r.terminal, strings.Join(r.chemin, "."), r.fichier, famille))
 			} else {
 				o.etape(i18n.T("À jour"), i18n.T("%s : %s", r.terminal, r.fichier))
 			}
 			regle[r.terminal] = true
 		default:
 			o.etape("Terminal", i18n.T("%s : police %s (%s %s) dans %s%s ; relance-le si la police n'apparaît pas",
-				r.terminal, NomPolice, strings.Join(r.chemin, "."), i18n.T(res), r.fichier, avecCopie(copie)))
+				r.terminal, famille, strings.Join(r.chemin, "."), i18n.T(res), r.fichier, avecCopie(copie)))
 			regle[r.terminal] = true
 		}
 		if r.terminal == "Windows Terminal" {
@@ -398,30 +417,31 @@ func (o Options) profilsAvecPolice(f string) {
 
 // terminalCourant : le terminal où « agentline install » est lancé, et comment y choisir la police.
 func (o Options) terminalCourant() (string, string) {
+	famille := o.police().Famille
 	p := o.env("TERM_PROGRAM")
 	switch {
 	case o.env("WT_SESSION") != "":
-		return "Windows Terminal", i18n.T("Windows Terminal : Paramètres > Profils > Par défaut > Apparence > Police : %s", NomPolice)
+		return "Windows Terminal", i18n.T("Windows Terminal : Paramètres > Profils > Par défaut > Apparence > Police : %s", famille)
 	case p == "vscode":
-		return "VS Code", i18n.T("VS Code : réglage terminal.integrated.fontFamily : %s", NomPolice)
+		return "VS Code", i18n.T("VS Code : réglage terminal.integrated.fontFamily : %s", famille)
 	case p == "mintty":
-		return "Git Bash", i18n.T("Git Bash (mintty) : clic droit sur la fenêtre > Options > Text > Font : %s", NomPolice)
+		return "Git Bash", i18n.T("Git Bash (mintty) : clic droit sur la fenêtre > Options > Text > Font : %s", famille)
 	case p == "iTerm.app":
-		return "iTerm2", i18n.T("iTerm2 : Settings > Profiles > Text > Font : %s", NomPolice)
+		return "iTerm2", i18n.T("iTerm2 : Settings > Profiles > Text > Font : %s", famille)
 	case p == "Apple_Terminal":
-		return "Terminal", i18n.T("Terminal : Réglages > Profils > Texte > Police > Modifier… : %s (pour chaque profil utilisé)", NomPolice)
+		return "Terminal", i18n.T("Terminal : Réglages > Profils > Texte > Police > Modifier… : %s (pour chaque profil utilisé)", famille)
 	case p == "WezTerm":
-		return "WezTerm", i18n.T("WezTerm : dans ~/.wezterm.lua, config.font = wezterm.font '%s'", NomPolice)
+		return "WezTerm", i18n.T("WezTerm : dans ~/.wezterm.lua, config.font = wezterm.font '%s'", famille)
 	case p == "ghostty":
-		return "Ghostty", i18n.T("Ghostty : dans ~/.config/ghostty/config, font-family = %s", NomPolice)
+		return "Ghostty", i18n.T("Ghostty : dans ~/.config/ghostty/config, font-family = %s", famille)
 	case o.env("KITTY_WINDOW_ID") != "":
-		return "kitty", i18n.T("kitty : dans ~/.config/kitty/kitty.conf, font_family %s", NomPolice)
+		return "kitty", i18n.T("kitty : dans ~/.config/kitty/kitty.conf, font_family %s", famille)
 	case o.env("ALACRITTY_WINDOW_ID") != "" || o.env("ALACRITTY_SOCKET") != "":
-		return "Alacritty", i18n.T("Alacritty : dans ~/.config/alacritty/alacritty.toml, [font.normal] family = \"%s\"", NomPolice)
+		return "Alacritty", i18n.T("Alacritty : dans ~/.config/alacritty/alacritty.toml, [font.normal] family = \"%s\"", famille)
 	case o.env("KONSOLE_VERSION") != "":
-		return "Konsole", i18n.T("Konsole : Configuration > Modifier le profil actuel > Apparence > Police : %s", NomPolice)
+		return "Konsole", i18n.T("Konsole : Configuration > Modifier le profil actuel > Apparence > Police : %s", famille)
 	case o.env("GNOME_TERMINAL_SCREEN") != "" || o.env("VTE_VERSION") != "":
-		return "GNOME Terminal", i18n.T("GNOME Terminal (ou autre terminal VTE) : Préférences > ton profil > Texte > Police personnalisée : %s", NomPolice)
+		return "GNOME Terminal", i18n.T("GNOME Terminal (ou autre terminal VTE) : Préférences > ton profil > Texte > Police personnalisée : %s", famille)
 	}
-	return "inconnu", i18n.T("choisis la police %s dans les réglages de ton terminal", NomPolice)
+	return "inconnu", i18n.T("choisis la police %s dans les réglages de ton terminal", famille)
 }

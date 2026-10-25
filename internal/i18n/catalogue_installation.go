@@ -60,7 +60,7 @@ var installation = map[string]string{
 	"téléchargement impossible":                                                 "download impossible",
 	"téléchargement de %s":                                                      "downloading %s",
 	"archive illisible : %v":                                                    "unreadable archive: %v",
-	"aucune police FiraCodeNerdFont-*.ttf dans l'archive":                       "no FiraCodeNerdFont-*.ttf font in the archive",
+	"aucune police %s*.ttf dans l'archive":                                      "no %s*.ttf font in the archive",
 	"déclaration de la police : %v":                                             "registering the font: %v",
 	"fc-cache -f a échoué : lance-le, ou ferme ta session":                      "fc-cache -f failed: run it, or log out",
 	"%s installée (%d fichiers) dans %s":                                        "%s installed (%d files) in %s",

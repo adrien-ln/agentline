@@ -61,7 +61,7 @@ func installe(t *testing.T, os_ string) *simule {
 	}
 	s.Source = s.Binaire() // agentline doctor lancé par le binaire installé
 	s.env["PATH"] = s.dossierCommandes()
-	d := s.dossierPolicesUtilisateur()
+	d := s.dossierPolicesUtilisateur(Polices[0])
 	os.MkdirAll(d, 0o755)
 	os.WriteFile(filepath.Join(d, "FiraCodeNerdFont-Regular.ttf"), nil, 0o644)
 	return s
