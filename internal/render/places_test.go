@@ -64,3 +64,27 @@ func TestPlaces(t *testing.T) {
 		}
 	}
 }
+
+// TestPaletteImposee : une palette imposée (aperçu de l'éditeur) rend comme le thème qu'elle copie, sur fond
+// sombre comme sur fond clair ; sans palette, rien ne change.
+func TestPaletteImposee(t *testing.T) {
+	s := claude.Lire([]byte(casJSON(t, "complet", "/x")))
+	for _, fond := range []ansi.Fond{ansi.Sombre, ansi.Clair} {
+		e := env(t, modes["riche"], t.TempDir())
+		e.Couleurs.Fond = fond
+		e.GitFictif = &GitFictif{Branche: "main"}
+		parNom := e
+		parNom.Getenv = func(k string) string {
+			if k == "AGENTLINE_THEME" {
+				return "dracula"
+			}
+			return ""
+		}
+		p, _ := e.Themes.Charger("dracula")
+		imposee := e
+		imposee.Palette = &p
+		if a, b := RenderSession(s, parNom), RenderSession(s, imposee); a != b {
+			t.Errorf("fond %v : palette imposée différente du thème\n%q\n%q", fond, a, b)
+		}
+	}
+}

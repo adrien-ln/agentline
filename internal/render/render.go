@@ -35,6 +35,9 @@ type Env struct {
 	// GitFictif : état git imposé (aperçu du sélecteur, sans dépôt ni processus) ; nil : lu dans le dépôt.
 	GitFictif *GitFictif
 	Style     *style.Style // nil : le style par défaut
+	// Palette : la palette imposée (aperçu de l'éditeur de thèmes, un thème pas encore enregistré) ; nil : celle
+	// du thème en vigueur. Elle passe quand même par la correction pour l'autre fond.
+	Palette *theme.Palette
 }
 
 // GitFictif : un état git décrit à la main.
@@ -365,7 +368,12 @@ func preparer(ss etat.Session, env Env) *rendu {
 		d = rep
 	}
 	clair := env.Couleurs.Fond == ansi.Clair
-	r := &rendu{env: env, o: optionsDe(env.Style, env.SSH), p: env.Themes.ChoisirSurBranche(d, g.branche, env.Getenv).Palette.PourFond(clair),
+	palette := env.Palette
+	if palette == nil {
+		p := env.Themes.ChoisirSurBranche(d, g.branche, env.Getenv).Palette
+		palette = &p
+	}
+	r := &rendu{env: env, o: optionsDe(env.Style, env.SSH), p: palette.PourFond(clair),
 		riche: !env.SSH || env.SSHRiche || env.CouleursImposees, c: env.Couleurs}
 	c := r.c
 	if r.riche {
