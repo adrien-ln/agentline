@@ -8,10 +8,11 @@ import (
 	"github.com/adrien-ln/agentline/internal/i18n"
 )
 
-// Clawd, la mascotte de Claude Code, perché sur le bord de la mini-fenêtre : son vrai dessin (9 colonnes,
-// 3 lignes), le corps aux couleurs du thème (dégradé MODELE → fin du dégradé du nom, ou couleur unie) et les
-// pattes posées sur le cadre. Les creux des blocs forment les yeux ; « ▂ » est une paupière. Son humeur
-// dépend de ce qui se passe : tes actions, la session fictive, ou l'ennui.
+// Pip, la mascotte d'agentline, perché sur le bord de la mini-fenêtre comme un oiseau sur un fil. Il est dessiné
+// en pixels, 18 de large sur 6 de haut, soit 9 colonnes et 3 lignes de terminal (2 × 2 pixels par cellule) : la
+// tête, le corps, puis les pattes posées sur le cadre. Le corps prend les couleurs du thème (dégradé MODELE →
+// fin du dégradé du nom, ou couleur unie), le bec et les pattes la couleur D75. Les creux forment les yeux ;
+// « ▂ » est une paupière. Son humeur dépend de ce qui se passe : tes actions, la session fictive, ou l'ennui.
 
 var modesMascotte = []string{i18n.M("dégradé"), i18n.M("unie"), i18n.M("aucune")} // traduits à l'affichage
 
@@ -28,85 +29,88 @@ const (
 // ouverts : les yeux qu'un clignement peut fermer.
 var ouverts = map[string]bool{"ouverts": true, "gauche": true, "droite": true}
 
-// Les pièces du dessin d'origine. Bras : début et fin de la ligne de la tête, puis de celle du corps.
+// Les pièces du dessin, en rangées de 18 pixels : « # » le corps, « a » le bec et les pattes, « o » un œil (un
+// creux), « p » une paupière, « . » le vide. Rangée 0 : le haut de la tête ; 1 : les yeux ; 2 : le bec ; 3 : le
+// bas du corps ; 4 : les pattes ; 5 : vide. Ailes : les rangées 1 à 3, avant d'y poser les yeux.
 var (
-	bras = map[string][4]string{
-		"bas":   {" ▐", "", "▝▜", "█▀"},
-		"levés": {"▗▟", "▄", " ▜", "█▘"},
-		"un":    {" ▐", "▄", "▝▜", "█▘"},
+	ailes = map[string][3]string{
+		"bas":   {"....##########....", "..######aa######..", "...############..."},
+		"levés": {"..##############..", "...#####aa#####...", "...############..."},
+		"un":    {"..############....", "...#####aa######..", "...############..."},
 	}
-	yeux = map[string]string{
-		"ouverts": "▛███▛█",
-		"gauche":  "▟███▟█",
-		"droite":  "█▟███▟",
-		"fermés":  "▂███▂█",
-		"clin":    "▛███▂█",
-		"dos":     "██████",
+	// yeux : la colonne de chaque œil dans la rangée 1, en creux (o) ou fermé (p)
+	yeux = map[string]map[int]byte{
+		"ouverts": {6: 'o', 11: 'o'},
+		"gauche":  {5: 'o', 10: 'o'},
+		"droite":  {7: 'o', 12: 'o'},
+		"fermés":  {6: 'p', 11: 'p'},
+		"clin":    {6: 'o', 11: 'p'},
+		"dos":     {}, // de dos : ni yeux ni bec
 	}
 	pieds = map[string]string{
-		"deux":   " ▝▝   ▝▝ ",
-		"gauche": " ▝▝      ",
-		"droite": "      ▝▝ ",
+		"deux":   "......a....a......",
+		"gauche": "......a...........",
+		"droite": "...........a......",
 	}
-	// tour : il pivote sur lui-même, de face à de dos, puis revient de face
-	tour = [][3]string{
-		{" ▐█▜██▛█ ", "▝▜██████▀", " ▝▝   ▝▝ "},
-		{"  █▛██▛▌ ", " ▝█████▛ ", "  ▘▘  ▘▘ "},
-		{"  ▐█▛█▜  ", "  ▐████  ", "  ▝▝ ▝▝  "},
-		{"   ██▛▌  ", "   ███▌  ", "   ▘  ▘  "},
-		{"   ▐██   ", "   ▐██   ", "   ▝ ▝   "},
-		{"   ███▌  ", "   ███▌  ", "   ▘  ▘  "},
-		{"  ▐████  ", "  ▐████  ", "  ▝▝ ▝▝  "},
-		{"  █████▌ ", " ▝█████▛ ", "  ▘▘  ▘▘ "},
-		{" ▐██████ ", "▝▜██████▀", " ▝▝   ▝▝ "},
-		{"   ▛██▌  ", "   ███▌  ", "   ▘  ▘  "},
-		{"  ▐▜▛██  ", "  ▐████  ", "  ▝▝ ▝▝  "},
-		{"  ▛██▛█▌ ", " ▝█████▛ ", "  ▘▘  ▘▘ "},
-		{" ▐▛███▜█ ", "▝▜██████▀", " ▝▝   ▝▝ "},
+	// profils : de côté, le bec en avant, pour le tour sur lui-même
+	profilDroit  = [6]string{"......#######.....", ".....#####o###....", ".....#########aa..", "......########....", ".........a..a.....", vide18}
+	profilGauche = [6]string{".....#######......", "....###o#####.....", "..aa#########.....", "....########......", ".....a..a.........", vide18}
+	// tour : il se retourne, de face à de dos, puis revient de face
+	tour = [][6]string{
+		composer("bas", "droite", "deux"), profilDroit, composer("bas", "dos", "deux"), profilGauche, composer("bas", "gauche", "deux"),
 	}
 )
 
+const vide18 = ".................."
+
 const (
-	pasTour  = 110 // ms par pose du tour
+	pasTour  = 160 // ms par pose du tour
 	pasDanse = 300 // ms par pas de danse
 )
 
-// dessiner : les 3 lignes de Clawd (9 colonnes chacune) à partir de ses pièces.
-func dessiner(b, y, p string) [3]string {
-	a := bras[b]
-	tete := a[0] + yeux[y] + a[1]
-	return [3]string{tete + espaces(largeurMascotte-len([]rune(tete))), a[2] + "█████" + a[3], pieds[p]}
+// composer : les 6 rangées de Pip à partir de ses pièces.
+func composer(a, y, p string) [6]string {
+	l := ailes[a]
+	oeil := []byte(l[0])
+	for k, v := range yeux[y] {
+		oeil[k] = v
+	}
+	bec := l[1]
+	if y == "dos" {
+		bec = strings.ReplaceAll(bec, "a", "#")
+	}
+	return [6]string{".....########.....", string(oeil), bec, l[2], pieds[p], vide18}
 }
 
-// expression : la pose (bras, yeux, pattes) et les effets.
+// expression : la pose (ailes, yeux, pattes) et les effets.
 type expression struct {
-	bras, yeux, pieds string
-	saut              bool // un petit bond
-	sommeil           bool // des « z » au-dessus de la tête
+	ailes, yeux, pieds string
+	saut               bool // un petit bond
+	sommeil            bool // des « z » au-dessus de la tête
 }
 
 var expressions = map[string]expression{
-	"normal":    {bras: "bas", yeux: "ouverts", pieds: "deux"},
-	"cligne":    {bras: "bas", yeux: "fermés", pieds: "deux"},
-	"clin":      {bras: "bas", yeux: "clin", pieds: "deux"},
-	"gauche":    {bras: "bas", yeux: "gauche", pieds: "deux"},
-	"droite":    {bras: "bas", yeux: "droite", pieds: "deux"},
-	"content":   {bras: "levés", yeux: "ouverts", pieds: "deux", saut: true},
-	"surpris":   {bras: "un", yeux: "ouverts", pieds: "deux"},
-	"reveil":    {bras: "levés", yeux: "ouverts", pieds: "deux", saut: true},
-	"triste":    {bras: "bas", yeux: "dos", pieds: "deux"}, // il te tourne le dos
-	"pensif":    {bras: "un", yeux: "droite", pieds: "deux"},
-	"endormi":   {bras: "bas", yeux: "fermés", pieds: "deux", sommeil: true},
-	"concentre": {bras: "bas", yeux: "gauche", pieds: "deux"}, // il regarde la frappe, dans la fenêtre
-	"saute":     {bras: "levés", yeux: "ouverts", pieds: "deux"},
-	"etire":     {bras: "levés", yeux: "fermés", pieds: "deux"},
-	"suit":      {bras: "bas", yeux: "gauche", pieds: "deux"}, // il suit la liste des yeux quand on y navigue
-	"baille":    {bras: "un", yeux: "fermés", pieds: "deux"},  // la main devant la bouche
-	"somnole":   {bras: "bas", yeux: "fermés", pieds: "deux"},
+	"normal":    {ailes: "bas", yeux: "ouverts", pieds: "deux"},
+	"cligne":    {ailes: "bas", yeux: "fermés", pieds: "deux"},
+	"clin":      {ailes: "bas", yeux: "clin", pieds: "deux"},
+	"gauche":    {ailes: "bas", yeux: "gauche", pieds: "deux"},
+	"droite":    {ailes: "bas", yeux: "droite", pieds: "deux"},
+	"content":   {ailes: "levés", yeux: "ouverts", pieds: "deux", saut: true},
+	"surpris":   {ailes: "un", yeux: "ouverts", pieds: "deux"},
+	"reveil":    {ailes: "levés", yeux: "ouverts", pieds: "deux", saut: true},
+	"triste":    {ailes: "bas", yeux: "dos", pieds: "deux"}, // il te tourne le dos
+	"pensif":    {ailes: "un", yeux: "droite", pieds: "deux"},
+	"endormi":   {ailes: "bas", yeux: "fermés", pieds: "deux", sommeil: true},
+	"concentre": {ailes: "bas", yeux: "gauche", pieds: "deux"}, // il regarde la frappe, dans la fenêtre
+	"saute":     {ailes: "levés", yeux: "ouverts", pieds: "deux"},
+	"etire":     {ailes: "levés", yeux: "fermés", pieds: "deux"},
+	"suit":      {ailes: "bas", yeux: "gauche", pieds: "deux"}, // il suit la liste des yeux quand on y navigue
+	"baille":    {ailes: "un", yeux: "fermés", pieds: "deux"},  // l'aile devant le bec
+	"somnole":   {ailes: "bas", yeux: "fermés", pieds: "deux"},
 }
 
-// danse : d'une patte sur l'autre, un bras puis les deux en l'air
-var danse = [2]expression{{bras: "levés", yeux: "ouverts", pieds: "gauche"}, {bras: "un", yeux: "fermés", pieds: "droite"}}
+// danse : d'une patte sur l'autre, une aile puis les deux en l'air
+var danse = [2]expression{{ailes: "levés", yeux: "ouverts", pieds: "gauche"}, {ailes: "un", yeux: "fermés", pieds: "droite"}}
 
 // durées des réactions (ms) ; le bond ne dure que le début
 var dureesReaction = map[string]int{"content": 1100, "surpris": 800, "reveil": 700, "clin": 700, "suit": 1200}
@@ -266,7 +270,7 @@ func (m *Modele) pose(h string) (expression, int) {
 		e.pieds = []string{"gauche", "droite"}[(ec/250)%2]
 	case "coucou":
 		e = expressions["normal"]
-		e.bras = []string{"un", "bas"}[(ec/200)%2]
+		e.ailes = []string{"un", "bas"}[(ec/200)%2]
 	case "saute": // il prend son élan, monte, redescend
 		return e, []int{1, 2, 2, 1, 0, 0, 0}[min(ec/100, 6)]
 	case "etire":
@@ -301,7 +305,7 @@ func (m *Modele) mascotteCouleurs(nom string) [largeurMascotte]string {
 	return c
 }
 
-// Clawd : ses 3 lignes au-dessus de la fenêtre (place pour sauter comprise) et ses pattes, posées sur le
+// Mascotte : ses 3 lignes au-dessus de la fenêtre (place pour sauter comprise) et ses pattes, posées sur le
 // cadre ou dans le vide pendant un bond. Rien si la mascotte est masquée.
 func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes string, ok bool) {
 	if m.mascotte == 2 {
@@ -309,7 +313,7 @@ func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes st
 	}
 	h := m.humeur()
 	e, haut := m.pose(h)
-	var d [3]string
+	var d [6]string
 	if h == "tour" {
 		_, ec := gesteA(m.t)
 		d = tour[min(ec/pasTour, len(tour)-1)]
@@ -317,86 +321,110 @@ func (m *Modele) Mascotte(nom string) (lignes [hauteurMascotte]string, pattes st
 		if ouverts[e.yeux] && cligneA(m.t) {
 			e.yeux = "fermés"
 		}
-		d = dessiner(e.bras, e.yeux, e.pieds)
+		d = composer(e.ailes, e.yeux, e.pieds)
 	}
-
-	c := m.mascotteCouleurs(nom)
-	colorer := func(l string) string {
-		var s strings.Builder
-		for k, r := range []rune(l) {
-			switch r {
-			case ' ':
-				s.WriteString(" ")
-			case paupiere, paupiereHaute: // paupière sombre sur le corps
-				s.WriteString(ansi.Bg(c[k]) + ansi.Fg(visageSombre) + string(r) + z)
-			default:
-				s.WriteString(ansi.Fg(c[k]) + string(r) + z)
-			}
-		}
-		return s.String()
-	}
-
-	dessus := espaces(largeurMascotte)
-	if e.sommeil { // des « z » qui montent, au rythme de la respiration
-		z1 := []string{"     z   ", "      z  ", "      Z  ", "       Z "}[(m.t/600)%4]
-		dessus = estompe + z1 + z
-	}
-	l, p := poser(d, haut)
+	l := colorer(poser(d, haut), m.mascotteCouleurs(nom), m.palette(nom).D75)
 	if haut == 0 {
-		l[0] = dessus
-	} else {
-		l[0] = colorer(l[0])
+		l[0] = espaces(largeurMascotte)
+		if e.sommeil { // des « z » qui montent, au rythme de la respiration
+			l[0] = estompe + []string{"     z   ", "      z  ", "      Z  ", "       Z "}[(m.t/600)%4] + z
+		}
 	}
-	if p != "" {
-		p = colorer(p)
+	if strings.TrimSpace(l[3]) != "" {
+		pattes = l[3]
 	}
-	return [hauteurMascotte]string{l[0], colorer(l[1]), colorer(l[2])}, p, true
+	return [hauteurMascotte]string{l[0], l[1], l[2]}, pattes, true
 }
 
-// poser : Clawd (tête, corps, pattes) monté de haut demi-lignes au-dessus du cadre : ses 3 lignes et ce qui
-// reste posé sur le cadre (vide : les pattes sont en l'air). À 2, le corps monte d'une ligne entière.
-func poser(d [3]string, haut int) (lignes [hauteurMascotte]string, pattes string) {
-	switch {
-	case haut >= 2:
-		return [hauteurMascotte]string{d[0], d[1], d[2]}, ""
-	case haut == 1: // à mi-hauteur : chaque ligne prend le bas de celle du dessous et le haut de la suivante
-		var r [hauteurMascotte + 1][]rune
-		prec := []rune(espaces(largeurMascotte))
-		for i := range r {
-			suiv := []rune(espaces(largeurMascotte))
-			if i < len(d) {
-				suiv = []rune(d[i])
-			}
-			r[i] = make([]rune, largeurMascotte)
-			for k := range r[i] {
-				b := points(prec[k])>>2 | (points(suiv[k])&3)<<2
-				r[i][k] = quadrants[b]
-				if prec[k] == paupiere && b == 15 {
-					r[i][k] = paupiereHaute
-				}
-			}
-			prec = suiv
-		}
-		if p := string(r[hauteurMascotte]); strings.TrimSpace(p) != "" {
-			pattes = p
-		}
-		return [hauteurMascotte]string{string(r[0]), string(r[1]), string(r[2])}, pattes
+// poser : le dessin (6 rangées) dans une grille de 8, soit 4 lignes de terminal : la ligne de place, la tête, le
+// corps et celle du cadre. Posé, les pattes sont sur le cadre ; haut le monte d'autant de pixels (de demi-lignes).
+// À mi-hauteur, les pattes rentrent : sinon elles partageraient une cellule avec le corps et le vide.
+func poser(d [6]string, haut int) (g [8]string) {
+	if haut%2 == 1 {
+		d[4] = vide18
 	}
-	return [hauteurMascotte]string{espaces(largeurMascotte), d[0], d[1]}, d[2]
+	for i := range g {
+		g[i] = vide18
+	}
+	for i, r := range d {
+		g[2-haut+i] = r
+	}
+	return g
 }
 
-// quadrants : les blocs du dessin, indexés par leurs quarts pleins (1 haut gauche, 2 haut droite, 4 bas
-// gauche, 8 bas droite) ; une paupière compte pour un bloc plein.
+// quadrants : les blocs, indexés par leurs quarts pleins (1 haut gauche, 2 haut droite, 4 bas gauche, 8 bas droite).
 var quadrants = []rune(" ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█")
 
-func points(r rune) int {
-	if r == paupiere {
-		return 15
-	}
-	for i, q := range quadrants {
-		if q == r {
-			return i
+// cellule : ce que le terminal dessine pour 4 pixels (haut gauche, haut droite, bas gauche, bas droite) : le
+// caractère, la sorte de pixel qui donne sa couleur au texte et celle qui donne le fond (0 : le fond du
+// terminal). Une cellule n'a que deux couleurs : ok est faux quand le dessin en demanderait trois.
+func cellule(p [4]byte) (r rune, texte, fond byte, ok bool) {
+	vide, corps, bec, pau := false, false, false, -1
+	for i, x := range p {
+		switch x {
+		case '.', 'o':
+			vide = true
+		case '#':
+			corps = true
+		case 'a':
+			bec = true
+		case 'p':
+			pau = i
 		}
 	}
-	return 0
+	switch {
+	case pau >= 0: // une paupière sombre sur le corps
+		r = paupiereHaute
+		if pau >= 2 {
+			r = paupiere
+		}
+		return r, 'p', '#', !vide && !bec
+	case corps && bec: // le bec sur le corps
+		b := 0
+		for i, x := range p {
+			if x == 'a' {
+				b |= 1 << i
+			}
+		}
+		return quadrants[b], 'a', '#', !vide
+	}
+	b := 0
+	for i, x := range p {
+		if x == '#' || x == 'a' {
+			b |= 1 << i
+		}
+	}
+	if bec {
+		return quadrants[b], 'a', 0, true
+	}
+	return quadrants[b], '#', 0, true
+}
+
+// colorer : les 4 lignes de la grille, chaque cellule à la couleur de sa colonne (corps), du bec ou de la paupière.
+func colorer(g [8]string, c [largeurMascotte]string, bec string) (l [4]string) {
+	couleur := func(x byte, k int) string {
+		switch x {
+		case 'a':
+			return bec
+		case 'p':
+			return visageSombre
+		}
+		return c[k]
+	}
+	for i := range l {
+		var s strings.Builder
+		for k := range largeurMascotte {
+			r, texte, fond, _ := cellule([4]byte{g[2*i][2*k], g[2*i][2*k+1], g[2*i+1][2*k], g[2*i+1][2*k+1]})
+			switch {
+			case r == ' ':
+				s.WriteString(" ")
+			case fond != 0:
+				s.WriteString(ansi.Bg(couleur(fond, k)) + ansi.Fg(couleur(texte, k)) + string(r) + z)
+			default:
+				s.WriteString(ansi.Fg(couleur(texte, k)) + string(r) + z)
+			}
+		}
+		l[i] = s.String()
+	}
+	return l
 }

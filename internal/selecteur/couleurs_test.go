@@ -28,7 +28,7 @@ func ouvrirAvec(t *testing.T, dossier string, p ansi.Profil) *Modele {
 	return m
 }
 
-// TestNiveauxDansLeSelecteur : à chaque niveau, l'écran entier (logo, pastilles, Clawd, scènes, statusline)
+// TestNiveauxDansLeSelecteur : à chaque niveau, l'écran entier (logo, pastilles, Pip, scènes, statusline)
 // n'a que des couleurs de ce niveau ; le texte visible ne change pas.
 func TestNiveauxDansLeSelecteur(t *testing.T) {
 	vingtQuatre := regexp.MustCompile(`\x1b\[[0-9;]*[34]8;2;`)

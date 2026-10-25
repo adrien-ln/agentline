@@ -8,7 +8,7 @@ import (
 
 // Disposition : tout s'adapte à la taille du terminal, en trois agencements :
 //
-//	large     la liste à gauche, Clawd et la mini-fenêtre à droite
+//	large     la liste à gauche, Pip et la mini-fenêtre à droite
 //	empilée   la liste, puis la mini-fenêtre dessous (la liste passe avant : la fenêtre n'a que le reste)
 //	compacte  ni logo ni mini-fenêtre : la liste, puis la vraie statusline du thème en aperçu
 //
@@ -45,7 +45,7 @@ type disposition struct {
 	agencement
 	logo     bool     // le titre en grandes lettres
 	fenetre  bool     // la mini-fenêtre (sinon l'aperçu de la statusline seule)
-	mascotte bool     // la place de Clawd au-dessus de la fenêtre
+	mascotte bool     // la place de Pip au-dessus de la fenêtre
 	lw, ww   int      // largeurs de la colonne de la liste et de la fenêtre
 	liste    int      // thèmes visibles
 	wh       int      // hauteur de la fenêtre
@@ -87,7 +87,7 @@ func (m *Modele) disposer() disposition {
 	return d
 }
 
-// poserFenetre : la fenêtre dans la hauteur donnée, avec Clawd au-dessus s'il reste sa place.
+// poserFenetre : la fenêtre dans la hauteur donnée, avec Pip au-dessus s'il reste sa place.
 func (d *disposition) poserFenetre(place int) {
 	if d.mascotte && place-hauteurMascotte >= fenetreMin {
 		d.wh = place - hauteurMascotte

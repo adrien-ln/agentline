@@ -259,7 +259,7 @@ func (m *Modele) raccourciDe(touche string) (raccourci, bool) {
 	return raccourci{}, false
 }
 
-// touche : la touche, puis la réaction de Clawd à ce qu'elle a changé, puis la disposition.
+// touche : la touche, puis la réaction de Pip à ce qu'elle a changé, puis la disposition.
 func (m *Modele) touche(k tea.KeyMsg) tea.Cmd {
 	theme, filtre, dormait, ver := m.i, m.f, m.dort(), m.os.ver
 	averti := m.avertiQuitter

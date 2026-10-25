@@ -691,7 +691,7 @@ func (m *Modele) dessineIci(nom string, w int) bool {
 	return m.rendreStyle(nom, w, a, false).dessine(x.nom)
 }
 
-// boiteApercu : l'aperçu dans un cadre de largeur w, Clawd (ses pattes) posé sur le cadre.
+// boiteApercu : l'aperçu dans un cadre de largeur w, Pip (ses pattes) posé sur le cadre.
 func (m *Modele) boiteApercu(nom string, w int, pattes string) []string {
 	iw := w - 4
 	titre := "╭─ " + i18n.T("Aperçu · %s (v) ", i18n.T(nomsApercus[m.os.apercuVu()]))
@@ -871,7 +871,7 @@ func (m *Modele) indice(w int) []string {
 	return l
 }
 
-// corpsStyle : le corps de l'onglet : l'aperçu (dans son cadre, Clawd posé dessus, sauf en compact),
+// corpsStyle : le corps de l'onglet : l'aperçu (dans son cadre, Pip posé dessus, sauf en compact),
 // l'item choisi, puis le menu ouvert ou ce que l'item permet.
 func (m *Modele) corpsStyle(nom string) []string {
 	d := m.d

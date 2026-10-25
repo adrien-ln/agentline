@@ -1,6 +1,7 @@
 package selecteur
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -92,7 +93,7 @@ func TestAnimationBorduresAlignees(t *testing.T) {
 	}
 }
 
-// instantOu : le premier instant (pas de 50 ms) où la session fictive vérifie la condition, Clawd n'étant ni
+// instantOu : le premier instant (pas de 50 ms) où la session fictive vérifie la condition, Pip n'étant ni
 // en train de faire un geste ni de cligner des yeux.
 func instantOu(m *Modele, ok func(etatScene) bool) int {
 	for t := 0; t < 120000; t += 50 {
@@ -106,7 +107,7 @@ func instantOu(m *Modele, ok func(etatScene) bool) int {
 
 func sceneCalme(e etatScene) bool { return e.saisie == "" && e.reflexion < 0 }
 
-// debutGeste : le premier instant où Clawd commence le geste nom au repos, la session fictive restant calme
+// debutGeste : le premier instant où Pip commence le geste nom au repos, la session fictive restant calme
 // jusqu'à la fin du geste (sinon elle passe avant) ; -1 si aucun dans les dix premières minutes.
 func debutGeste(m *Modele, nom string) int {
 	duree := 0
@@ -131,7 +132,7 @@ func debutGeste(m *Modele, nom string) int {
 	return -1
 }
 
-// eveille : Clawd à l'instant t, sans réaction en cours ni sommeil.
+// eveille : Pip à l'instant t, sans réaction en cours ni sommeil.
 func eveille(m *Modele, t int) { m.t, m.derniereTouche, m.reaction = t, t, "" }
 
 func TestMascotteModes(t *testing.T) {
@@ -139,11 +140,11 @@ func TestMascotteModes(t *testing.T) {
 	eveille(m, instantOu(m, sceneCalme))
 	l, pattes, ok := m.Mascotte(m.noms[m.i])
 	v := visible(strings.Join(l[:], "\n"))
-	if !ok || !strings.Contains(v, " ▐▛███▛█ \n▝▜██████▀") || visible(pattes) != " ▝▝   ▝▝ " {
-		t.Fatalf("Clawd absent ou incomplet :\n%s\npattes %q", v, pattes)
+	if !ok || !strings.Contains(v, "  ▟▜█▛▙  \n ▜██▀██▛ ") || visible(pattes) != "   ▘ ▝   " {
+		t.Fatalf("Pip absent ou incomplet :\n%s\npattes %q", v, pattes)
 	}
 	if !strings.Contains(m.View(), strings.ReplaceAll(pattes, " ", "─")) {
-		t.Error("les pattes de Clawd doivent être posées sur le cadre de la fenêtre")
+		t.Error("les pattes de Pip doivent être posées sur le cadre de la fenêtre")
 	}
 	c := m.mascotteCouleurs(m.noms[m.i])
 	if c[0] == c[len(c)-1] {
@@ -151,16 +152,16 @@ func TestMascotteModes(t *testing.T) {
 	}
 	appuyer(m, "m")
 	if c := m.mascotteCouleurs(m.noms[m.i]); c[0] != c[len(c)-1] || !strings.Contains(m.View(), "m mascotte (unie)") {
-		t.Error("mode uni : Clawd doit être d'une seule couleur")
+		t.Error("mode uni : Pip doit être d'une seule couleur")
 	}
 	appuyer(m, "m")
-	if _, _, ok := m.Mascotte(m.noms[m.i]); ok || strings.Contains(ecran(m), "▝▜██████▀") {
-		t.Error("mode aucune : Clawd doit disparaître")
+	if _, _, ok := m.Mascotte(m.noms[m.i]); ok || strings.Contains(ecran(m), "▟▜█▛▙") {
+		t.Error("mode aucune : Pip doit disparaître")
 	}
 	appuyer(m, "m")
-	m.Update(tea.WindowSizeMsg{Width: 110, Height: 18}) // trop bas : la fenêtre passe avant Clawd
-	if strings.Contains(ecran(m), "▝▜██████▀") {
-		t.Error("terminal trop bas : Clawd doit laisser la place à la fenêtre")
+	m.Update(tea.WindowSizeMsg{Width: 110, Height: 18}) // trop bas : la fenêtre passe avant Pip
+	if strings.Contains(ecran(m), "▟▜█▛▙") {
+		t.Error("terminal trop bas : Pip doit laisser la place à la fenêtre")
 	}
 }
 
@@ -185,8 +186,8 @@ func TestMascotteHumeurs(t *testing.T) {
 	eveille(m, calme)
 	appuyer(m, "↓")
 	l, pattes, _ := m.Mascotte(m.noms[m.i])
-	if h := m.humeur(); h != "content" || pattes != "" || !strings.HasPrefix(visible(l[0]), "▗▟") || !strings.Contains(visible(l[2]), "▝▝") {
-		t.Errorf("changement de thème : %s, il doit sauter les bras levés (pattes en l'air) :\n%s", h, visible(strings.Join(l[:], "\n")))
+	if h := m.humeur(); h != "content" || pattes != "" || !strings.HasPrefix(visible(l[0]), " ▄▟") || !strings.Contains(visible(l[2]), "▘ ▝") {
+		t.Errorf("changement de thème : %s, il doit sauter les ailes levées (pattes en l'air) :\n%s", h, visible(strings.Join(l[:], "\n")))
 	}
 	m.t += 1200
 	m.derniereTouche = m.t
@@ -197,7 +198,7 @@ func TestMascotteHumeurs(t *testing.T) {
 	eveille(m, calme)
 	appuyer(m, "↓")
 	m.t += dureeSaut + dureeAtterrissage/2
-	if l, p, _ := m.Mascotte(m.noms[m.i]); p != "" || strings.TrimSpace(visible(l[0])) == "" || strings.HasPrefix(visible(l[0]), "▗▟") {
+	if l, p, _ := m.Mascotte(m.noms[m.i]); p != "" || strings.TrimSpace(visible(l[0])) == "" || strings.HasPrefix(visible(l[0]), " ▄▟") {
 		t.Errorf("atterrissage : il doit passer par la mi-hauteur :\n%s\n%q", visible(strings.Join(l[:], "\n")), visible(p))
 	}
 	m.t += dureeAtterrissage
@@ -224,7 +225,7 @@ func TestMascotteHumeurs(t *testing.T) {
 		pas[visible(p)] = true
 		m.t += pasDanse
 	}
-	if h := m.humeur(); h != "danse" || !pas[" ▝▝      "] || !pas["      ▝▝ "] {
+	if h := m.humeur(); h != "danse" || !pas["   ▘     "] || !pas["     ▝   "] {
 		t.Errorf("validation : %s, attendu une danse d'une patte sur l'autre (%v)", h, pas)
 	}
 	appuyer(m, "échap")
@@ -235,7 +236,7 @@ func TestMascotteHumeurs(t *testing.T) {
 	m, _ = nouveau(t)
 	eveille(m, calme)
 	appuyer(m, "/", "z", "z", "z", "z")
-	if l, _, _ := m.Mascotte(m.noms[m.i]); m.humeur() != "triste" || visible(l[1]) != " ▐██████ " {
+	if l, _, _ := m.Mascotte(m.noms[m.i]); m.humeur() != "triste" || visible(l[1]) != "  ▟███▙  " {
 		t.Errorf("aucun résultat : %s, attendu triste, de dos : %q", m.humeur(), visible(l[1]))
 	}
 
@@ -274,7 +275,7 @@ func TestMascotteTour(t *testing.T) {
 			t.Fatalf("instant %d : %s, attendu tour", m.t, m.humeur())
 		}
 	}
-	if len(vues) != len(tour) || !vues["   ▐██   |   ▐██   |   ▝ ▝   "] {
+	if len(vues) != len(tour) || !vues["  ▗██▜▙  |  ▝████▀ |    ▝ ▘  "] {
 		t.Errorf("le tour doit passer par ses %d poses, dont le profil : %v", len(tour), vues)
 	}
 	eveille(m, t0+len(tour)*pasTour)
@@ -370,7 +371,7 @@ func TestClignements(t *testing.T) {
 		sc, ts := sceneA(m.scenes, u)
 		if g, _ := gesteA(u); g == "" && cligneA(u) && sceneCalme(sc.etatA(ts)) {
 			eveille(m, u)
-			if l, _, _ := m.Mascotte(m.noms[m.i]); visible(l[1]) != " ▐▂███▂█ " {
+			if l, _, _ := m.Mascotte(m.noms[m.i]); visible(l[1]) != "  ▟▂█▂▙  " {
 				t.Errorf("clignement : %q, attendu les paupières baissées", visible(l[1]))
 			}
 			return
@@ -379,31 +380,39 @@ func TestClignements(t *testing.T) {
 	t.Error("aucun clignement au calme")
 }
 
-// demi-ligne : chaque bloc passe pour moitié dans la ligne du dessus, sans rien perdre du dessin
+// demi-ligne : dans toutes les poses et à toutes les hauteurs, aucune cellule ne demande trois couleurs ; à
+// mi-hauteur, les pattes rentrent et les paupières suivent le corps
 func TestDemiLigne(t *testing.T) {
-	somme := func(ls ...string) (n int) {
-		for _, l := range ls {
-			for _, r := range l {
-				if r == paupiereHaute {
-					r = paupiere
-				}
-				p := points(r)
-				for ; p > 0; p >>= 1 {
-					n += p & 1
+	poses := map[string][6]string{}
+	for a := range ailes {
+		for y := range yeux {
+			for p := range pieds {
+				poses[a+" "+y+" "+p] = composer(a, y, p)
+			}
+		}
+	}
+	for k, d := range tour {
+		poses[fmt.Sprint("tour ", k)] = d
+	}
+	for nom, d := range poses {
+		for haut := 0; haut <= 2; haut++ {
+			g := poser(d, haut)
+			for i := 0; i < 4; i++ {
+				for k := 0; k < largeurMascotte; k++ {
+					if _, _, _, ok := cellule([4]byte{g[2*i][2*k], g[2*i][2*k+1], g[2*i+1][2*k], g[2*i+1][2*k+1]}); !ok {
+						t.Errorf("%s, hauteur %d : la cellule %d de la ligne %d demande trois couleurs :\n%s", nom, haut, k, i, strings.Join(g[:], "\n"))
+					}
 				}
 			}
 		}
-		return n
 	}
-	for _, y := range []string{"ouverts", "fermés"} {
-		d := dessiner("bas", y, "deux")
-		l, p := poser(d, 1)
-		if p != "" || somme(l[:]...) != somme(d[:]...) {
-			t.Errorf("yeux %s, à mi-hauteur : pattes %q, %d points au lieu de %d :\n%s", y, p, somme(l[:]...), somme(d[:]...), strings.Join(l[:], "\n"))
-		}
-		if y == "fermés" && !strings.ContainsRune(l[1], paupiereHaute) {
-			t.Errorf("les paupières doivent suivre le corps à mi-hauteur :\n%s", strings.Join(l[:], "\n"))
-		}
+	c := [largeurMascotte]string{}
+	for k := range c {
+		c[k] = "c0caf5"
+	}
+	l := colorer(poser(composer("bas", "fermés", "deux"), 1), c, "ff9e64")
+	if strings.TrimSpace(visible(l[3])) != "" || !strings.ContainsRune(l[1], paupiereHaute) {
+		t.Errorf("à mi-hauteur, les pattes rentrent et les paupières suivent le corps :\n%s", visible(strings.Join(l[:], "\n")))
 	}
 
 	m, _ := nouveau(t)
@@ -418,7 +427,7 @@ func TestDemiLigne(t *testing.T) {
 		switch haut := strings.TrimSpace(visible(l[0])); {
 		case p != "":
 			pose = true
-		case strings.HasPrefix(haut, "▗▟"):
+		case strings.HasPrefix(visible(l[0]), " ▄▟"):
 			enLair = true
 		case haut != "":
 			mi = true

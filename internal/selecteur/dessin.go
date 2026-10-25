@@ -152,7 +152,7 @@ func (m *Modele) statusline(nom string, largeur, ctx int) []string {
 }
 
 // fenetre : la mini-fenêtre Claude Code de largeur w et de hauteur h (au moins 9), à l'instant m.t de la
-// session fictive ; pattes : celles de Clawd, posées sur le cadre du haut (vide : aucune).
+// session fictive ; pattes : celles de Pip, posées sur le cadre du haut (vide : aucune).
 func (m *Modele) fenetre(nom string, w, h int, pattes string) []string {
 	iw := w - 4
 	trace := func(n int) string { return strings.Repeat("─", max(min(n, w), 0)) }
@@ -205,7 +205,7 @@ func (m *Modele) fenetre(nom string, w, h int, pattes string) []string {
 // --- Mesure et pliage du texte ----------------------------------------------------------------------
 
 // cellules : la largeur des caractères dans le terminal (deux colonnes pour le CJK et la plupart des
-// emoji, aucune pour les accents combinants). Les caractères ambigus (cadres, blocs de Clawd) comptent
+// emoji, aucune pour les accents combinants). Les caractères ambigus (cadres, blocs de Pip) comptent
 // pour une colonne, quelle que soit la langue du système. Le rendu de la statusline (internal/render)
 // garde sa propre mesure, celle de l'ancienne version bash.
 var cellules = &runewidth.Condition{EastAsianWidth: false, StrictEmojiNeutral: true}
@@ -422,7 +422,7 @@ func (m *Modele) apercuSeul(nom string, w int) []string {
 	return append([]string{""}, m.surFond(l)...)
 }
 
-// colonneFenetre : Clawd perché au-dessus de la mini-fenêtre, ses pattes sur le cadre.
+// colonneFenetre : Pip perché au-dessus de la mini-fenêtre, ses pattes sur le cadre.
 func (m *Modele) colonneFenetre(nom string) []string {
 	var droite []string
 	pattes := ""

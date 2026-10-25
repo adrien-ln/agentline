@@ -266,7 +266,7 @@ func TestOngletStyleGarder(t *testing.T) {
 	aller(t, m, gLigne1, "pr")
 	appuyer(m, "x", "s")
 	if m.mode() != enStyleQuestion || m.humeur() != "danse" {
-		t.Fatal("s : la question, et Clawd danse")
+		t.Fatal("s : la question, et Pip danse")
 	}
 	e := ecran(m)
 	if !strings.Contains(e, "[d] partout") || !strings.Contains(e, "[p] ce projet (bientôt)") {

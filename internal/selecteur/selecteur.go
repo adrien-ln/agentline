@@ -1,5 +1,5 @@
 // Package selecteur : le sélecteur de thèmes interactif (« agentline theme »), avec Bubble Tea.
-// En-tête (titre centré, thème en vigueur et pourquoi), liste filtrable, Clawd perché sur la mini-fenêtre
+// En-tête (titre centré, thème en vigueur et pourquoi), liste filtrable, Pip perché sur la mini-fenêtre
 // Claude Code (session animée, vraie statusline calculée dans le même processus), à la taille du terminal.
 // Rien n'est écrit pendant la navigation, seulement à la validation (Entrée, puis p, b, d ou u). Un second
 // onglet (Tab), « Statusline », règle les items de la statusline (internal/style).
@@ -70,8 +70,8 @@ type Modele struct {
 	debut    time.Time // ouverture (horloge réelle)
 	mascotte int       // 0 dégradé du thème, 1 couleur unie, 2 aucune (touche m)
 
-	derniereTouche int         // instant de la dernière touche (ms) : Clawd s'endort après 20 s sans rien
-	reaction       string      // dernière réaction de Clawd, et son instant
+	derniereTouche int         // instant de la dernière touche (ms) : Pip s'endort après 20 s sans rien
+	reaction       string      // dernière réaction de Pip, et son instant
 	reactionT      int         //
 	lignesListe    int         // thèmes visibles dans la liste, selon la hauteur du terminal (Page préc./suiv.)
 	d              disposition // calculée par ajuster, à chaque touche et redimensionnement
