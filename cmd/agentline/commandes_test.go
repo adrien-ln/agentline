@@ -130,3 +130,33 @@ func TestCommandeThemeImportExport(t *testing.T) {
 		t.Errorf("export : code %d\n%s%s", code, sortie.String(), erreurs.String())
 	}
 }
+
+// TestStyleProject : --project règle le style du projet d'ici, sans toucher au style général ; show dit d'où
+// vient chaque valeur ; unset et reset --project rendent la main au style général.
+func TestStyleProject(t *testing.T) {
+	lancerOK := func(args ...string) string {
+		t.Helper()
+		var sortie, erreurs bytes.Buffer
+		if code := principale(args, &sortie, &erreurs); code != 0 {
+			t.Fatalf("%v : code %d\n%s", args, code, erreurs.String())
+		}
+		return sortie.String()
+	}
+	lancerOK("style", "reset")
+	if s := lancerOK("style", "set", "--project", "ctx.width", "12"); !strings.Contains(s, "ctx.width = 12 (ce projet)") {
+		t.Errorf("set --project : %q", s)
+	}
+	if styleFichier().Regle("ctx.width") {
+		t.Error("le style général ne doit pas changer")
+	}
+	if s := lancerOK("style", "show"); !strings.Contains(s, "ctx.width         12  (ce projet)") {
+		t.Errorf("show :\n%s", s)
+	}
+	if s := lancerOK("style", "unset", "--project", "ctx.width"); !strings.Contains(s, "la valeur générale pour ce projet (8)") {
+		t.Errorf("unset --project : %q", s)
+	}
+	lancerOK("style", "hide", "--project", "pr")
+	if s := lancerOK("style", "reset", "--project"); !strings.Contains(s, "style du projet retiré (1 réglage)") {
+		t.Errorf("reset --project : %q", s)
+	}
+}

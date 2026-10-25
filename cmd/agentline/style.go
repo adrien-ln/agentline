@@ -22,11 +22,11 @@ func commandesStyle() []commande {
 	return []commande{
 		{nom: "show", aide: i18n.T("chaque option, sa valeur en vigueur et d'où elle vient"), faire: styleMontrer},
 		{nom: "keys", aide: i18n.T("les options, leurs valeurs permises et leur défaut"), faire: styleCles},
-		{nom: "set", args: i18n.T("<option> <valeur>"), aide: i18n.T("régler une option (valeur vide : \"\")"), brut: true, faire: styleRegler},
-		{nom: "unset", args: "<option>", aide: i18n.T("remettre une option à son défaut"), min: 1, max: 1, faire: styleRetirer},
-		{nom: "reset", aide: i18n.T("tout remettre par défaut"), faire: styleDefaut},
-		{nom: "hide", args: "<item>", aide: i18n.T("masquer un item partout"), min: 1, max: 1, faire: func(a *appel) int { return styleMasquer(a, true) }},
-		{nom: "unhide", args: "<item>", aide: i18n.T("afficher de nouveau un item masqué"), min: 1, max: 1, faire: func(a *appel) int { return styleMasquer(a, false) }},
+		{nom: "set", args: i18n.T("[--project] <option> <valeur>"), aide: i18n.T("régler une option (valeur vide : \"\") ; --project : pour le projet d'ici"), brut: true, faire: styleRegler},
+		{nom: "unset", args: "<option>", aide: i18n.T("remettre une option à son défaut (--project : à la valeur générale)"), min: 1, max: 1, options: []option{optionProjet()}, faire: styleRetirer},
+		{nom: "reset", aide: i18n.T("tout remettre par défaut (--project : retirer le style du projet)"), options: []option{optionProjet()}, faire: styleDefaut},
+		{nom: "hide", args: "<item>", aide: i18n.T("masquer un item partout (--project : dans ce projet)"), min: 1, max: 1, options: []option{optionProjet()}, faire: func(a *appel) int { return styleMasquer(a, true) }},
+		{nom: "unhide", args: "<item>", aide: i18n.T("afficher de nouveau un item masqué"), min: 1, max: 1, options: []option{optionProjet()}, faire: func(a *appel) int { return styleMasquer(a, false) }},
 		{nom: "preview", args: "[--ssh]", aide: i18n.T("aperçu réel de la statusline ici (--ssh : la ligne courte)"),
 			options: []option{{nom: "--ssh", aide: i18n.T("la ligne courte, comme en SSH")}}, faire: styleApercu},
 		{nom: "help", alias: []string{"aide"}, aide: i18n.T("cette aide"), faire: func(a *appel) int { io.WriteString(a.sortie, aideStyle()); return 0 }},
@@ -37,7 +37,7 @@ func commandesStyle() []commande {
 func aideStyle() string {
 	return ligneAide("agentline style", i18n.T("le sélecteur, sur l'onglet Statusline")) + aideTable(commandesStyle(), "agentline style") +
 		i18n.T("Items : %s.\n", strings.Join(style.Items, ", ")) +
-		i18n.T("Réglages : $AGENTLINE_CONFIG/style (seuls les écarts au défaut) ; AGENTLINE_STYLE=default l'ignore.\n")
+		i18n.T("Réglages : $AGENTLINE_CONFIG/style (seuls les écarts au défaut), et $AGENTLINE_CONFIG/styles/ pour les projets ; AGENTLINE_STYLE=default les ignore.\n")
 }
 
 // commandeStyle : « agentline style … » ; renvoie le code de sortie.
@@ -59,6 +59,48 @@ func commandeStyle(args []string, sortie, erreurs io.Writer) int {
 
 // styleFichier : le style écrit dans les réglages (même si AGENTLINE_STYLE=default).
 func styleFichier() *style.Style { return style.LireFichier(dossierConfig()) }
+
+// optionProjet : --project, le style du projet du dossier courant.
+func optionProjet() option {
+	return option{nom: "--project", aide: i18n.T("pour le projet du dossier courant (ses réglages par-dessus le style général)")}
+}
+
+// projetIci : l'identifiant du projet du dossier courant si --project, sinon vide (le style général).
+func (a *appel) projetIci() string {
+	if !a.opts["--project"] {
+		return ""
+	}
+	d, _ := os.Getwd()
+	return sources().ProjetID(d)
+}
+
+// stylePortee : le style à modifier : le général, ou pour un projet le général et le sien par-dessus.
+func stylePortee(projet string) *style.Style {
+	if projet == "" {
+		return styleFichier()
+	}
+	return style.Superposer(styleFichier(), style.ChargerProjet(dossierConfig(), projet))
+}
+
+// ecrirePortee : le style écrit à sa portée (pour un projet : seulement ce qui diffère du général).
+func (a *appel) ecrirePortee(projet string, s *style.Style) bool {
+	if projet == "" {
+		return a.ecrireStyle(s)
+	}
+	if err := style.EcrireProjet(dossierConfig(), projet, style.Ecart(s, styleFichier())); err != nil {
+		a.echec("%v", err)
+		return false
+	}
+	return true
+}
+
+// ici : la portée dans un message (« (ce projet) »), vide pour le style général.
+func ici(projet string) string {
+	if projet == "" {
+		return ""
+	}
+	return i18n.T(" (ce projet)")
+}
 
 // avertir : les « ⚠ » qui disent pourquoi un réglage ne se verra pas ici.
 func (a *appel) avertir(cle string) {
@@ -106,14 +148,20 @@ func montre(v string) string {
 }
 
 func styleMontrer(a *appel) int {
-	s := style.Charger(dossierConfig(), getenv)
+	d, _ := os.Getwd()
+	projet := sources().ProjetID(d)
+	sp := style.ChargerProjet(dossierConfig(), projet)
+	s := style.ChargerPour(dossierConfig(), projet, getenv)
 	if style.Force(getenv) {
 		fmt.Fprintln(a.sortie, i18n.T("⚠ AGENTLINE_STYLE=default : le fichier du style est ignoré, tout est au défaut"))
 	}
 	ssh := ligneCourte(s)
 	for _, c := range style.Cles() {
 		source := i18n.T("défaut")
-		if s.Regle(c.Nom) {
+		switch {
+		case sp.Regle(c.Nom) && !style.Force(getenv):
+			source = i18n.T("ce projet")
+		case s.Regle(c.Nom):
 			source = i18n.T("réglé")
 		}
 		if ssh && !c.SSH {
@@ -168,6 +216,9 @@ func styleRegler(a *appel) int {
 		io.WriteString(a.sortie, usageDe(a.cmd, a.prefixe))
 		return 0
 	}
+	if len(a.args) > 0 && a.args[0] == "--project" { // set prend ses arguments tels quels : --project se lit à la main
+		a.opts["--project"], a.args = true, a.args[1:]
+	}
 	if len(a.args) < 2 {
 		return a.usage("%s", i18n.T("il manque l'option ou la valeur"))
 	}
@@ -176,18 +227,19 @@ func styleRegler(a *appel) int {
 		return codeUsage
 	}
 	v := strings.Join(a.args[1:], " ")
-	s := styleFichier()
+	projet := a.projetIci()
+	s := stylePortee(projet)
 	if err := s.Definir(c.Nom, v); err != nil {
 		return a.usage(i18n.T("valeur refusée pour %s : %v"), c.Nom, err)
 	}
-	if !a.ecrireStyle(s) {
+	if !a.ecrirePortee(projet, s) {
 		return codeEchec
 	}
 	defaut := ""
 	if !s.Regle(c.Nom) {
 		defaut = i18n.T(" (défaut)")
 	}
-	fmt.Fprintf(a.sortie, "✓ %s = %s%s\n", c.Nom, montre(s.Valeur(c.Nom)), defaut)
+	fmt.Fprintf(a.sortie, "✓ %s = %s%s%s\n", c.Nom, montre(s.Valeur(c.Nom)), defaut, ici(projet))
 	a.avertir(c.Nom)
 	return 0
 }
@@ -196,6 +248,19 @@ func styleRetirer(a *appel) int {
 	c, ok := a.cleArg(a.args[0])
 	if !ok {
 		return codeUsage
+	}
+	if projet := a.projetIci(); projet != "" {
+		if !style.ChargerProjet(dossierConfig(), projet).Regle(c.Nom) {
+			fmt.Fprint(a.sortie, i18n.T("%s n'est pas réglé pour ce projet\n", c.Nom))
+			return 0
+		}
+		s := stylePortee(projet)
+		s.Definir(c.Nom, styleFichier().Valeur(c.Nom))
+		if !a.ecrirePortee(projet, s) {
+			return codeEchec
+		}
+		fmt.Fprint(a.sortie, i18n.T("✓ %s : la valeur générale pour ce projet (%s)\n", c.Nom, montre(s.Valeur(c.Nom))))
+		return 0
 	}
 	s := styleFichier()
 	if !s.Regle(c.Nom) {
@@ -211,6 +276,14 @@ func styleRetirer(a *appel) int {
 }
 
 func styleDefaut(a *appel) int {
+	if projet := a.projetIci(); projet != "" {
+		n := style.ChargerProjet(dossierConfig(), projet).Nombre()
+		if err := style.EcrireProjet(dossierConfig(), projet, &style.Surcharge{}); err != nil {
+			return a.echec("%v", err)
+		}
+		fmt.Fprint(a.sortie, i18n.N(n, "✓ style du projet retiré (%d réglage) : le style général s'applique ici\n", "✓ style du projet retiré (%d réglages) : le style général s'applique ici\n", n))
+		return 0
+	}
 	s := styleFichier()
 	n := 0
 	for _, c := range style.Cles() {
@@ -234,7 +307,8 @@ func styleMasquer(a *appel, oui bool) int {
 	if !ok {
 		return a.usage(i18n.T("item inconnu : %s (items : %s)"), item, strings.Join(style.Items, ", "))
 	}
-	s := styleFichier()
+	projet := a.projetIci()
+	s := stylePortee(projet)
 	if s.Masques()[item] == oui {
 		if oui {
 			fmt.Fprint(a.sortie, i18n.T("%s est déjà masqué\n", item))
@@ -244,7 +318,7 @@ func styleMasquer(a *appel, oui bool) int {
 		return 0
 	}
 	s.Masquer(item, oui)
-	if !a.ecrireStyle(s) {
+	if !a.ecrirePortee(projet, s) {
 		return codeEchec
 	}
 	if oui {
