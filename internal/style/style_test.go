@@ -99,13 +99,14 @@ func TestAnciensNoms(t *testing.T) {
 
 func TestValider(t *testing.T) {
 	refus := map[string][]string{
-		"ctx.width":   {"3", "21", "huit", " 8", ""},
-		"icons":       {"Nerd", "emoji"},
-		"ctx.libelle": {"一二", "trop long pour un libellé", "a\tb"},
-		"sep.line1":   {"→→→→→", "🚀", "́"},
-		"ctx.bar":     {"ab", "abcd", "█▌🚀"},
-		"line1":       {"model | inconnu"},
-		"hide":        {"model zut"},
+		"ctx.width":     {"3", "21", "huit", " 8", ""},
+		"icons":         {"Nerd", "emoji"},
+		"ctx.libelle":   {"一二", "trop long pour un libellé", "a\tb"},
+		"sep.line1":     {"→→→→→", "🚀", "́"},
+		"ctx.bar":       {"ab", "abcd", "█▌🚀"},
+		"line1":         {"model | inconnu"},
+		"hide":          {"model zut"},
+		"git.protected": {"main dev:1", "a~b", " main", "main " + strings.Repeat("x", 80)},
 	}
 	for cle, vals := range refus {
 		c, _ := Trouver(cle)
@@ -116,9 +117,10 @@ func TestValider(t *testing.T) {
 		}
 	}
 	accepte := map[string][]string{
-		"ctx.bar":   {"#=-", "▰▱▱", "none"},
-		"line1":     {"", "ctx|5h", "  model   effort |  | git "},
-		"sep.short": {"", "/", "»»"},
+		"ctx.bar":       {"#=-", "▰▱▱", "none"},
+		"line1":         {"", "ctx|5h", "  model   effort |  | git "},
+		"sep.short":     {"", "/", "»»"},
+		"git.protected": {"", "main", "main master release/1.0"},
 	}
 	for cle, vals := range accepte {
 		c, _ := Trouver(cle)

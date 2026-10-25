@@ -1,6 +1,8 @@
 package render
 
 import (
+	"strings"
+
 	"github.com/adrien-ln/agentline/internal/i18n"
 	"github.com/adrien-ln/agentline/internal/style"
 )
@@ -14,6 +16,7 @@ type options struct {
 	modeleCourt, modeleUnie bool   // premier mot du nom ; une seule couleur
 	effort                  string // icon+text, icon, text
 	gitResume, gitAmont     bool
+	protegees               map[string]bool // branches où des changements non commités sont une alerte
 	prEtat, prLien          bool
 	sessionMax              int // longueur au-delà de laquelle le nom de session est coupé
 
@@ -37,6 +40,7 @@ func optionsDefaut() options {
 		disp:         dispositionDefaut,
 		effort:       "icon+text",
 		gitAmont:     true,
+		protegees:    branchesDe("main master"),
 		prEtat:       true,
 		prLien:       true,
 		sessionMax:   40,
@@ -87,6 +91,7 @@ func lireOptions(st *style.Style, ssh bool) options {
 	o.modeleCourt, o.modeleUnie = v("model.name") == "short", v("model.color") == "solid"
 	o.effort = v("effort.display")
 	o.gitResume, o.gitAmont = v("git.status") == "summary", v("git.upstream") == style.Oui
+	o.protegees = branchesDe(v("git.protected"))
 	o.prEtat, o.prLien = v("pr.status") == style.Oui, v("pr.link") == style.Oui
 	o.sessionMax = entierDe(v("session.max"))
 	if ssh {
@@ -105,6 +110,15 @@ func lireOptions(st *style.Style, ssh bool) options {
 		o.signal = st.Glyphe("signal")
 	}
 	return o
+}
+
+// branchesDe : « main master » -> l'ensemble de ces branches.
+func branchesDe(s string) map[string]bool {
+	b := map[string]bool{}
+	for _, n := range strings.Fields(s) {
+		b[n] = true
+	}
+	return b
 }
 
 func entierDe(s string) int {

@@ -345,7 +345,7 @@ func valeursDe(c style.Cle, actuelle string) []string {
 		} else {
 			v = []string{c.Defaut, "│", "·", "|", "/", "•", "»", ""}
 		}
-	case style.Libelle:
+	case style.Libelle, style.Branches:
 		v = []string{c.Defaut, ""}
 	}
 	var u []string
@@ -420,7 +420,7 @@ func (o *ongletStyle) entrer() {
 
 // saisissable : l'option se règle aussi en tapant sa valeur.
 func saisissable(c style.Cle) bool {
-	return c.Genre == style.Libelle || c.Genre == style.Glyphe || c.Genre == style.Barre
+	return c.Genre == style.Libelle || c.Genre == style.Glyphe || c.Genre == style.Barre || c.Genre == style.Branches
 }
 
 // valider : Entrée pendant la saisie ; une valeur refusée (glyphe trop large…) le dit et reste à corriger.

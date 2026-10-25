@@ -34,6 +34,7 @@ const (
 	Barre                    // un nom de Valeurs, ou trois caractères d'une colonne
 	Disposition              // des items, « | » entre les segments
 	ListeItems               // des items séparés par des espaces
+	Branches                 // des noms de branches séparés par des espaces (vide permis)
 )
 
 // Cle : une option du style. C'est la seule description des options : la CLI (agentline style keys), le
@@ -105,6 +106,7 @@ var catalogue = func() []Cle {
 		Cle{Nom: "model.color", Genre: Choix, Valeurs: []string{"gradient", "solid"}, Defaut: "gradient", Items: []string{"model"}, Aide: i18n.M("nom du modèle en dégradé, ou d'une couleur")},
 		Cle{Nom: "effort.display", Genre: Choix, Valeurs: []string{"icon+text", "icon", "text"}, Defaut: "icon+text", Items: []string{"effort"}, Aide: i18n.M("niveau d'effort : jauge et nom, jauge seule, nom seul")},
 		Cle{Nom: "git.status", Genre: Choix, Valeurs: []string{"detail", "summary"}, Defaut: "detail", Items: []string{"git"}, Aide: i18n.M("compteurs (+1 ●2 ?3), ou un seul signe (✓ ou *)")},
+		Cle{Nom: "git.protected", Genre: Branches, Defaut: "main master", Items: []string{"git"}, Aide: i18n.M("branches où des changements non commités mettent la statusline en alerte (vide : jamais)"), SSH: true},
 		Cle{Nom: "git.upstream", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"git"}, Aide: i18n.M("commits d'avance et de retard (↑ ↓)")},
 		Cle{Nom: "pr.status", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"pr"}, Aide: i18n.M("état de la revue (approuvée, en revue…)")},
 		Cle{Nom: "pr.link", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"pr"}, Aide: i18n.M("numéro cliquable (lien OSC 8)")},
@@ -216,8 +218,9 @@ func EstItem(n string) bool {
 
 // Limites des textes libres, en colonnes.
 const (
-	maxLibelle = 12
-	maxGlyphe  = 4
+	maxLibelle  = 12
+	maxGlyphe   = 4
+	maxBranches = 80
 )
 
 // cellules : la mesure du sélecteur (caractères ambigus sur une colonne, quelle que soit la langue).
@@ -278,6 +281,16 @@ func (c Cle) Valider(v string) error {
 	case Disposition:
 		_, err := LireDisposition(v)
 		return err
+	case Branches:
+		if len([]rune(v)) > maxBranches {
+			return Erreur(i18n.T("%d caractères au plus", maxBranches))
+		}
+		for _, n := range strings.Fields(v) {
+			if strings.ContainsAny(n, "~^:?*[\\") || strings.ContainsFunc(n, unicode.IsControl) {
+				return Erreur(i18n.T("nom de branche invalide : %s", n))
+			}
+		}
+		return nil
 	case ListeItems:
 		for _, n := range strings.Fields(v) {
 			if _, ok := NomItem(n); !ok {

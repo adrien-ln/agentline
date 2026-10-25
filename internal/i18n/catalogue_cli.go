@@ -109,6 +109,7 @@ var cli = map[string]string{
 	", ignorée en SSH":                     ", ignored over SSH",
 	"texte":                                "text",
 	"glyphe":                               "glyph",
+	"branches":                             "branches",
 	"|3 car.":                              "|3 chars",
 	"items, « | »":                         "items, \"|\"",
 	" (aussi en SSH)":                      " (also over SSH)",

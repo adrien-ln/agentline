@@ -105,10 +105,16 @@ func itemDossier(r *rendu, _ *etat.Session, court bool) (string, bool) {
 // des conflits.
 func itemGit(r *rendu, _ *etat.Session, court bool) (string, bool) {
 	g := r.g
+	// des changements non commités sur une branche protégée (main…) : la branche passe en rouge, le segment en alerte
+	protegee := r.sale && r.o.protegees[g.branche]
+	couleur := r.lieu
+	if protegee {
+		couleur = r.rouge
+	}
 	if court {
 		s := ""
 		if g.branche != "" {
-			s += " " + r.lieu + g.branche + z
+			s += " " + couleur + g.branche + z
 			if r.sale {
 				s += r.jaune + "*" + z
 			}
@@ -123,7 +129,7 @@ func itemGit(r *rendu, _ *etat.Session, court bool) (string, bool) {
 	}
 	s := ""
 	if g.branche != "" {
-		s += "  " + r.lieu + ico(r.iBranche) + g.branche + r.texte
+		s += "  " + couleur + ico(r.iBranche) + g.branche + r.texte
 		compteurs := ""
 		if g.indexe != 0 {
 			compteurs += " +" + strconv.Itoa(g.indexe)
@@ -158,7 +164,7 @@ func itemGit(r *rendu, _ *etat.Session, court bool) (string, bool) {
 			s += " " + r.orange + "↓" + strconv.Itoa(g.retard)
 		}
 	}
-	return s, g.conflit != 0
+	return s, g.conflit != 0 || protegee
 }
 
 func itemWorktree(r *rendu, s *etat.Session, _ bool) (string, bool) {

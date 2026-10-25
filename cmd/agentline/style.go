@@ -145,6 +145,8 @@ func permis(c style.Cle) string {
 		return strings.Join(c.Valeurs, "|") + i18n.T("|3 car.")
 	case style.Disposition:
 		return i18n.T("items, « | »")
+	case style.Branches:
+		return i18n.T("branches")
 	}
 	return "items"
 }
