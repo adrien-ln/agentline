@@ -57,7 +57,9 @@ type rangeeMenu struct {
 
 // ongletStyle : l'état de l'onglet.
 type ongletStyle struct {
-	st, garde *style.Style // le style en cours, et celui du fichier
+	st, garde *style.Style // le style en cours, et celui enregistré pour la portée choisie
+	general   *style.Style // le style général (le fichier style)
+	projet    bool         // la portée : ce projet (son style par-dessus le général), sinon partout
 	ver       int          // incrémenté à chaque modification (caches des aperçus)
 	g, pos    int          // l'item choisi : sa ligne, et sa place dans la ligne
 	menu      int          // sansMenu, menuItem, menuGeneral ou menuAjout
@@ -438,15 +440,24 @@ func (o *ongletStyle) valider() {
 func (o *ongletStyle) remettre() {
 	if o.menu != sansMenu {
 		if c := o.cle(); c.Nom != "" {
-			o.st.Retirer(c.Nom)
+			o.revenir(c.Nom)
 		}
 	} else if x, ok := o.courant(); ok {
 		for _, c := range style.DesItems(x.nom) {
-			o.st.Retirer(c.Nom)
+			o.revenir(c.Nom)
 		}
-		o.st.Masquer(x.nom, false)
+		o.st.Masquer(x.nom, o.projet && o.general.Masques()[x.nom])
 	}
 	o.changer()
+}
+
+// revenir : l'option à son défaut ; pour ce projet, à la valeur du style général.
+func (o *ongletStyle) revenir(nom string) {
+	if o.projet {
+		o.st.Definir(nom, o.general.Valeur(nom))
+		return
+	}
+	o.st.Retirer(nom)
 }
 
 func (o *ongletStyle) modifie() bool { return !o.st.Egal(o.garde) }
@@ -454,10 +465,46 @@ func (o *ongletStyle) modifie() bool { return !o.st.Egal(o.garde) }
 // --- Dans le modèle --------------------------------------------------------------------------------
 
 func (m *Modele) initStyle() {
-	m.os.garde = style.LireFichier(m.sources.Config)
+	m.os.general = style.LireFichier(m.sources.Config)
+	m.os.projet = style.ChargerProjet(m.sources.Config, m.projet) != nil
+	m.os.garde = m.styleGarde()
 	m.os.st = m.os.garde.Copie()
 	m.os.ignore = style.Force(m.getenv)
 	m.os.rendus = map[string]apercuRendu{}
+}
+
+// styleGarde : le style enregistré pour la portée choisie (pour ce projet : le général et le sien par-dessus).
+func (m *Modele) styleGarde() *style.Style {
+	if m.os.projet {
+		return style.Superposer(m.os.general, style.ChargerProjet(m.sources.Config, m.projet))
+	}
+	return m.os.general.Copie()
+}
+
+// porterStyle : p ou d, la portée du style ; sans modification en cours, l'aperçu prend le style de cette
+// portée (sinon les modifications la suivent).
+func (m *Modele) porterStyle(projet bool) tea.Cmd {
+	o := &m.os
+	if o.projet == projet {
+		return nil
+	}
+	modifie := o.modifie()
+	o.projet = projet
+	o.garde = m.styleGarde()
+	if !modifie {
+		o.st = o.garde.Copie()
+		o.changer()
+		o.borner()
+	}
+	return nil
+}
+
+// libellePorteeStyle : la portée du style, en peu de mots.
+func (m *Modele) libellePorteeStyle() string {
+	if m.os.projet {
+		return i18n.T("ce projet (%s)", m.depot())
+	}
+	return i18n.T("partout (défaut)")
 }
 
 // OuvrirStyle : le sélecteur s'ouvre sur l'onglet Statusline (agentline style).

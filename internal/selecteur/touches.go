@@ -196,8 +196,21 @@ func init() {
 			libelle: func(m *Modele) string { return i18n.T("aperçu (%s)", i18n.T(nomsApercus[m.os.apercuVu()])) }, rang: 7, faire: (*Modele).apercuSuivant},
 		{mode: enStyle, touches: []string{"r"}, nom: "r", effet: i18n.M("l'item par défaut (ses options, affiché)"), rang: 9,
 			faire: func(m *Modele) tea.Cmd { m.os.remettre(); return nil }},
-		{mode: enStyle, touches: []string{"R"}, nom: "R", effet: i18n.M("tout le style par défaut"), rang: 9,
-			faire: func(m *Modele) tea.Cmd { m.os.st = style.Defaut(); m.os.changer(); m.os.borner(); return nil }},
+		{mode: enStyle, touches: []string{"R"}, nom: "R", effet: i18n.M("tout le style par défaut (pour ce projet : le style général)"), rang: 9,
+			faire: func(m *Modele) tea.Cmd {
+				m.os.st = style.Defaut()
+				if m.os.projet {
+					m.os.st = m.os.general.Copie()
+				}
+				m.os.changer()
+				m.os.borner()
+				return nil
+			}},
+		{mode: enStyle, nom: "p d", libelle: func(*Modele) string { return i18n.T("portée") }, rang: 3},
+		{mode: enStyle, touches: []string{"p"}, nom: "p", effet: i18n.M("portée du style : ce projet (ses réglages par-dessus le style général)"),
+			faire: func(m *Modele) tea.Cmd { return m.porterStyle(true) }},
+		{mode: enStyle, touches: []string{"d"}, nom: "d", effet: i18n.M("portée du style : partout (le style général)"),
+			faire: func(m *Modele) tea.Cmd { return m.porterStyle(false) }},
 		{mode: enStyle, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet suivant : Créer (Maj+Tab : Thèmes ; l'aperçu prend le thème survolé)"), libelle: func(*Modele) string { return i18n.T("créer") }, rang: 8,
 			faire: (*Modele).basculerOnglet},
 		dans(enStyle, enregistrer),

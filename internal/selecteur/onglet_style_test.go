@@ -486,3 +486,39 @@ func TestStyleCentre(t *testing.T) {
 		appuyer(m, "échap")
 	}
 }
+
+// TestStyleDeCeProjet : p règle le style pour ce projet : s n'écrit que ses différences avec le style général,
+// dans le fichier du projet ; rouvert, le sélecteur part de cette portée ; d revient au style général.
+func TestStyleDeCeProjet(t *testing.T) {
+	m, config := ouvrirStyle(t)
+	appuyer(m, "p")
+	if !m.os.projet || !strings.Contains(ecran(m), "style : ce projet") {
+		t.Fatalf("p : portée ce projet :\n%s", ecran(m))
+	}
+	aller(t, m, gLigne1, "pr")
+	appuyer(m, "x")
+	if !strings.Contains(aplati(ecran(m)), "style de la statusline pour ce projet (1 réglage)") {
+		t.Errorf("la barre dit la portée :\n%s", ecran(m))
+	}
+	appuyer(m, "s")
+	if _, err := os.Stat(filepath.Join(config, style.Fichier)); !os.IsNotExist(err) {
+		t.Error("le style général ne doit pas être écrit")
+	}
+	sp := style.ChargerProjet(config, m.projet)
+	if sp.Nombre() != 1 || !sp.Regle("line1") {
+		t.Fatalf("style du projet : %d options", sp.Nombre())
+	}
+	m2 := Nouveau(m.sources, m.apercu, m.dossier, m.getenv)
+	if !m2.os.projet || strings.Contains(m2.os.st.Valeur("line1"), "pr") {
+		t.Errorf("rouvert : portée %v, line1 %q", m2.os.projet, m2.os.st.Valeur("line1"))
+	}
+	m2.OuvrirStyle()
+	appuyer(m2, "d")
+	if m2.os.projet || !strings.Contains(m2.os.st.Valeur("line1"), "pr") {
+		t.Errorf("d : le style général (avec pr) : %q", m2.os.st.Valeur("line1"))
+	}
+	appuyer(m2, "p", "R")
+	if !strings.Contains(m2.os.st.Valeur("line1"), "pr") || !m2.os.modifie() {
+		t.Error("R pour ce projet : retour au style général, à enregistrer")
+	}
+}

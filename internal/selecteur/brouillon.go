@@ -102,13 +102,21 @@ func (m *Modele) enAttente() []string {
 		}
 	}
 	if m.os.modifie() {
-		n := m.reglagesStyle()
-		l = append(l, i18n.N(n, "style de la statusline (%d réglage)", "style de la statusline (%d réglages)", n))
+		l = append(l, m.libelleStyle())
 	}
 	if m.ed.modifie() {
 		l = append(l, i18n.T("thème personnel %s (%s.theme)", m.ed.titre, m.ed.nom))
 	}
 	return l
+}
+
+// libelleStyle : le style en attente, et sa portée.
+func (m *Modele) libelleStyle() string {
+	n := m.reglagesStyle()
+	if m.os.projet {
+		return i18n.N(n, "style de la statusline pour ce projet (%d réglage)", "style de la statusline pour ce projet (%d réglages)", n)
+	}
+	return i18n.N(n, "style de la statusline (%d réglage)", "style de la statusline (%d réglages)", n)
 }
 
 func (m *Modele) aEnregistrer() bool { return len(m.enAttente()) > 0 }
@@ -179,13 +187,22 @@ func (m *Modele) ecrire() (faits, avert []string) {
 		faits = append(faits, quoi)
 	}
 	if m.os.modifie() {
-		n := m.reglagesStyle()
-		if err := style.Ecrire(m.sources.Config, m.os.st); err != nil {
+		quoi := m.libelleStyle()
+		var err error
+		if m.os.projet { // seulement ce qui diffère du style général
+			err = style.EcrireProjet(m.sources.Config, m.projet, style.Ecart(m.os.st, m.os.general))
+		} else {
+			err = style.Ecrire(m.sources.Config, m.os.st)
+		}
+		if err != nil {
 			m.Resultat = erreur(err)
 			return nil, nil
 		}
+		if !m.os.projet {
+			m.os.general = m.os.st.Copie()
+		}
 		m.os.garde = m.os.st.Copie()
-		faits = append(faits, i18n.N(n, "style de la statusline (%d réglage)", "style de la statusline (%d réglages)", n))
+		faits = append(faits, quoi)
 		if m.os.ignore {
 			avert = append(avert, i18n.T("⚠ AGENTLINE_STYLE=default : il ne se verra pas tant qu'elle est définie."))
 		}

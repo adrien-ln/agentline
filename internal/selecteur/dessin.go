@@ -356,8 +356,11 @@ func (m *Modele) lignesEntete(nom string, w int) []string {
 	pastille := ansi.Bg(p.Modele) + ansi.Fg(visageSombre) + gras + " " + depot + " " + z
 	a := theme.Active(m.chaine)
 	infos := []string{i18n.T("en vigueur : %s (%s)", m.titreDe(a.Nom), pourquoi(a))}
-	if m.onglet == 0 {
+	switch m.onglet {
+	case 0:
 		infos = append(infos, i18n.T("portée : %s (p b d)", m.libellePortee()))
+	case 1:
+		infos = append(infos, i18n.T("style : %s (p d)", m.libellePorteeStyle()))
 	}
 	if nom != a.Nom {
 		infos = append(infos, i18n.T("survolé : %s", m.titres[m.i]))
