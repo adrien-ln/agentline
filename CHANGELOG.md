@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-25
+
 ### Changed
 
 - The picker draws 2 frames per second instead of 20 while the mascot sleeps, and each frame is about 20% faster to build.
@@ -66,7 +68,8 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/adrien-ln/agentline/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/adrien-ln/agentline/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/adrien-ln/agentline/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/adrien-ln/agentline/compare/v0.1.1...v0.2.0
