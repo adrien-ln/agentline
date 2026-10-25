@@ -162,4 +162,10 @@ var cli = map[string]string{
 	"barres du contexte":                        "context bars",
 	"cadres et flèches":                         "frames and arrows",
 	"La statusline avec ce thème et ce style :": "The statusline with this theme and style:",
+	"modifier un thème dans l'éditeur (un thème intégré : une copie)":                "edit a theme in the editor (a built-in theme: a copy)",
+	"créer un thème dans l'éditeur, à partir de celui en vigueur ici (ou de --from)": "create a theme in the editor, from the one in effect here (or --from)",
+	"<nom> [--from <thème>]":                                      "<name> [--from <theme>]",
+	"un thème s'appelle déjà %s (agentline theme edit %s)":        "a theme is already called %s (agentline theme edit %s)",
+	"nom de thème invalide : %s (minuscules, chiffres et tirets)": "invalid theme name: %s (lowercase letters, digits and dashes)",
+	"le thème de départ":                                          "the starting theme",
 }

@@ -128,8 +128,9 @@ func (m *Modele) editer(nom string) {
 // nouveau thème (vide : un nom libre).
 func (m *Modele) OuvrirEditeur(base, nom string) {
 	m.editer(base)
-	if nom != "" && m.ed.nouveau {
-		m.ed.nom, m.ed.nomGarde = nom, nom
+	if nom != "" && m.ed.nouveau { // nom différent de celui prévu : le thème compte comme à créer
+		t := []rune(strings.ReplaceAll(nom, "-", " "))
+		m.ed.nom, m.ed.titre = nom, strings.ToUpper(string(t[:1]))+string(t[1:])
 	}
 	m.ajuster()
 }

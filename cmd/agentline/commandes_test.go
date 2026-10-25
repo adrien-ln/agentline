@@ -70,3 +70,23 @@ func TestCommandeFontTest(t *testing.T) {
 		}
 	}
 }
+
+// TestCommandeThemeNew : un nom invalide, un nom déjà pris ou un thème de départ inconnu sont des erreurs
+// d'usage, avant l'ouverture de l'éditeur.
+func TestCommandeThemeNew(t *testing.T) {
+	for args, texte := range map[[3]string]string{
+		{"new", "Ma Nuit", ""}:           "nom de thème invalide : Ma Nuit",
+		{"new", "tokyo", ""}:             "un thème s'appelle déjà tokyo",
+		{"new", "ma-nuit", "--from=zzz"}: "thème inconnu : zzz",
+		{"edit", "zzz", ""}:              "thème inconnu : zzz",
+	} {
+		var sortie, erreurs bytes.Buffer
+		l := []string{"theme", args[0], args[1]}
+		if args[2] != "" {
+			l = append(l, args[2])
+		}
+		if code := principale(l, &sortie, &erreurs); code != codeUsage || !strings.Contains(erreurs.String(), texte) {
+			t.Errorf("%v : code %d\n%s", l, code, erreurs.String())
+		}
+	}
+}

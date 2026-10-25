@@ -32,6 +32,9 @@ func commandesTheme() []commande {
 		{nom: "branch", args: i18n.T("<motif> <thème>"), aide: i18n.T("thème des branches du motif (main, release/*), dans tous les projets"), min: 2, max: 2, faire: themeBranche},
 		{nom: "unbranch", args: i18n.T("<motif>"), aide: i18n.T("retirer la règle"), min: 1, max: 1, faire: themeRetirerBranche},
 		{nom: "branches", aide: i18n.T("règles de branche"), faire: themeBranches},
+		{nom: "new", args: i18n.T("<nom> [--from <thème>]"), aide: i18n.T("créer un thème dans l'éditeur, à partir de celui en vigueur ici (ou de --from)"), min: 1, max: 1,
+			options: []option{{nom: "--from", valeur: "theme", aide: i18n.T("le thème de départ")}}, faire: themeNouveau},
+		{nom: "edit", args: i18n.T("<thème>"), aide: i18n.T("modifier un thème dans l'éditeur (un thème intégré : une copie)"), min: 1, max: 1, faire: themeEditer},
 		{nom: "preview", args: i18n.T("[thème]"), aide: i18n.T("aperçu réel de la statusline ici"), max: 1, faire: themeApercu},
 		{nom: "background", args: "[dark|light|auto]", aide: i18n.T("fond du terminal, clair ou sombre (sans argument : celui retenu)"), max: 1, faire: themeFond},
 		{nom: "help", alias: []string{"aide"}, aide: i18n.T("cette aide"), faire: func(a *appel) int { io.WriteString(a.sortie, aideTheme()); return 0 }},
@@ -142,7 +145,10 @@ func avertissement(s theme.Sources, nom, source, dossier string, getenv func(str
 	return i18n.T("⚠ masqué ici par %s : %s reste en vigueur (agentline theme current --why)", qui, titre(s, m.Nom))
 }
 
-func themeChoisir(a *appel) int {
+func themeChoisir(a *appel) int { return lancerSelecteur(a, nil) }
+
+// lancerSelecteur : le sélecteur plein écran (préparé par avant, s'il y a lieu), puis son message de sortie.
+func lancerSelecteur(a *appel, avant func(*selecteur.Modele)) int {
 	env := environnement()
 	d, _ := os.Getwd()
 	// Avant Bubble Tea (qui prend l'entrée) : le fond du terminal, s'il n'est pas déjà réglé
@@ -153,6 +159,9 @@ func themeChoisir(a *appel) int {
 		}
 	}
 	m := selecteur.Nouveau(env.Themes, env, d, getenv)
+	if avant != nil {
+		avant(m)
+	}
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		return a.echec("%v", err)
 	}
@@ -163,6 +172,36 @@ func themeChoisir(a *appel) int {
 		}
 	}
 	return 0
+}
+
+// themeNouveau : « agentline theme new <nom> [--from <thème>] » : l'éditeur sur une copie du thème de départ,
+// sous ce nom ; s la crée.
+func themeNouveau(a *appel) int {
+	s := sources()
+	nom := a.args[0]
+	if !theme.NomValide(nom) {
+		return a.usage(i18n.T("nom de thème invalide : %s (minuscules, chiffres et tirets)"), nom)
+	}
+	if _, pris := s.Fichier(nom); pris {
+		return a.usage(i18n.T("un thème s'appelle déjà %s (agentline theme edit %s)"), nom, nom)
+	}
+	d, _ := os.Getwd()
+	base := s.Choisir(d, getenv).Nom
+	if v, ok := a.vals["--from"]; ok {
+		if base, ok = a.themeArg(s, v); !ok {
+			return codeUsage
+		}
+	}
+	return lancerSelecteur(a, func(m *selecteur.Modele) { m.OuvrirEditeur(base, nom) })
+}
+
+// themeEditer : « agentline theme edit <thème> » : l'éditeur sur ce thème (un thème intégré : une copie).
+func themeEditer(a *appel) int {
+	nom, ok := a.themeArg(sources(), a.args[0])
+	if !ok {
+		return codeUsage
+	}
+	return lancerSelecteur(a, func(m *selecteur.Modele) { m.OuvrirEditeur(nom, "") })
 }
 
 func themeListe(a *appel) int {

@@ -139,3 +139,21 @@ func TestResponsiveEditeur(t *testing.T) {
 		}
 	}
 }
+
+// TestOuvrirEditeurNomme : agentline theme new <nom> : la copie prend ce nom et un titre tiré de lui, et elle
+// est à créer tout de suite (s l'écrit même sans autre changement).
+func TestOuvrirEditeurNomme(t *testing.T) {
+	m, config := nouveau(t)
+	m.OuvrirEditeur("nord", "ma-nuit")
+	if m.onglet != 2 || m.ed.nom != "ma-nuit" || m.ed.titre != "Ma nuit" || !m.ed.modifie() {
+		t.Fatalf("éditeur : onglet %d, %q %q modifié=%v", m.onglet, m.ed.nom, m.ed.titre, m.ed.modifie())
+	}
+	appuyer(m, "s")
+	if _, err := os.Stat(filepath.Join(config, "themes", "ma-nuit.theme")); err != nil {
+		t.Errorf("s doit créer le thème : %v", err)
+	}
+	p, _ := m.sources.Charger("ma-nuit")
+	if nord, _ := m.sources.Charger("nord"); p != nord {
+		t.Errorf("le thème créé doit reprendre les couleurs de nord :\n%+v\n%+v", p, nord)
+	}
+}
