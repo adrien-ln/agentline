@@ -28,7 +28,6 @@ Everything below is covered by automated tests or simulations only. The CI runs 
 - [ ] More animated scenes, or a scene chosen by project.
 - [ ] `agentline theme gallery`: every theme at once, one statusline per theme.
 - [ ] Favorites in the picker, theme editor.
-- [ ] **Style per project** (`p` in the confirmation panel of the Statusline tab, shown as "soon"): one style file per project, with the same priority as themes.
 - [ ] Statusline tab: in the original spec, ← closes the options panel, but ←→ already change the value there; today only Esc closes it.
 - [ ] `agentline install --in-place` (Scoop, Homebrew): the binary path follows links to the version folder (`apps/agentline/<version>`), which changes on every update; aim at `current` or the shim instead.
 - [ ] Colors: `FORCE_COLOR` and `CLICOLOR_FORCE` are not read; `agentline doctor` and `install` keep their ✓ ⚠ ✗ marks in basic colors even with `NO_COLOR`.

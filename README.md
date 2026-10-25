@@ -96,6 +96,7 @@ If you want every widget and Powerline, ccstatusline does more. If you want a fa
 ## Good to know
 
 - **Settings** live in `~/.config/agentline` (or `$AGENTLINE_CONFIG`). Your own themes go in its `themes/` folder: see [docs/themes.md](docs/themes.md).
+- **A style per project**: in the Statusline tab, `p` makes your changes apply to this project only (over the general style), `d` everywhere; or `agentline style set --project <option> <value>`.
 - **Language**: English or French, from your system; force it with `AGENTLINE_LANG=en` or `fr`.
 - **Light background**: detected by `agentline install`; otherwise `agentline theme background light`.
 - **Over SSH**: the full statusline, with the font of the terminal on your own machine. For one short line without icons: `agentline style set ssh.short yes`.

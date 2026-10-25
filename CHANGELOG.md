@@ -6,6 +6,7 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ### Added
 
+- A statusline style per project: the options set for a project apply over the general style, in that project only (`p` and `d` in the Statusline tab, `--project` on `agentline style set`, `unset`, `reset`, `hide` and `unhide`). `ssh.short` stays a general setting.
 - `agentline theme import` turns a Windows Terminal, iTerm2 or base16 color scheme (or, with `--terminal`, the scheme of the current Windows Terminal profile) into a theme opened in the editor; `agentline theme export` prints a theme to share.
 - In the theme editor, `g` matches the gauge colors to the chosen color, `G` builds a whole theme around it, `a` previews it for color blindness; saved themes get color tags computed from their colors.
 - `agentline font preview` tries the installed Nerd Fonts live in Windows Terminal or VS Code: each one really becomes the terminal font while you choose (a .bak copy is made), Enter keeps it, Esc puts yours back. An interrupted preview is reported by doctor and undone by the next preview.
