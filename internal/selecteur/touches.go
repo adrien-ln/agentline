@@ -81,7 +81,7 @@ func init() {
 			libelle: (*Modele).retourListe, rang: 3, faire: (*Modele).remonter},
 		{mode: enListe, touches: []string{"?"}, nom: "?", effet: i18n.M("cette aide"), libelle: func(*Modele) string { return i18n.T("aide") }, rang: 1,
 			faire: func(m *Modele) tea.Cmd { m.aide = true; return nil }},
-		{mode: enListe, touches: []string{"m"}, nom: "m", effet: i18n.M("mascotte : dégradé, unie, aucune"),
+		{mode: enListe, touches: []string{"m"}, nom: "m", effet: i18n.M("mascotte : unie, aucune"),
 			libelle: func(m *Modele) string { return i18n.T("mascotte (%s)", i18n.T(modesMascotte[m.mascotte])) }, rang: 6,
 			faire: func(m *Modele) tea.Cmd { m.mascotte = (m.mascotte + 1) % len(modesMascotte); return nil }},
 		{mode: enListe, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet Statusline : les items de la statusline"), libelle: func(*Modele) string { return i18n.T("statusline") }, rang: 7,
@@ -404,6 +404,9 @@ func (m *Modele) garder(source string) tea.Cmd {
 	m.Resultat = i18n.T("✓ %s %s : %s", titre, cible, visibleBientot())
 	if e, ok := theme.MasquePar(m.sources.Resoudre(m.dossier, m.branche, m.getenv), source); ok {
 		m.Resultat += i18n.T("\n⚠ Ici, %s reste prioritaire.", m.qui(e))
+	}
+	if m.os.modifie() { // l'autre onglet : ses réglages ne sont pas gardés, et il faut le dire
+		m.Resultat += i18n.T("\n⚠ Les modifications du style de la statusline n'ont pas été gardées (s dans l'onglet Statusline).")
 	}
 	return tea.Quit
 }

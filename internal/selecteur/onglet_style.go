@@ -504,6 +504,9 @@ func (m *Modele) garderStyle() tea.Cmd {
 	if m.os.ignore {
 		m.Resultat += "\n" + i18n.T("⚠ AGENTLINE_STYLE=default : il ne se verra pas tant qu'elle est définie.")
 	}
+	if n := m.noms[m.i]; n != m.avant { // l'autre onglet : le thème survolé n'est pas gardé
+		m.Resultat += "\n" + i18n.T("⚠ Le thème %s n'a pas été gardé (Entrée dans l'onglet Thèmes).", m.titres[m.i])
+	}
 	return tea.Quit
 }
 

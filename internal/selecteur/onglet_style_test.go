@@ -467,3 +467,18 @@ func TestStyleCentre(t *testing.T) {
 		appuyer(m, "échap")
 	}
 }
+
+// TestGarderSansPerdreLAutreOnglet : garder le thème ou le style ferme le sélecteur ; ce qui n'a pas été gardé
+// dans l'autre onglet est signalé au lieu d'être perdu en silence.
+func TestGarderSansPerdreLAutreOnglet(t *testing.T) {
+	m, _ := ouvrirStyle(t)
+	appuyer(m, "x", "tab") // un item retiré, puis l'onglet Thèmes
+	if !appuyer(m, "entrée", "d") || !strings.Contains(m.Message(), "style de la statusline n'ont pas été gardées") {
+		t.Errorf("thème gardé, style modifié : le message doit le dire :\n%s", m.Message())
+	}
+	m, _ = ouvrirStyle(t)
+	appuyer(m, "tab", "↓", "tab") // un autre thème survolé, retour à la statusline
+	if !appuyer(m, "x", "s", "d") || !strings.Contains(m.Message(), "n'a pas été gardé") {
+		t.Errorf("style gardé, autre thème survolé : le message doit le dire :\n%s", m.Message())
+	}
+}
