@@ -13,6 +13,7 @@ import (
 
 func init() {
 	touches["tab"] = tea.KeyTab
+	touches["maj+tab"] = tea.KeyShiftTab
 	touches["maj+↑"] = tea.KeyShiftUp
 	touches["maj+↓"] = tea.KeyShiftDown
 	touches["maj+←"] = tea.KeyShiftLeft
@@ -88,8 +89,16 @@ func TestOngletStyleBascule(t *testing.T) {
 		t.Errorf("ssh.short=yes : la ligne SSH, qu'on peut choisir :\n%s", e)
 	}
 	appuyer(m, "tab")
+	if m.onglet != 2 || !m.ed.actif {
+		t.Error("Tab passe à l'onglet Créer, sur une copie du thème survolé")
+	}
+	appuyer(m, "tab")
 	if m.onglet != 0 {
-		t.Error("Tab revient à l'onglet Thèmes")
+		t.Error("puis Tab revient à l'onglet Thèmes")
+	}
+	appuyer(m, "maj+tab")
+	if m.onglet != 2 {
+		t.Error("Maj+Tab : dans l'autre sens")
 	}
 }
 
@@ -312,7 +321,7 @@ func TestOngletStyleQuitterSansGarder(t *testing.T) {
 // ensemble avec s, depuis n'importe quel onglet ; s dans la question de sortie enregistre puis quitte.
 func TestEnregistrerLesDeuxOnglets(t *testing.T) {
 	m, config := ouvrirStyle(t)
-	appuyer(m, "x", "tab", "↓", "entrée", "d", "tab")
+	appuyer(m, "x", "maj+tab", "↓", "entrée", "d", "tab")
 	nom := m.noms[m.i]
 	if a := m.enAttente(); len(a) != 2 {
 		t.Fatalf("un thème et le style en attente : %v", a)
@@ -346,7 +355,7 @@ func TestOngletStyleApercu(t *testing.T) {
 		t.Error("retour à l'aperçu complet")
 	}
 	avant := m.View()
-	appuyer(m, "tab", "↓", "tab")
+	appuyer(m, "maj+tab", "↓", "tab")
 	if m.View() == avant {
 		t.Error("l'aperçu doit prendre le thème survolé")
 	}
@@ -358,7 +367,7 @@ func TestAideStyle(t *testing.T) {
 	appuyer(m, "?")
 	e := ecran(m)
 	for _, r := range raccourcis {
-		if r.mode >= enStyle && !strings.Contains(e, r.effet) && !strings.Contains(e, strings.Fields(r.effet)[0]) {
+		if r.mode >= enStyle && r.mode <= enStyleSaisie && !strings.Contains(e, r.effet) && !strings.Contains(e, strings.Fields(r.effet)[0]) {
 			t.Errorf("%s (%s) absent de l'aide", r.nom, r.effet)
 		}
 	}

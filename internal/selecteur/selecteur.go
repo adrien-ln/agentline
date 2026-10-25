@@ -9,6 +9,7 @@
 //	selecteur.go     l'état, son initialisation, la liste filtrée, le message de sortie
 //	touches.go       la table des touches (actions, pied de page, aide « ? »)
 //	onglet_style.go  l'onglet Statusline : items par ligne, options, aperçu en direct
+//	editeur.go       l'onglet Créer : l'éditeur de thèmes
 //	disposition.go   les trois dispositions (large, empilée, compacte) et leurs seuils
 //	dessin.go        View et ce qu'il dessine
 package selecteur
@@ -77,8 +78,9 @@ type Modele struct {
 	lignesListe    int         // thèmes visibles dans la liste, selon la hauteur du terminal (Page préc./suiv.)
 	d              disposition // calculée par ajuster, à chaque touche et redimensionnement
 
-	onglet          int         // 0 Thèmes, 1 Statusline (Tab)
+	onglet          int         // 0 Thèmes, 1 Statusline, 2 Créer (Tab)
 	os              ongletStyle // l'onglet Statusline (onglet_style.go)
+	ed              editeur     // l'onglet Créer (editeur.go)
 	choix           string      // le thème choisi (Entrée), à enregistrer ; vide : aucun
 	portee          string      // où l'enregistrer : projet, branche ou défaut (p, b, d)
 	retrait         bool        // x : le réglage d'ici (règle de branche, sinon thème du projet) sera retiré
@@ -106,15 +108,7 @@ func image(lent bool) tea.Cmd {
 func Nouveau(s theme.Sources, apercu render.Env, dossier string, getenv func(string) string) *Modele {
 	m := &Modele{sources: s, apercu: apercu, getenv: getenv, dossier: dossier, largeur: 110, hauteur: 24, scenes: Scenes(),
 		rendus: map[string]string{}, logos: map[string]string{}, palettes: map[string]theme.Palette{}}
-	m.noms = s.Noms()
-	for _, n := range m.noms {
-		t, g := s.Entete(n)
-		if p, ok := s.Charger(n); ok && p.Clair {
-			g = append(g, filtreClairs)
-		}
-		m.titres = append(m.titres, t)
-		m.tags = append(m.tags, g)
-	}
+	m.chargerNoms()
 	m.projet = s.ProjetID(dossier)
 	m.branche = theme.BrancheDe(dossier)
 	m.chaine = s.Resoudre(dossier, m.branche, getenv)
@@ -125,6 +119,24 @@ func Nouveau(s theme.Sources, apercu render.Env, dossier string, getenv func(str
 			m.i = k
 		}
 	}
+	m.calculerVue()
+	m.initStyle()
+	m.ajuster()
+	return m
+}
+
+// chargerNoms : les thèmes (noms, titres, tags) et les filtres qui en ont ; aussi après l'enregistrement d'un
+// thème de l'éditeur, qui peut en ajouter un.
+func (m *Modele) chargerNoms() {
+	m.noms, m.titres, m.tags, m.filtres = m.sources.Noms(), nil, nil, nil
+	for _, n := range m.noms {
+		t, g := m.sources.Entete(n)
+		if p, ok := m.sources.Charger(n); ok && p.Clair {
+			g = append(g, filtreClairs)
+		}
+		m.titres = append(m.titres, t)
+		m.tags = append(m.tags, g)
+	}
 	for _, f := range filtresOrdre {
 		for k := range m.noms {
 			if f == "tous" || m.aLeTag(k, f) {
@@ -133,10 +145,6 @@ func Nouveau(s theme.Sources, apercu render.Env, dossier string, getenv func(str
 			}
 		}
 	}
-	m.calculerVue()
-	m.initStyle()
-	m.ajuster()
-	return m
 }
 
 func (m *Modele) aLeTag(k int, f string) bool {

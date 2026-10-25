@@ -105,6 +105,9 @@ func (m *Modele) enAttente() []string {
 		n := m.reglagesStyle()
 		l = append(l, i18n.N(n, "style de la statusline (%d réglage)", "style de la statusline (%d réglages)", n))
 	}
+	if m.ed.modifie() {
+		l = append(l, i18n.T("thème personnel %s (%s.theme)", m.ed.titre, m.ed.nom))
+	}
 	return l
 }
 
@@ -187,10 +190,34 @@ func (m *Modele) ecrire() (faits, avert []string) {
 			avert = append(avert, i18n.T("⚠ AGENTLINE_STYLE=default : il ne se verra pas tant qu'elle est définie."))
 		}
 	}
+	if m.ed.modifie() {
+		e := &m.ed
+		if err := m.sources.EcrireTheme(e.nom, theme.Format(e.p, e.titre, e.tags)); err != nil {
+			m.Resultat = erreur(err)
+			return nil, nil
+		}
+		faits = append(faits, i18n.T("thème personnel %s (%s.theme)", e.titre, e.nom))
+		e.garde, e.nomGarde, e.titreG, e.nouveau = e.p, e.nom, e.titre, false
+		m.rafraichirThemes(e.nom)
+	}
 	m.choix, m.retrait = "", false
 	m.chaine = m.sources.Resoudre(m.dossier, m.branche, m.getenv)
 	m.avant = theme.Active(m.chaine).Nom
 	return faits, avert
+}
+
+// rafraichirThemes : après l'écriture d'un thème, la liste le connaît, ses aperçus en cache sont oubliés, et il
+// devient le thème survolé.
+func (m *Modele) rafraichirThemes(nom string) {
+	m.chargerNoms()
+	m.palettes, m.rendus, m.logos, m.os.rendus = map[string]theme.Palette{}, map[string]string{}, map[string]string{}, map[string]apercuRendu{}
+	m.majEditeur()
+	m.calculerVue()
+	for p, k := range m.vue {
+		if m.noms[k] == nom {
+			m.p, m.i = p, k
+		}
+	}
 }
 
 // annuler : u : le brouillon oublié, tout revient à ce qui est enregistré.
@@ -200,6 +227,10 @@ func (m *Modele) annuler() tea.Cmd {
 		m.os.st = m.os.garde.Copie()
 		m.os.changer()
 		m.os.borner()
+	}
+	if m.ed.modifie() {
+		m.ed.p, m.ed.nom, m.ed.titre = m.ed.garde, m.ed.nomGarde, m.ed.titreG
+		m.majEditeur()
 	}
 	m.reagir("clin")
 	return nil

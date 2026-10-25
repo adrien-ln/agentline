@@ -515,6 +515,8 @@ func (m *Modele) View() string {
 		}
 	case m.onglet == 1:
 		corps = m.corpsStyle(nom)
+	case m.onglet == 2:
+		corps = m.corpsEditeur()
 	case d.agencement == large:
 		col, droite := m.colonneListe(nom), m.colonneFenetre(nom)
 		for k := 0; k < max(len(col), len(droite)); k++ {

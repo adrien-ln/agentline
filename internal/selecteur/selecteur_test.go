@@ -433,6 +433,7 @@ func TestAideComplete(t *testing.T) {
 	if !strings.Contains(aplati(ecran(m)), "? aide") {
 		t.Error("le pied doit rappeler ? aide")
 	}
+	m.Update(tea.WindowSizeMsg{Width: 160, Height: 60}) // l'aide entière
 	appuyer(m, "?")
 	e := ecran(m)
 	for _, r := range raccourcis {

@@ -126,6 +126,13 @@ func (m *Modele) piedDuMode(w int) []string {
 	case enStyleSaisie:
 		debut := gras + i18n.T("%s : %s", m.os.cle().Nom, m.os.texte) + z + "▏   "
 		return []string{tronquer(debut+m.aideCourte(md, w-largeur(debut)), w)}
+	case enEditeurSaisie:
+		quoi := rolesTheme[m.ed.role].cle
+		if m.ed.saisieNom {
+			quoi = i18n.T("nom")
+		}
+		debut := gras + i18n.T("%s : %s", quoi, m.ed.texte) + z + "▏   "
+		return []string{tronquer(debut+m.aideCourte(md, w-largeur(debut)), w)}
 	case enRecherche:
 		debut := gras + i18n.T("Chercher : %s", m.recherche) + z + "▏   "
 		return []string{tronquer(debut+m.aideCourte(md, w-largeur(debut)), w)}

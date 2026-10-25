@@ -26,14 +26,19 @@ const (
 	enStyleMenu   // le menu de l'item (Entrée) ou les options générales (g)
 	enStyleAjout  // les items à ajouter à la ligne (+)
 	enStyleSaisie // on tape une valeur (Entrée sur un libellé, un glyphe)
+
+	enEditeur       // onglet Créer : on règle les couleurs du thème
+	enEditeurSaisie // on tape un code de couleur (Entrée) ou un nom (n)
 )
 
 // nomsModes : les titres des sections de l'aide (en français, traduits à l'affichage).
 var nomsModes = map[mode]string{enListe: i18n.M("Thèmes : liste"), enRecherche: i18n.M("Thèmes : recherche (/)"), enQuitter: i18n.M("Quitter avec des changements (q)"), enAide: i18n.M("Aide (?)"),
-	enStyle: i18n.M("Statusline : items"), enStyleMenu: i18n.M("Statusline : menu (Entrée, g)"), enStyleAjout: i18n.M("Statusline : ajouter (+)"), enStyleSaisie: i18n.M("Statusline : saisie (Entrée)")}
+	enStyle: i18n.M("Statusline : items"), enStyleMenu: i18n.M("Statusline : menu (Entrée, g)"), enStyleAjout: i18n.M("Statusline : ajouter (+)"), enStyleSaisie: i18n.M("Statusline : saisie (Entrée)"),
+	enEditeur: i18n.M("Créer : couleurs"), enEditeurSaisie: i18n.M("Créer : saisie (Entrée, n)")}
 
 // modesAide : les sections de l'aide complète de chaque onglet, dans l'ordre.
-var modesAide = [2][]mode{{enListe, enRecherche, enQuitter}, {enStyle, enStyleMenu, enStyleAjout, enStyleSaisie, enQuitter}}
+var modesAide = [3][]mode{{enListe, enRecherche, enQuitter}, {enStyle, enStyleMenu, enStyleAjout, enStyleSaisie, enQuitter},
+	{enEditeur, enEditeurSaisie, enQuitter}}
 
 // raccourci : une touche (ou plusieurs équivalentes) dans un mode.
 type raccourci struct {
@@ -141,8 +146,10 @@ func init() {
 		{mode: enListe, touches: []string{"m"}, nom: "m", effet: i18n.M("mascotte : unie, aucune"),
 			libelle: func(m *Modele) string { return i18n.T("mascotte (%s)", i18n.T(modesMascotte[m.mascotte])) }, rang: 6,
 			faire: func(m *Modele) tea.Cmd { m.mascotte = (m.mascotte + 1) % len(modesMascotte); return nil }},
-		{mode: enListe, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet Statusline : les items de la statusline"), libelle: func(*Modele) string { return i18n.T("statusline") }, rang: 7,
+		{mode: enListe, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet suivant : Statusline, puis Créer (Maj+Tab : l'inverse)"), libelle: func(*Modele) string { return i18n.T("statusline") }, rang: 7,
 			faire: (*Modele).basculerOnglet},
+		{mode: enListe, touches: []string{"e"}, nom: "e", effet: i18n.M("créer un thème à partir de celui-ci (onglet Créer)"), libelle: func(*Modele) string { return i18n.T("créer") }, rang: 7,
+			dispo: func(m *Modele) bool { return len(m.vue) > 0 }, faire: func(m *Modele) tea.Cmd { m.editer(m.noms[m.i]); return nil }},
 		{mode: enListe, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter (demande d'abord s'il reste à enregistrer)"), libelle: func(*Modele) string { return i18n.T("quitter") }, rang: 8, faire: quitter},
 
 		{mode: enRecherche, nom: i18n.M("lettres"), effet: i18n.M("nom, titre ou couleur (bleu, rose…)")},
@@ -191,7 +198,7 @@ func init() {
 			faire: func(m *Modele) tea.Cmd { m.os.remettre(); return nil }},
 		{mode: enStyle, touches: []string{"R"}, nom: "R", effet: i18n.M("tout le style par défaut"), rang: 9,
 			faire: func(m *Modele) tea.Cmd { m.os.st = style.Defaut(); m.os.changer(); m.os.borner(); return nil }},
-		{mode: enStyle, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet Thèmes (l'aperçu prend le thème survolé)"), libelle: func(*Modele) string { return i18n.T("thèmes") }, rang: 8,
+		{mode: enStyle, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet suivant : Créer (Maj+Tab : Thèmes ; l'aperçu prend le thème survolé)"), libelle: func(*Modele) string { return i18n.T("créer") }, rang: 8,
 			faire: (*Modele).basculerOnglet},
 		dans(enStyle, enregistrer),
 		dans(enStyle, annuler),
@@ -248,6 +255,55 @@ func init() {
 			return nil
 		}},
 
+		{mode: enEditeur, touches: []string{"up", "k", "down", "j"}, nom: "↑↓", effet: i18n.M("choisir la couleur à régler"), libelle: func(*Modele) string { return i18n.T("couleur") }, rang: 2,
+			faire: func(m *Modele) tea.Cmd {
+				m.ed.role = min(max(m.ed.role+sens(m.derniere), 0), len(rolesTheme)-1)
+				return nil
+			}},
+		{mode: enEditeur, touches: []string{"left", "h", "right", "l"}, nom: "←→", effet: i18n.M("régler la couleur sur le canal choisi"), libelle: func(*Modele) string { return i18n.T("régler") }, rang: 1,
+			faire: func(m *Modele) tea.Cmd { return m.reglerCouleur(sensH(m.derniere)) }},
+		{mode: enEditeur, touches: []string{"shift+left", "H", "shift+right", "L"}, nom: i18n.M("Maj+←→ H L"), effet: i18n.M("régler 5 fois plus vite"),
+			faire: func(m *Modele) tea.Cmd { return m.reglerCouleur(5 * sensH(m.derniere)) }},
+		{mode: enEditeur, touches: []string{"c"}, nom: "c", effet: i18n.M("canal suivant : clarté, saturation, teinte"), rang: 3,
+			libelle: func(m *Modele) string { return i18n.T(canaux[m.ed.canal]) },
+			faire:   func(m *Modele) tea.Cmd { m.ed.canal = (m.ed.canal + 1) % len(canaux); return nil }},
+		{mode: enEditeur, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("taper le code de la couleur (rrggbb)"), libelle: func(*Modele) string { return i18n.T("code") }, rang: 4,
+			faire: func(m *Modele) tea.Cmd {
+				m.ed.saisie, m.ed.texte = true, *rolesTheme[m.ed.role].champ(&m.ed.p.Couleurs)
+				return nil
+			}},
+		{mode: enEditeur, touches: []string{"n"}, nom: "n", effet: i18n.M("renommer le thème (le nom du fichier en découle)"), libelle: func(*Modele) string { return i18n.T("nom") }, rang: 5,
+			faire: func(m *Modele) tea.Cmd { m.ed.saisie, m.ed.saisieNom, m.ed.texte = true, true, m.ed.titre; return nil }},
+		{mode: enEditeur, touches: []string{"f"}, nom: "f", effet: i18n.M("aperçu sur l'autre fond"), libelle: func(*Modele) string { return i18n.T("fond") }, rang: 6,
+			faire: func(m *Modele) tea.Cmd { m.ed.autreFond = !m.ed.autreFond; return nil }},
+		{mode: enEditeur, touches: []string{"v"}, nom: "v", effet: i18n.M("aperçu en 24 bits, 256 ou 16 couleurs"), libelle: func(*Modele) string { return i18n.T("couleurs") }, rang: 6,
+			faire: func(m *Modele) tea.Cmd { m.ed.niveau = (m.ed.niveau + 1) % len(niveauxApercu); return nil }},
+		{mode: enEditeur, touches: []string{"r"}, nom: "r", effet: i18n.M("la couleur enregistrée de ce rôle"), rang: 9,
+			faire: func(m *Modele) tea.Cmd {
+				*rolesTheme[m.ed.role].champ(&m.ed.p.Couleurs) = *rolesTheme[m.ed.role].champ(&m.ed.garde.Couleurs)
+				m.majEditeur()
+				return nil
+			}},
+		dans(enEditeur, enregistrer),
+		dans(enEditeur, annuler),
+		{mode: enEditeur, touches: []string{"?"}, nom: "?", effet: i18n.M("cette aide"), libelle: func(*Modele) string { return i18n.T("aide") }, rang: 1,
+			faire: func(m *Modele) tea.Cmd { m.aide = true; return nil }},
+		{mode: enEditeur, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet suivant : Thèmes (Maj+Tab : Statusline)"), libelle: func(*Modele) string { return i18n.T("thèmes") }, rang: 7,
+			faire: (*Modele).basculerOnglet},
+		{mode: enEditeur, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter (demande d'abord s'il reste à enregistrer)"), libelle: func(*Modele) string { return i18n.T("quitter") }, rang: 8, faire: quitter},
+
+		{mode: enEditeurSaisie, nom: i18n.M("lettres"), effet: i18n.M("le code (rrggbb, # permis ; vide pour MODEL_END), ou le nom du thème")},
+		{mode: enEditeurSaisie, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("valider"), libelle: func(*Modele) string { return i18n.T("valider") }, rang: 1,
+			faire: (*Modele).validerSaisie},
+		{mode: enEditeurSaisie, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("annuler"), libelle: func(*Modele) string { return i18n.T("annuler") }, rang: 2,
+			faire: func(m *Modele) tea.Cmd { m.ed.saisie, m.ed.saisieNom = false, false; return nil }},
+		{mode: enEditeurSaisie, touches: []string{"backspace"}, nom: "⌫", effet: i18n.M("corriger"), rang: 3, faire: func(m *Modele) tea.Cmd {
+			if r := []rune(m.ed.texte); len(r) > 0 {
+				m.ed.texte = string(r[:len(r)-1])
+			}
+			return nil
+		}},
+
 		{mode: enAide, touches: []string{"esc", "?"}, nom: i18n.M("Échap ?"), effet: i18n.M("fermer l'aide"), libelle: func(*Modele) string { return i18n.T("fermer") }, rang: 1,
 			faire: func(m *Modele) tea.Cmd { m.aide = false; return nil }},
 		{mode: enAide, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter"), rang: 2, faire: quitter},
@@ -260,6 +316,10 @@ func (m *Modele) mode() mode {
 		return enAide
 	case m.questionQuitter:
 		return enQuitter
+	case m.onglet == 2 && m.ed.saisie && !m.aide:
+		return enEditeurSaisie
+	case m.onglet == 2 && !m.aide:
+		return enEditeur
 	case m.onglet == 1 && m.os.saisie:
 		return enStyleSaisie
 	case m.onglet == 1 && m.os.menu == menuAjout:
@@ -294,7 +354,7 @@ func (m *Modele) raccourciDe(touche string) (raccourci, bool) {
 func (m *Modele) touche(k tea.KeyMsg) tea.Cmd {
 	theme, filtre, dormait, ver := m.i, m.f, m.dort(), m.os.ver
 	m.derniereTouche = m.t
-	m.os.message = ""
+	m.os.message, m.ed.message = "", ""
 	cmd := m.toucheBrute(k)
 	switch {
 	case dormait:
@@ -330,6 +390,9 @@ func (m *Modele) toucheBrute(k tea.KeyMsg) tea.Cmd {
 	}
 	if m.mode() == enStyleSaisie && (k.Type == tea.KeyRunes || k.Type == tea.KeySpace) {
 		m.os.texte += string(k.Runes)
+	}
+	if m.mode() == enEditeurSaisie && (k.Type == tea.KeyRunes || k.Type == tea.KeySpace) {
+		m.ed.texte += string(k.Runes)
 	}
 	return nil
 }

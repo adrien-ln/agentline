@@ -467,7 +467,14 @@ func (m *Modele) OuvrirStyle() {
 }
 
 func (m *Modele) basculerOnglet() tea.Cmd {
-	m.onglet = 1 - m.onglet
+	d := 1
+	if m.derniere == "shift+tab" {
+		d = 2
+	}
+	m.onglet = (m.onglet + d) % 3
+	if m.onglet == 2 && !m.ed.actif {
+		m.editer(m.noms[m.i])
+	}
 	m.reagir("surpris")
 	return nil
 }
@@ -912,10 +919,10 @@ func (m *Modele) largeurNaturelle(nom string) int {
 // lignesApercuStyle : la hauteur du cadre de l'aperçu (la ligne SSH en plus avec la ligne courte).
 func (m *Modele) lignesApercuStyle() int { return 4 + b2i(m.os.court()) }
 
-// barreOnglets : « Thèmes   Statusline », l'onglet actif en inverse.
+// barreOnglets : « Thèmes   Statusline   Créer », l'onglet actif en inverse.
 func (m *Modele) barreOnglets(w int) string {
 	var t []string
-	for k, n := range []string{i18n.T("Thèmes"), "Statusline"} {
+	for k, n := range []string{i18n.T("Thèmes"), "Statusline", i18n.T("Créer")} {
 		if k == m.onglet {
 			t = append(t, inverse+gras+" "+n+" "+z)
 		} else {
@@ -923,7 +930,7 @@ func (m *Modele) barreOnglets(w int) string {
 		}
 	}
 	marque := ""
-	if m.os.modifie() {
+	if m.os.modifie() && m.onglet == 1 || m.ed.modifie() && m.onglet == 2 {
 		marque = "  " + estompe + i18n.T("• modifié") + z
 	}
 	s := strings.Join(t, " ") + "  " + estompe + "Tab" + z + marque
