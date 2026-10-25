@@ -2,9 +2,10 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,18 +26,23 @@ func terminal(f *os.File) bool {
 	return err == nil && i.Mode()&os.ModeCharDevice != 0 && console(f) // NUL et /dev/null sont aussi des périphériques caractère
 }
 
-// telecharger : le contenu d'une adresse (200 Mo au plus, deux minutes au plus).
+// telecharger : le contenu d'une adresse, par curl (livré avec Windows 10 et suivants, macOS et la plupart
+// des Linux) : pour ce seul téléchargement (la police), le binaire n'embarque pas la pile réseau (net/http,
+// TLS), qui alourdissait chaque lancement de la statusline. 200 Mo au plus, deux minutes au plus.
 func telecharger(url string) ([]byte, error) {
-	c := &http.Client{Timeout: 2 * time.Minute}
-	r, err := c.Get(url)
+	curl, err := exec.LookPath("curl")
 	if err != nil {
-		return nil, err
+		return nil, errors.New(i18n.T("curl introuvable : installe-le, ou télécharge %s à la main", url))
 	}
-	defer r.Body.Close()
-	if r.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s : %s", url, r.Status)
+	c := exec.Command(curl, "--fail", "--silent", "--show-error", "--location",
+		"--max-time", "120", "--max-filesize", strconv.Itoa(200<<20), url)
+	var erreurs bytes.Buffer
+	c.Stderr = &erreurs
+	sortie, err := c.Output()
+	if err != nil {
+		return nil, fmt.Errorf("curl : %v %s", err, strings.TrimSpace(erreurs.String()))
 	}
-	return io.ReadAll(io.LimitReader(r.Body, 200<<20))
+	return sortie, nil
 }
 
 // demander : pose la question, lit la réponse ; vide, « o », « oui », « y » ou « yes » : oui.

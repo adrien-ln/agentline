@@ -43,6 +43,7 @@ var cli = map[string]string{
 	"ne copie pas le binaire : utilise celui-ci, là où il est":                                         "don't copy the binary: use this one, where it is",
 	"sans Nerd Font : ne propose pas de l'installer, affiche la commande":                              "no Nerd Font: don't offer to install it, print the command",
 	"installe cette Nerd Font et la choisit dans tes terminaux, même à la place d'une autre (%s)":      "install this Nerd Font and select it in your terminals, even over another one (%s)",
+	"curl introuvable : installe-le, ou télécharge %s à la main":                                       "curl not found: install it, or download %s by hand",
 	"police inconnue : %s (au choix : %s)":                                                             "unknown font: %s (choose from: %s)",
 	"\nThèmes :\n":                                                                                     "\nThemes:\n",
 	"\nStyle :\n":                                                                                      "\nStyle:\n",
