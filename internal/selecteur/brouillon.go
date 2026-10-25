@@ -192,12 +192,12 @@ func (m *Modele) ecrire() (faits, avert []string) {
 	}
 	if m.ed.modifie() {
 		e := &m.ed
-		if err := m.sources.EcrireTheme(e.nom, theme.Format(e.p, e.titre, e.tags)); err != nil {
+		if err := m.sources.EcrireTheme(e.nom, theme.Format(e.p, e.titre, theme.EtiquettesAuto(e.p))); err != nil {
 			m.Resultat = erreur(err)
 			return nil, nil
 		}
 		faits = append(faits, i18n.T("thème personnel %s (%s.theme)", e.titre, e.nom))
-		e.garde, e.nomGarde, e.titreG, e.nouveau = e.p, e.nom, e.titre, false
+		e.garde, e.nomGarde, e.titreG, e.nouveau, e.aCreer = e.p, e.nom, e.titre, false, false
 		m.rafraichirThemes(e.nom)
 	}
 	m.choix, m.retrait = "", false

@@ -61,14 +61,15 @@ type editeur struct {
 	actif             bool
 	nom, titre        string        // le fichier (themes/<nom>.theme) et le nom affiché
 	nomGarde, titreG  string        // ce qui est enregistré (ou prévu, pour un nouveau thème)
-	tags              []string      // ceux du thème de départ, sans « populaire »
+	aCreer            bool          // le thème est à créer même sans autre changement (theme new, import)
 	p, garde          theme.Palette // le brouillon, et ce qui est enregistré (la copie, pour un nouveau thème)
 	nouveau           bool          // le fichier n'existe pas encore : s le crée
 	role, canal       int
 	saisie, saisieNom bool // on tape un code (Entrée) ou un nom (n)
 	texte             string
-	autreFond         bool // f : l'aperçu sur l'autre fond
-	niveau            int  // v : index dans niveauxApercu
+	autreFond         bool        // f : l'aperçu sur l'autre fond
+	niveau            int         // v : index dans niveauxApercu
+	vision            ansi.Vision // a : l'aperçu tel que le voit une personne daltonienne
 	message           string
 }
 
@@ -76,7 +77,7 @@ type editeur struct {
 const cleEditeur = " éditeur"
 
 func (e *editeur) modifie() bool {
-	return e.actif && (!reflect.DeepEqual(e.p, e.garde) || e.titre != e.titreG || e.nom != e.nomGarde)
+	return e.actif && (e.aCreer || !reflect.DeepEqual(e.p, e.garde) || e.titre != e.titreG || e.nom != e.nomGarde)
 }
 
 // couleur : la couleur du rôle choisi (MODEL_END vide : celle de BRANCH, qu'elle reprend).
@@ -108,14 +109,8 @@ func (m *Modele) editer(nom string) {
 	if !ok {
 		p = theme.Secours()
 	}
-	titre, tags := m.sources.Entete(nom)
-	var t []string
-	for _, x := range tags {
-		if x != "populaire" && x != filtreClairs {
-			t = append(t, x)
-		}
-	}
-	e := editeur{actif: true, nom: nom, titre: titre, tags: t, p: p, garde: p}
+	titre, _ := m.sources.Entete(nom)
+	e := editeur{actif: true, nom: nom, titre: titre, p: p, garde: p}
 	if !m.sources.DeLUtilisateur(nom) {
 		e.nom, e.titre, e.nouveau = m.nomLibre(nom+i18n.T("-perso")), i18n.T("%s (perso)", titre), true
 	}
@@ -128,10 +123,24 @@ func (m *Modele) editer(nom string) {
 // nouveau thème (vide : un nom libre).
 func (m *Modele) OuvrirEditeur(base, nom string) {
 	m.editer(base)
-	if nom != "" && m.ed.nouveau { // nom différent de celui prévu : le thème compte comme à créer
+	if nom != "" && m.ed.nouveau {
 		t := []rune(strings.ReplaceAll(nom, "-", " "))
-		m.ed.nom, m.ed.titre = nom, strings.ToUpper(string(t[:1]))+string(t[1:])
+		m.ed.nom, m.ed.titre, m.ed.aCreer = nom, strings.ToUpper(string(t[:1]))+string(t[1:]), true
 	}
+	m.ajuster()
+}
+
+// OuvrirImport : le sélecteur s'ouvre sur l'onglet Créer avec un thème importé (agentline theme import), à
+// retoucher puis à enregistrer.
+func (m *Modele) OuvrirImport(p theme.Palette, titre string) {
+	m.onglet = 2
+	nom := theme.NomDeTitre(titre)
+	if !theme.NomValide(nom) {
+		nom = i18n.T("importe")
+	}
+	nom = m.nomLibre(nom)
+	m.ed = editeur{actif: true, nom: nom, titre: titre, nomGarde: nom, titreG: titre, p: p, garde: p, nouveau: true, aCreer: true}
+	m.majEditeur()
 	m.ajuster()
 }
 
@@ -150,7 +159,53 @@ func (m *Modele) nomLibre(n string) string {
 
 // majEditeur : après un changement, Pip et les aperçus prennent le brouillon.
 func (m *Modele) majEditeur() {
-	m.palettes[cleEditeur] = m.ed.p.PourFond(m.clair())
+	m.palettes[cleEditeur] = simulee(m.ed.p, m.ed.vision).PourFond(m.clair())
+}
+
+// simulee : la palette telle que la voit une personne de cette vision.
+func simulee(p theme.Palette, v ansi.Vision) theme.Palette {
+	if v == ansi.VisionNormale {
+		return p
+	}
+	for _, c := range []*theme.Couleurs{&p.Couleurs, &p.Autre} {
+		for _, r := range rolesTheme {
+			x := r.champ(c)
+			*x = ansi.Simuler(*x, v)
+		}
+	}
+	return p
+}
+
+// nomsVisions : les visions de a, en peu de mots.
+var nomsVisions = []string{i18n.M("vision normale"), i18n.M("protanopie"), i18n.M("deutéranopie"), i18n.M("tritanopie")}
+
+// generer : g, les seuils et l'intensité accordés à la couleur choisie ; G, tout le thème autour d'elle.
+func (m *Modele) generer(tout bool) tea.Cmd {
+	e := &m.ed
+	c := e.couleur(e.role)
+	if tout {
+		e.p.Couleurs = theme.Harmoniser(c, e.p.Clair).Couleurs
+	} else {
+		e.p = theme.Seuils(e.p, c)
+	}
+	m.majEditeur()
+	return nil
+}
+
+// confusions : en vision simulée, les seuils voisins qui ne se distinguent plus (pour l'avertir).
+func (e *editeur) confusions() []string {
+	if e.vision == ansi.VisionNormale {
+		return nil
+	}
+	s := simulee(e.p, e.vision)
+	seuils := [][2]string{{"D0", s.D0}, {"D50", s.D50}, {"D75", s.D75}, {"D100", s.D100}}
+	var l []string
+	for k := 1; k < len(seuils); k++ {
+		if ansi.Ecart(seuils[k-1][1], seuils[k][1]) < 10 {
+			l = append(l, seuils[k-1][0]+"/"+seuils[k][0])
+		}
+	}
+	return l
 }
 
 // reglerCouleur : ←→ (Maj : 5 fois plus) sur le canal choisi, en CIELAB.
@@ -176,7 +231,7 @@ func (m *Modele) validerSaisie() tea.Cmd {
 	e := &m.ed
 	t := strings.TrimSpace(e.texte)
 	if e.saisieNom {
-		nom := nomDeFichier(t)
+		nom := theme.NomDeTitre(t)
 		switch {
 		case t == "" || !theme.NomValide(nom):
 			e.message = i18n.T("⚠ nom vide : des lettres ou des chiffres")
@@ -210,24 +265,6 @@ func codeCouleur(h string) bool {
 	return err == nil
 }
 
-// nomDeFichier : « Ma Nuit d'été » -> « ma-nuit-d-ete » (minuscules sans accents, tirets).
-func nomDeFichier(t string) string {
-	sans := strings.NewReplacer("à", "a", "â", "a", "ä", "a", "é", "e", "è", "e", "ê", "e", "ë", "e", "î", "i", "ï", "i",
-		"ô", "o", "ö", "o", "ù", "u", "û", "u", "ü", "u", "ç", "c", "œ", "oe", "æ", "ae")
-	var b strings.Builder
-	tiret := false
-	for _, r := range sans.Replace(strings.ToLower(t)) {
-		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
-			b.WriteRune(r)
-			tiret = false
-		} else if !tiret && b.Len() > 0 {
-			b.WriteByte('-')
-			tiret = true
-		}
-	}
-	return strings.TrimSuffix(b.String(), "-")
-}
-
 // --- Dessin ----------------------------------------------------------------------------------------
 
 // apercuEditeur : les statuslines d'exemple (complète, tendue, API) au brouillon, sur le fond et au niveau
@@ -236,7 +273,8 @@ func (m *Modele) apercuEditeur(w int) []string {
 	e := &m.ed
 	clair := e.p.Clair != e.autreFond
 	env := m.apercu
-	env.Palette, env.Style, env.Columns = &e.p, m.os.st, w+4
+	p := simulee(e.p, e.vision)
+	env.Palette, env.Style, env.Columns = &p, m.os.st, w+4
 	env.Couleurs.Fond, env.Couleurs.Niveau = ansi.Sombre, niveauxApercu[e.niveau]
 	fond := ansi.FondSombre
 	if clair {
@@ -326,6 +364,9 @@ func (m *Modele) corpsEditeur() []string {
 	if e.nouveau {
 		etat = " · " + i18n.T("nouveau")
 	}
+	if e.vision != ansi.VisionNormale {
+		fond += " · " + i18n.T(nomsVisions[e.vision])
+	}
 	titre := "╭─ " + e.titre + " · " + e.nom + ".theme" + etat + " · " + fond + " · " + nomsNiveaux(niveauxApercu[e.niveau]) + " "
 	if largeur(titre)+2 > bw {
 		titre = "╭─"
@@ -343,7 +384,7 @@ func (m *Modele) corpsEditeur() []string {
 	// les rôles : deux colonnes si la place le permet ; faute de hauteur, une colonne qui défile autour du
 	// rôle choisi (les canaux et le message restent visibles dessous)
 	n := len(rolesTheme)
-	place := m.d.corps - len(corps) - 2 - b2i(e.message != "")
+	place := m.d.corps - len(corps) - 2 - b2i(e.message != "") - b2i(len(e.confusions()) > 0)
 	cols, cw := 1, bw
 	if bw >= 92 && (n+1)/2 <= place {
 		cols, cw = 2, (bw-2)/2
@@ -365,6 +406,9 @@ func (m *Modele) corpsEditeur() []string {
 		corps = append(corps, marge+strings.TrimRight(l, " "))
 	}
 	corps = append(corps, "", marge+"  "+m.ligneCanaux())
+	if c := e.confusions(); len(c) > 0 {
+		corps = append(corps, marge+"  "+gras+i18n.T("⚠ en %s, ces seuils se confondent : %s", i18n.T(nomsVisions[e.vision]), strings.Join(c, ", "))+z)
+	}
 	if e.message != "" {
 		corps = append(corps, marge+"  "+gras+e.message+z)
 	}

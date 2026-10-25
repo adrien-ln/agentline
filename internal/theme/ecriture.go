@@ -95,3 +95,21 @@ func (s Sources) DeLUtilisateur(nom string) bool {
 
 // NomValide : le nom peut-il être celui d'un thème (minuscules, chiffres et tirets) ?
 func NomValide(nom string) bool { return nomValide.MatchString(nom) }
+
+// NomDeTitre : « Ma Nuit d'été » -> « ma-nuit-d-ete », un nom de fichier de thème (minuscules sans accents, tirets).
+func NomDeTitre(t string) string {
+	sans := strings.NewReplacer("à", "a", "â", "a", "ä", "a", "é", "e", "è", "e", "ê", "e", "ë", "e", "î", "i", "ï", "i",
+		"ô", "o", "ö", "o", "ù", "u", "û", "u", "ü", "u", "ç", "c", "œ", "oe", "æ", "ae")
+	var b strings.Builder
+	tiret := false
+	for _, r := range sans.Replace(strings.ToLower(t)) {
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
+			b.WriteRune(r)
+			tiret = false
+		} else if !tiret && b.Len() > 0 {
+			b.WriteByte('-')
+			tiret = true
+		}
+	}
+	return strings.TrimSuffix(b.String(), "-")
+}

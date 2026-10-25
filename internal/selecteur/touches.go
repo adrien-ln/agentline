@@ -284,6 +284,16 @@ func init() {
 				m.majEditeur()
 				return nil
 			}},
+		{mode: enEditeur, touches: []string{"g"}, nom: "g", effet: i18n.M("accorder les seuils et l'intensité à cette couleur"), libelle: func(*Modele) string { return i18n.T("accorder") }, rang: 7,
+			faire: func(m *Modele) tea.Cmd { return m.generer(false) }},
+		{mode: enEditeur, touches: []string{"G"}, nom: "G", effet: i18n.M("tout le thème en harmonie autour de cette couleur"), rang: 9,
+			faire: func(m *Modele) tea.Cmd { return m.generer(true) }},
+		{mode: enEditeur, touches: []string{"a"}, nom: "a", effet: i18n.M("aperçu en vision daltonienne : protanopie, deutéranopie, tritanopie"), libelle: func(m *Modele) string { return i18n.T(nomsVisions[m.ed.vision]) }, rang: 8,
+			faire: func(m *Modele) tea.Cmd {
+				m.ed.vision = (m.ed.vision + 1) % ansi.Vision(len(nomsVisions))
+				m.majEditeur()
+				return nil
+			}},
 		dans(enEditeur, enregistrer),
 		dans(enEditeur, annuler),
 		{mode: enEditeur, touches: []string{"?"}, nom: "?", effet: i18n.M("cette aide"), libelle: func(*Modele) string { return i18n.T("aide") }, rang: 1,

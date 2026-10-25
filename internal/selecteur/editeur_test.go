@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/adrien-ln/agentline/internal/theme"
 )
 
 // ouvrirEditeur : le sélecteur sur l'onglet Créer, avec une copie du thème survolé (e).
@@ -113,7 +115,7 @@ func TestEditeurAnnulerEtContraste(t *testing.T) {
 // TestNomDeFichier : un nom affiché devient un nom de fichier de thème.
 func TestNomDeFichier(t *testing.T) {
 	for in, out := range map[string]string{"Ma Nuit d'été": "ma-nuit-d-ete", "  Tokyo  2 ": "tokyo-2", "Œuvre!": "oeuvre"} {
-		if n := nomDeFichier(in); n != out {
+		if n := theme.NomDeTitre(in); n != out {
 			t.Errorf("%q -> %q, attendu %q", in, n, out)
 		}
 	}
@@ -155,5 +157,47 @@ func TestOuvrirEditeurNomme(t *testing.T) {
 	p, _ := m.sources.Charger("ma-nuit")
 	if nord, _ := m.sources.Charger("nord"); p != nord {
 		t.Errorf("le thème créé doit reprendre les couleurs de nord :\n%+v\n%+v", p, nord)
+	}
+}
+
+// TestEditeurOutils : g accorde les seuils à la couleur choisie, G refait le thème autour d'elle, a fait défiler
+// les visions (et avertit quand des seuils se confondent) ; les étiquettes écrites sont calculées.
+func TestEditeurOutils(t *testing.T) {
+	m, config := ouvrirEditeur(t)
+	appuyer(m, "↓", "↓", "↓", "↓") // MODEL
+	avant := m.ed.p.D0
+	appuyer(m, "g")
+	if m.ed.p.D0 == avant || theme.EtiquetteDe(m.ed.p.D0) != "vert" || theme.EtiquetteDe(m.ed.p.D100) != "rouge" {
+		t.Errorf("g : D0 %s -> %s, D100 %s", avant, m.ed.p.D0, m.ed.p.D100)
+	}
+	appuyer(m, "G")
+	if m.ed.p.Modele != m.ed.couleur(4) || m.ed.p.Texte == "" {
+		t.Errorf("G : %+v", m.ed.p)
+	}
+	appuyer(m, "a", "a")
+	if m.ed.vision != 2 || !strings.Contains(ecran(m), "deutéranopie") {
+		t.Errorf("a, a : deutéranopie attendue (%d)", m.ed.vision)
+	}
+	m.ed.p.D75, m.ed.p.D100 = "e08040", "d06030" // proches, et plus encore en deutéranopie
+	if c := m.ed.confusions(); len(c) == 0 || !strings.Contains(ecran(m), "se confondent") {
+		t.Errorf("seuils proches en deutéranopie : %v", c)
+	}
+	appuyer(m, "s")
+	b, _ := os.ReadFile(filepath.Join(config, "themes", m.ed.nom+".theme"))
+	if l := strings.Split(string(b), "\n"); len(l) < 2 || !strings.HasPrefix(l[1], "# tags: ") || strings.Contains(l[1], "popular") {
+		t.Errorf("étiquettes calculées, jamais « popular » :\n%s", b)
+	}
+}
+
+// TestOuvrirImport : un thème importé s'ouvre dans l'éditeur, à créer sous un nom tiré de son titre.
+func TestOuvrirImport(t *testing.T) {
+	m, _ := nouveau(t)
+	m.OuvrirImport(theme.Harmoniser("3fa7d6", false), "Nuit Bleue")
+	if m.onglet != 2 || m.ed.nom != "nuit-bleue" || !m.ed.nouveau || !m.ed.modifie() {
+		t.Errorf("import : onglet %d, %q, nouveau=%v, à créer=%v", m.onglet, m.ed.nom, m.ed.nouveau, m.ed.modifie())
+	}
+	appuyer(m, "u")
+	if !m.ed.modifie() {
+		t.Error("u garde le thème importé à créer")
 	}
 }
