@@ -4,6 +4,10 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Added
+
+- Alerts that say what to do: a context in alert is followed by a `/compact` hint in Claude Code (`ctx.compact`), and uncommitted changes on `main` or `master` turn the branch red and put the git segment in alert (`git.protected`, set it to your own list or leave it empty to turn it off).
+
 ### Changed
 
 - The picker mascot is now Pip, a chick perched on the window like a bird on a wire, in one color of the theme. The `m` key switches it between solid and hidden. It replaces Clawd, whose drawing belongs to Anthropic.
