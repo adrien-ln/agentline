@@ -63,7 +63,7 @@ It checks the binary, `settings.json`, the font, the colors and the background, 
 ## Use
 
 ```bash
-agentline          # pick a theme: Enter keeps it for this project, this branch or everywhere
+agentline          # pick a theme (Enter) and where it applies (p this project, b this branch, d everywhere), then s to save
 agentline style    # show, hide, move and tune each item of the statusline
 agentline help     # every command
 ```

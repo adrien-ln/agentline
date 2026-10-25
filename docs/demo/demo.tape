@@ -1,5 +1,5 @@
-# Démo du README : le sélecteur (selecteur.gif), en anglais (AGENTLINE_LANG=en), centrée sur les nouveautés : validation par projet,
-# branche ou partout, puis l'onglet Statusline (chaque élément réglable) et `agentline style preview`.
+# Démo du README : le sélecteur (selecteur.gif), en anglais (AGENTLINE_LANG=en) : un thème choisi pour ce projet, l'onglet
+# Statusline (chaque élément réglable), puis s qui enregistre le tout sans fermer, et `agentline style preview`.
 # La statusline seule : statusline.tape. Depuis la racine du dépôt, avec vhs, ttyd et ffmpeg : vhs docs/demo/demo.tape
 # Les réglages de la démo vont dans un dossier temporaire : les tiens ne sont ni lus ni modifiés. Le sélecteur
 # s'ouvre dans un dépôt de démo « agentline » (temporaire lui aussi), pour un en-tête qui ne dépend pas du clone.
@@ -36,11 +36,11 @@ Sleep 2s
 Left 4
 Sleep 800ms
 
-# valider : le panneau propose ce projet, la branche, partout. Échap : retour
+# choisir le thème, pour ce projet : la barre dit ce qui reste à enregistrer
 Enter
-Sleep 3s
-Escape
-Sleep 1s
+Sleep 1.5s
+Type "p"
+Sleep 2.5s
 
 # l'onglet Statusline : on choisit un élément sur la statusline même
 Tab
@@ -65,11 +65,11 @@ Escape
 # l'aperçu tendu : alertes, conflit, plafond
 Type "v"
 Sleep 2.5s
-# garder pour tous les projets
+# enregistrer le thème et le style d'un coup, sans fermer, puis quitter
 Type "s"
-Sleep 1.5s
-Type "d"
 Sleep 2.5s
+Type "q"
+Sleep 1.5s
 
 # le résultat, en ligne de commande
 Type "agentline style preview"
