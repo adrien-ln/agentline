@@ -116,4 +116,8 @@ var installation = map[string]string{
 	"en SSH : statusline complète (ligne courte : agentline style set ssh.short yes)": "over SSH: full statusline (short line: agentline style set ssh.short yes)",
 	"en SSH : statusline sur une ligne courte, sans icônes (ssh.short=yes)":           "over SSH: statusline on one short line, without icons (ssh.short=yes)",
 	"AGENTLINE_SSH_RICH=1 : les couleurs du thème quand même ; la statusline complète : agentline style set ssh.short no": "AGENTLINE_SSH_RICH=1: the theme colors anyway; the full statusline: agentline style set ssh.short no",
+	"Un aperçu de police a été interrompu : remets la police de %s à la main.":                                            "A font preview was interrupted: set the font of %s back by hand.",
+	"Un aperçu de police a été interrompu : %s":                                                                           "A font preview was interrupted: %s",
+	"%s a changé pendant l'aperçu : remets sa police à la main":                                                           "%s changed during the preview: set its font back by hand",
+	"Un aperçu de police avait été interrompu : %s est remise dans %s%s.":                                                 "A font preview had been interrupted: %s is set back in %s%s.",
 }
