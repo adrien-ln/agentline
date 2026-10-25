@@ -152,9 +152,11 @@ func (r *rendu) nomModele(t string) string {
 	return b.String() + z
 }
 
+// niveauxEffort : le rang de chaque niveau d'effort, dans la jauge.
+var niveauxEffort = map[string]int{"low": 0, "medium": 1, "high": 2, "xhigh": 3, "max": 4}
+
 func (r *rendu) puissance(niveau string) string {
-	n := map[string]int{"low": 0, "medium": 1, "high": 2, "xhigh": 3, "max": 4}
-	i, ok := n[niveau]
+	i, ok := niveauxEffort[niveau]
 	if !ok {
 		return ""
 	}
