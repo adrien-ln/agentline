@@ -4,6 +4,10 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Fixed
+
+- A quota already at 100% no longer shows a projection (`↗103%`).
+
 ## [0.4.0] - 2026-10-25
 
 ### Added

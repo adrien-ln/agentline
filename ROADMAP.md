@@ -26,7 +26,6 @@ Everything below is covered by automated tests or simulations only. The CI runs 
 
 ## Ideas
 
-- [ ] At 100% of the 5-hour quota, the statusline still shows a projection (`↗103%`). This comes from the old bash version and is kept by the references (`tests/golden/`). Fixing it means updating the references (`go test ./internal/render -maj`).
 - [ ] More animated scenes, or a scene chosen by project.
 - [ ] `agentline theme gallery`: every theme at once, one statusline per theme.
 - [ ] Favorites in the picker, theme editor.

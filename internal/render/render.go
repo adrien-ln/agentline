@@ -264,7 +264,8 @@ func (r *rendu) quota(libelle, utilise, reset string, fenetre int64) (string, bo
 	}
 	alerte := ui >= int64(r.o.quotaAlerte) || plafond != ""
 	s := r.etiquette(libelle) + r.valeur(u, alerte)
-	if r.o.projection && ind != ui && ind >= 75 && plafond == "" {
+	// Quota épuisé : la projection n'apprend plus rien (elle affichait ↗103 % à 100 %)
+	if r.o.projection && ind != ui && ind >= 75 && ui < 100 && plafond == "" {
 		s += " " + r.teinte(int(ind)) + "↗" + strconv.FormatInt(ind, 10) + "%" + z
 	}
 	if reset != "" && (alerte && r.o.reset == "alert" || r.o.reset == "always") {
