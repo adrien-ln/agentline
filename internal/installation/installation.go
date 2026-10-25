@@ -239,6 +239,9 @@ func Installer(o Options) error {
 	if err := o.retirerAnciens(); err != nil {
 		return err
 	}
+	if err := o.configurerOutils(); err != nil {
+		return err
+	}
 
 	if o.PoliceImposee {
 		if err := o.AppliquerPolice(); err != nil {
@@ -264,6 +267,9 @@ func Desinstaller(o Options) error {
 		return err
 	} else if res != identique {
 		o.etape(i18n.T("Réglages"), i18n.T("statusLine retirée de %s%s", reglages, avecCopie(copie)))
+	}
+	if err := o.retirerOutils(); err != nil {
+		return err
 	}
 	if err := o.retirerAnciens(); err != nil {
 		return err

@@ -35,6 +35,7 @@ type Verification struct {
 // pose la question, comparé à celui qui est installé.
 func Diagnostiquer(o Options) []Verification {
 	v := []Verification{o.verifierBinaire(), o.verifierPath(), o.verifierStatusLine()}
+	v = append(v, o.verifierOutils()...)
 	v = append(v, o.verifierAnciens()...)
 	v = append(v, o.verifierPolice()...)
 	return append(v, o.verifierSSH())
