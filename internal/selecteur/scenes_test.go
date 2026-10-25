@@ -150,7 +150,7 @@ func TestMascotteModes(t *testing.T) {
 	}
 	// toujours d'une seule couleur : chaque cellule de la tête (sans bec) est en MODELE
 	tete := strings.ReplaceAll(visible(l[1]), " ", "")
-	if n := strings.Count(l[1], ansi.Fg(m.palette(m.noms[m.i]).Modele)); n != len([]rune(tete)) || !strings.Contains(m.View(), "m mascotte (unie)") {
+	if n := strings.Count(l[1], ansi.Fg(m.palette(m.noms[m.i]).Modele)); n != len([]rune(tete)) || modesMascotte[m.mascotte] != "unie" {
 		t.Errorf("Pip doit être d'une seule couleur : %d cellules en MODELE sur %d", n, len([]rune(tete)))
 	}
 	appuyer(m, "m")
@@ -217,7 +217,7 @@ func TestMascotteHumeurs(t *testing.T) {
 
 	m, _ = nouveau(t)
 	eveille(m, calme)
-	appuyer(m, "entrée")
+	appuyer(m, "entrée", "s") // un thème choisi puis enregistré : il danse
 	pas := map[string]bool{}
 	for k := 0; k < 4; k++ {
 		_, p, _ := m.Mascotte(m.noms[m.i])
@@ -227,7 +227,9 @@ func TestMascotteHumeurs(t *testing.T) {
 	if h := m.humeur(); h != "danse" || !pas["   ▘     "] || !pas["     ▝   "] {
 		t.Errorf("validation : %s, attendu une danse d'une patte sur l'autre (%v)", h, pas)
 	}
-	appuyer(m, "échap")
+	m, _ = nouveau(t)
+	eveille(m, calme)
+	appuyer(m, "entrée", "u")
 	if h := m.humeur(); h != "clin" {
 		t.Errorf("annulation : %s, attendu un clin d'œil", h)
 	}

@@ -64,7 +64,6 @@ type ongletStyle struct {
 	opt       int          // rangée choisie dans le menu
 	saisie    bool         // on tape une valeur (libellé, glyphe)
 	texte     string       // ce qui est tapé
-	confirmer bool         // la question « où garder ce style ? » est posée
 	apercu    int          // index dans nomsApercus
 	message   string       // une information ou une erreur, effacée à la touche suivante
 	ignore    bool         // AGENTLINE_STYLE=default : le style gardé ne se verra pas
@@ -471,43 +470,6 @@ func (m *Modele) basculerOnglet() tea.Cmd {
 	m.onglet = 1 - m.onglet
 	m.reagir("surpris")
 	return nil
-}
-
-// quitterOuAvertir : q ou Échap pour quitter ; des modifications du style non gardées le font dire une
-// fois, la touche suivante quitte.
-func (m *Modele) quitterOuAvertir() tea.Cmd {
-	if m.os.modifie() && !m.avertiQuitter {
-		m.avertiQuitter = true
-		return nil
-	}
-	return tea.Quit
-}
-
-// garderStyle : d, le style en cours écrit pour tous les projets.
-func (m *Modele) garderStyle() tea.Cmd {
-	if err := style.Ecrire(m.sources.Config, m.os.st); err != nil {
-		m.Resultat = erreur(err)
-		return tea.Quit
-	}
-	n := 0
-	for _, c := range style.Cles() {
-		if m.os.st.Regle(c.Nom) {
-			n++
-		}
-	}
-	m.os.garde = m.os.st.Copie()
-	if n == 0 {
-		m.Resultat = i18n.T("✓ Style par défaut pour la statusline : %s", visibleBientot())
-	} else {
-		m.Resultat = i18n.N(n, "✓ Style de la statusline gardé (%d réglage, agentline style show) : %s", "✓ Style de la statusline gardé (%d réglages, agentline style show) : %s", n, visibleBientot())
-	}
-	if m.os.ignore {
-		m.Resultat += "\n" + i18n.T("⚠ AGENTLINE_STYLE=default : il ne se verra pas tant qu'elle est définie.")
-	}
-	if n := m.noms[m.i]; n != m.avant { // l'autre onglet : le thème survolé n'est pas gardé
-		m.Resultat += "\n" + i18n.T("⚠ Le thème %s n'a pas été gardé (Entrée dans l'onglet Thèmes).", m.titres[m.i])
-	}
-	return tea.Quit
 }
 
 // --- Aperçus ---------------------------------------------------------------------------------------

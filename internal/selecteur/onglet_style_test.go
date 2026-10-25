@@ -264,26 +264,22 @@ func TestOngletStyleOptions(t *testing.T) {
 func TestOngletStyleGarder(t *testing.T) {
 	m, config := ouvrirStyle(t)
 	aller(t, m, gLigne1, "pr")
-	appuyer(m, "x", "s")
-	if m.mode() != enStyleQuestion || m.humeur() != "danse" {
-		t.Fatal("s : la question, et Pip danse")
+	appuyer(m, "x")
+	if e := aplati(ecran(m)); !strings.Contains(e, "Non enregistré : style de la statusline (1 réglage)") {
+		t.Errorf("x : la barre doit le dire :\n%s", ecran(m))
 	}
-	e := ecran(m)
-	if !strings.Contains(e, "[d] partout") || !strings.Contains(e, "[p] ce projet (bientôt)") {
-		t.Errorf("panneau :\n%s", e)
-	}
-	if appuyer(m, "p") {
-		t.Fatal("p n'est pas encore disponible")
-	}
-	if !appuyer(m, "d") {
-		t.Fatal("d garde et quitte")
+	if appuyer(m, "s") || m.humeur() != "danse" {
+		t.Fatal("s enregistre sans fermer, et Pip danse")
 	}
 	b, err := os.ReadFile(filepath.Join(config, style.Fichier))
 	if err != nil || !strings.Contains(string(b), "line1=model effort fast | folder git worktree | agent | style | session\n") {
 		t.Errorf("fichier : %q %v", b, err)
 	}
-	if !strings.HasPrefix(m.Message(), "✓ Style de la statusline gardé (1 réglage") {
-		t.Errorf("message : %q", m.Message())
+	if m.os.modifie() || !strings.Contains(aplati(ecran(m)), "✓ Enregistré : style de la statusline (1 réglage)") {
+		t.Errorf("après s :\n%s", ecran(m))
+	}
+	if !appuyer(m, "q") || !strings.HasPrefix(m.Message(), "✓ Enregistré : style de la statusline (1 réglage)") {
+		t.Errorf("q : %q", m.Message())
 	}
 }
 
@@ -294,30 +290,44 @@ func TestOngletStyleQuitterSansGarder(t *testing.T) {
 	}
 	m, config := ouvrirStyle(t)
 	appuyer(m, "x")
-	if appuyer(m, "q") {
-		t.Fatal("modifications non gardées : q avertit d'abord")
+	if appuyer(m, "q") || m.mode() != enQuitter {
+		t.Fatal("modifications non enregistrées : q demande d'abord")
 	}
-	if e := ecran(m); !strings.Contains(e, "non gardées") || !strings.Contains(e, "s (onglet Statusline)") {
-		t.Errorf("l'avertissement doit s'afficher :\n%s", e)
+	if appuyer(m, "échap") || m.mode() != enStyle {
+		t.Fatal("Échap : retour aux items")
 	}
-	appuyer(m, "→") // une autre touche : l'avertissement tombe
-	if appuyer(m, "échap") {
-		t.Fatal("l'avertissement vaut pour la touche suivante seulement")
+	if appuyer(m, "u") || m.os.modifie() {
+		t.Fatal("u : le style revient à celui du fichier")
 	}
-	if !appuyer(m, "échap") {
-		t.Fatal("la seconde fois, Échap quitte")
-	}
-	if !strings.Contains(m.Message(), "pas été gardées") {
-		t.Errorf("message : %q", m.Message())
+	appuyer(m, "x")
+	if !appuyer(m, "q", "n") || !strings.Contains(m.Message(), "Non enregistré : style de la statusline") {
+		t.Errorf("q puis n : %q", m.Message())
 	}
 	if _, err := os.Stat(filepath.Join(config, style.Fichier)); !os.IsNotExist(err) {
 		t.Error("rien ne doit être écrit")
 	}
-	// depuis l'onglet Thèmes aussi
-	m, _ = ouvrirStyle(t)
-	appuyer(m, "x", "tab")
-	if appuyer(m, "q") || !appuyer(m, "q") {
-		t.Error("onglet Thèmes : avertir, puis quitter")
+}
+
+// TestEnregistrerLesDeuxOnglets : un thème choisi dans un onglet et le style réglé dans l'autre partent
+// ensemble avec s, depuis n'importe quel onglet ; s dans la question de sortie enregistre puis quitte.
+func TestEnregistrerLesDeuxOnglets(t *testing.T) {
+	m, config := ouvrirStyle(t)
+	appuyer(m, "x", "tab", "↓", "entrée", "d", "tab")
+	nom := m.noms[m.i]
+	if a := m.enAttente(); len(a) != 2 {
+		t.Fatalf("un thème et le style en attente : %v", a)
+	}
+	if !appuyer(m, "q", "s") {
+		t.Fatal("q puis s : enregistrer et quitter")
+	}
+	if b, _ := os.ReadFile(filepath.Join(config, "defaut")); string(b) != nom+"\n" {
+		t.Errorf("defaut = %q, attendu %s", b, nom)
+	}
+	if _, err := os.Stat(filepath.Join(config, style.Fichier)); err != nil {
+		t.Errorf("le style doit être écrit : %v", err)
+	}
+	if msg := m.Message(); !strings.Contains(msg, "thème ") || !strings.Contains(msg, "style de la statusline") || strings.Contains(msg, "Non enregistré") {
+		t.Errorf("message : %q", msg)
 	}
 }
 
@@ -465,20 +475,5 @@ func TestStyleCentre(t *testing.T) {
 			t.Errorf("%v : l'aperçu passe de la ligne %d à %d", menu, grand, k)
 		}
 		appuyer(m, "échap")
-	}
-}
-
-// TestGarderSansPerdreLAutreOnglet : garder le thème ou le style ferme le sélecteur ; ce qui n'a pas été gardé
-// dans l'autre onglet est signalé au lieu d'être perdu en silence.
-func TestGarderSansPerdreLAutreOnglet(t *testing.T) {
-	m, _ := ouvrirStyle(t)
-	appuyer(m, "x", "tab") // un item retiré, puis l'onglet Thèmes
-	if !appuyer(m, "entrée", "d") || !strings.Contains(m.Message(), "style de la statusline n'ont pas été gardées") {
-		t.Errorf("thème gardé, style modifié : le message doit le dire :\n%s", m.Message())
-	}
-	m, _ = ouvrirStyle(t)
-	appuyer(m, "tab", "↓", "tab") // un autre thème survolé, retour à la statusline
-	if !appuyer(m, "x", "s", "d") || !strings.Contains(m.Message(), "n'a pas été gardé") {
-		t.Errorf("style gardé, autre thème survolé : le message doit le dire :\n%s", m.Message())
 	}
 }

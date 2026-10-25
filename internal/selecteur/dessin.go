@@ -296,6 +296,9 @@ func (m *Modele) ligneListe(k int, sel bool, lw int) string {
 	if sel {
 		return inverse + " › " + t + pad + " " + z
 	}
+	if m.noms[k] == m.choix && m.themeEnAttente() { // choisi, pas encore enregistré
+		return "  " + gras + "◆" + z + t + pad + " "
+	}
 	if m.noms[k] == m.avant {
 		return "  " + estompe + "●" + z + t + pad + " "
 	}
@@ -313,7 +316,7 @@ func indicateur(s string, lw int) string {
 func centrer(s string, w int) string { return espaces((w-largeur(s))/2) + s }
 
 // lignesEntete : le titre en grandes lettres (s'il a sa place), centré d'un bloc, puis la ligne du dépôt :
-// le thème en vigueur et pourquoi, le thème survolé, le nombre de thèmes, le chemin, dans cet ordre de
+// le thème en vigueur et pourquoi, la portée de s (onglet Thèmes), le thème survolé, le nombre de thèmes, le chemin, dans cet ordre de
 // priorité (ce qui ne tient pas est retiré en partant de la fin), puis une ligne vide.
 func (m *Modele) lignesEntete(nom string, w int) []string {
 	var l []string
@@ -334,6 +337,9 @@ func (m *Modele) lignesEntete(nom string, w int) []string {
 	pastille := ansi.Bg(p.Modele) + ansi.Fg(visageSombre) + gras + " " + depot + " " + z
 	a := theme.Active(m.chaine)
 	infos := []string{i18n.T("en vigueur : %s (%s)", m.titreDe(a.Nom), pourquoi(a))}
+	if m.onglet == 0 {
+		infos = append(infos, i18n.T("portée : %s", m.libellePortee()))
+	}
 	if nom != a.Nom {
 		infos = append(infos, i18n.T("survolé : %s", m.titres[m.i]))
 	}

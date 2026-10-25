@@ -115,7 +115,7 @@ var expressions = map[string]expression{
 var danse = [2]expression{{ailes: "levés", yeux: "ouverts", pieds: "gauche"}, {ailes: "un", yeux: "fermés", pieds: "droite"}}
 
 // durées des réactions (ms) ; le bond ne dure que le début
-var dureesReaction = map[string]int{"content": 1100, "surpris": 800, "reveil": 700, "clin": 700, "suit": 1200}
+var dureesReaction = map[string]int{"content": 1100, "surpris": 800, "reveil": 700, "clin": 700, "suit": 1200, "danse": 1500}
 
 const (
 	dureeSaut         = 350
@@ -137,8 +137,6 @@ func (m *Modele) humeur() string {
 		return m.reaction
 	}
 	switch {
-	case m.confirmer || m.os.confirmer:
-		return "danse"
 	case m.dort():
 		return "endormi"
 	case m.t-m.derniereTouche > sommeil-dureeSomnolence+dureeBaillement:

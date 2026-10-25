@@ -103,15 +103,10 @@ func b2i(b bool) int {
 	return 0
 }
 
-// lignesPied : le pied de page, en lignes de largeur w au plus : le panneau de validation (replié, jamais
-// tronqué), la recherche en cours, ou l'aide courte.
+// lignesPied : le pied de page, en lignes de largeur w au plus : le brouillon, puis la question de sortie
+// (repliée, jamais tronquée), la recherche en cours, ou l'aide courte.
 func (m *Modele) lignesPied(w int) []string {
-	var avant []string // un avertissement, un message de l'onglet Statusline, au-dessus du pied
-	if m.avertiQuitter {
-		for _, x := range replier(strings.Fields(i18n.T("⚠ Modifications du style non gardées : encore une fois pour quitter sans les garder, s (onglet Statusline) pour les garder.")), " ", w) {
-			avant = append(avant, gras+x+z)
-		}
-	}
+	avant := m.lignesBrouillon(w) // ce qui reste à enregistrer, ou le « ✓ Enregistré » de s
 	if m.onglet == 1 && m.os.message != "" {
 		for _, x := range replier(strings.Fields(m.os.message), " ", w) {
 			avant = append(avant, gras+x+z)
@@ -122,31 +117,15 @@ func (m *Modele) lignesPied(w int) []string {
 
 func (m *Modele) piedDuMode(w int) []string {
 	switch md := m.mode(); md {
-	case enStyleQuestion:
-		morceaux := []string{gras + i18n.T("Garder ce style :") + z}
+	case enQuitter:
+		morceaux := []string{gras + i18n.T("Quitter :") + z}
 		for _, r := range m.raccourcisDuPied(md) {
 			morceaux = append(morceaux, "["+r.touche()+"] "+r.maintenant(m))
 		}
-		l := replier(morceaux, "  ", w)
-		if m.os.ignore {
-			l = append(l, gras+tronquer(i18n.T("⚠ AGENTLINE_STYLE=default : il ne se verra pas tant qu'elle est définie"), w)+z)
-		}
-		return l
+		return replier(morceaux, "  ", w)
 	case enStyleSaisie:
 		debut := gras + i18n.T("%s : %s", m.os.cle().Nom, m.os.texte) + z + "▏   "
 		return []string{tronquer(debut+estompe+m.aideCourte(md, w-largeur(debut))+z, w)}
-	case enQuestion:
-		morceaux := []string{gras + i18n.T("Garder « %s » :", m.titres[m.i]) + z}
-		for _, r := range m.raccourcisDuPied(md) {
-			morceaux = append(morceaux, "["+r.touche()+"] "+r.maintenant(m))
-		}
-		l := replier(morceaux, "  ", w)
-		if a := m.avertissement(); a != "" {
-			for _, x := range replier(strings.Fields(a), " ", w) {
-				l = append(l, gras+x+z)
-			}
-		}
-		return l
 	case enRecherche:
 		debut := gras + i18n.T("Chercher : %s", m.recherche) + z + "▏   "
 		return []string{tronquer(debut+estompe+m.aideCourte(md, w-largeur(debut))+z, w)}

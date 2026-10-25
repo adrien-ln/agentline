@@ -32,17 +32,17 @@ func TestAnglais(t *testing.T) {
 		}
 	}
 	e := ecran(m)
-	contient("liste", e, "in effect: Tokyo Night (built-in)", strconv.Itoa(len(m.noms))+" themes", "◂ all ▸", "Enter keep", "? help", "Claude Code · my-project", "> run the tests")
+	contient("liste", e, "in effect: Tokyo Night (built-in)", strconv.Itoa(len(m.noms))+" themes", "◂ all ▸", "Enter choose", "? help", "Claude Code · my-project", "> run the tests")
 	appuyer(m, "→")
 	contient("filtre", ecran(m), "◂ popular ▸")
 	appuyer(m, "?")
 	contient("aide", ecran(m), "Themes: list", "Themes: search (/)", "browse", "Esc ?")
-	appuyer(m, "échap", "entrée")
-	contient("validation", ecran(m), "Keep \"", "[p] this project (statusline)", "[b] the branch main", "[d] everywhere (default)")
+	appuyer(m, "échap", "↓", "entrée", "b")
+	contient("brouillon", ecran(m), "Not saved: theme", "for the branch main", "s save · u cancel", "scope: the branch main")
 	appuyer(m, "échap", "tab")
 	m.os.st.Definir("ssh.short", "yes")
 	m.os.changer()
-	contient("onglet Statusline", ecran(m), " Themes ", "▲ model · Line 1", "Preview · full (v)", "SSH Opus", "s keep", "Enter menu")
+	contient("onglet Statusline", ecran(m), " Themes ", "▲ model · Line 1", "Preview · full (v)", "SSH Opus", "s save", "Enter menu")
 	appuyer(m, "↑")
 	contient("ligne SSH", ecran(m), "SSH line")
 	appuyer(m, "g")
@@ -50,7 +50,7 @@ func TestAnglais(t *testing.T) {
 	appuyer(m, "échap", "↓", "x", "+") // tous les items sont dans les lignes : en retirer un d'abord
 	contient("ajouter", ecran(m), "Add to line 1")
 	appuyer(m, "échap")
-	if s := m.Message(); !strings.HasPrefix(s, "Canceled: Tokyo Night stays in effect (built-in).") {
+	if s := m.Message(); !strings.HasPrefix(s, "Nothing changed: Tokyo Night stays in effect (built-in).") {
 		t.Errorf("message de sortie : %q", s)
 	}
 	m.enRecherche, m.recherche = false, "blue" // la recherche trouve les tags en anglais

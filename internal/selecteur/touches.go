@@ -18,22 +18,21 @@ type mode int
 const (
 	enListe     mode = iota // on parcourt la liste
 	enRecherche             // on tape le texte cherché
-	enQuestion              // Entrée : où garder le thème ?
+	enQuitter               // q avec quelque chose à enregistrer : enregistrer, quitter sans, ou revenir ?
 	enAide                  // l'aide complète
 
-	enStyle         // onglet Statusline : on choisit un item sur l'aperçu
-	enStyleMenu     // le menu de l'item (Entrée) ou les options générales (g)
-	enStyleAjout    // les items à ajouter à la ligne (+)
-	enStyleSaisie   // on tape une valeur (Entrée sur un libellé, un glyphe)
-	enStyleQuestion // Entrée : où garder ce style ?
+	enStyle       // onglet Statusline : on choisit un item sur l'aperçu
+	enStyleMenu   // le menu de l'item (Entrée) ou les options générales (g)
+	enStyleAjout  // les items à ajouter à la ligne (+)
+	enStyleSaisie // on tape une valeur (Entrée sur un libellé, un glyphe)
 )
 
 // nomsModes : les titres des sections de l'aide (en français, traduits à l'affichage).
-var nomsModes = map[mode]string{enListe: i18n.M("Thèmes : liste"), enRecherche: i18n.M("Thèmes : recherche (/)"), enQuestion: i18n.M("Thèmes : validation (Entrée)"), enAide: i18n.M("Aide (?)"),
-	enStyle: i18n.M("Statusline : items"), enStyleMenu: i18n.M("Statusline : menu (Entrée, g)"), enStyleAjout: i18n.M("Statusline : ajouter (+)"), enStyleSaisie: i18n.M("Statusline : saisie (Entrée)"), enStyleQuestion: i18n.M("Statusline : validation (s)")}
+var nomsModes = map[mode]string{enListe: i18n.M("Thèmes : liste"), enRecherche: i18n.M("Thèmes : recherche (/)"), enQuitter: i18n.M("Quitter avec des changements (q)"), enAide: i18n.M("Aide (?)"),
+	enStyle: i18n.M("Statusline : items"), enStyleMenu: i18n.M("Statusline : menu (Entrée, g)"), enStyleAjout: i18n.M("Statusline : ajouter (+)"), enStyleSaisie: i18n.M("Statusline : saisie (Entrée)")}
 
 // modesAide : les sections de l'aide complète de chaque onglet, dans l'ordre.
-var modesAide = [2][]mode{{enListe, enRecherche, enQuestion}, {enStyle, enStyleMenu, enStyleAjout, enStyleSaisie, enStyleQuestion}}
+var modesAide = [2][]mode{{enListe, enRecherche, enQuitter}, {enStyle, enStyleMenu, enStyleAjout, enStyleSaisie, enQuitter}}
 
 // raccourci : une touche (ou plusieurs équivalentes) dans un mode.
 type raccourci struct {
@@ -62,22 +61,33 @@ func (r raccourci) disponible(m *Modele) bool { return r.dispo == nil || r.dispo
 var raccourcis []raccourci
 
 func init() {
-	quitter := (*Modele).quitterOuAvertir
+	quitter := (*Modele).quitter
 	avecBranche := func(m *Modele) bool { return m.branche != "" }
+	enregistrer := raccourci{touches: []string{"s", "ctrl+s"}, nom: "s", effet: i18n.M("enregistrer le thème choisi et le style, sans fermer"),
+		libelle: func(*Modele) string { return i18n.T("enregistrer") }, rang: 1, faire: (*Modele).enregistrer}
+	annuler := raccourci{touches: []string{"u"}, nom: "u", effet: i18n.M("oublier ce qui n'est pas enregistré"), libelle: func(*Modele) string { return i18n.T("annuler") }, rang: 2,
+		dispo: (*Modele).aEnregistrer, faire: (*Modele).annuler}
+	dans := func(md mode, r raccourci) raccourci { r.mode = md; return r }
 	raccourcis = []raccourci{
 		{mode: enListe, touches: []string{"up", "k", "down", "j"}, nom: "↑↓", effet: i18n.M("parcourir"), rang: 2},
 		{mode: enListe, touches: []string{"pgup", "pgdown", "home", "end"}, nom: i18n.M("PgPréc PgSuiv Début Fin"), effet: i18n.M("sauter")},
 		{mode: enListe, touches: []string{"left", "right"}, nom: "←→", effet: i18n.M("filtre (populaire, couleur)"), libelle: func(*Modele) string { return i18n.T("filtre") }, rang: 5},
 		{mode: enListe, touches: []string{"/"}, nom: "/", effet: i18n.M("chercher (nom, titre ou couleur)"), libelle: func(*Modele) string { return i18n.T("chercher") }, rang: 4,
 			faire: func(m *Modele) tea.Cmd { m.enRecherche = true; return nil }},
-		{mode: enListe, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("garder le thème (ce projet, la branche, partout)"), libelle: func(*Modele) string { return i18n.T("garder") }, rang: 1,
-			dispo: func(m *Modele) bool { return len(m.vue) > 0 },
-			faire: func(m *Modele) tea.Cmd {
-				m.confirmer = true
-				m.reagir("danse") // il danse tant que la question est posée
-				return nil
-			}},
-		{mode: enListe, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("un cran en arrière : recherche, filtre, puis quitter"),
+		{mode: enListe, touches: []string{"enter"}, nom: i18n.M("Entrée"), effet: i18n.M("choisir ce thème (s l'enregistre)"), libelle: func(*Modele) string { return i18n.T("choisir") }, rang: 1,
+			dispo: func(m *Modele) bool { return len(m.vue) > 0 }, faire: (*Modele).choisir},
+		dans(enListe, enregistrer),
+		dans(enListe, annuler),
+		{mode: enListe, nom: "p b d", libelle: func(*Modele) string { return i18n.T("portée") }, rang: 3},
+		{mode: enListe, touches: []string{"p"}, nom: "p", effet: i18n.M("portée du thème : ce projet (reconnu par son remote)"),
+			faire: func(m *Modele) tea.Cmd { return m.changerPortee(theme.SourceProjet) }},
+		{mode: enListe, touches: []string{"b"}, nom: "b", effet: i18n.M("portée du thème : la branche courante, dans tous les projets"), dispo: avecBranche,
+			faire: func(m *Modele) tea.Cmd { return m.changerPortee(theme.SourceBranche) }},
+		{mode: enListe, touches: []string{"d"}, nom: "d", effet: i18n.M("portée du thème : partout (le thème par défaut)"),
+			faire: func(m *Modele) tea.Cmd { return m.changerPortee(theme.SourceDefaut) }},
+		{mode: enListe, touches: []string{"x"}, nom: "x", effet: i18n.M("retirer le réglage d'ici (règle de branche, sinon thème du projet) ; s l'enregistre"), rang: 6,
+			dispo: func(m *Modele) bool { _, ok := m.aRetirer(); return ok }, libelle: func(*Modele) string { return i18n.T("retirer le réglage d'ici") }, faire: (*Modele).marquerRetrait},
+		{mode: enListe, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("un cran en arrière : recherche, puis filtre"),
 			libelle: (*Modele).retourListe, rang: 3, faire: (*Modele).remonter},
 		{mode: enListe, touches: []string{"?"}, nom: "?", effet: i18n.M("cette aide"), libelle: func(*Modele) string { return i18n.T("aide") }, rang: 1,
 			faire: func(m *Modele) tea.Cmd { m.aide = true; return nil }},
@@ -86,7 +96,7 @@ func init() {
 			faire: func(m *Modele) tea.Cmd { m.mascotte = (m.mascotte + 1) % len(modesMascotte); return nil }},
 		{mode: enListe, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet Statusline : les items de la statusline"), libelle: func(*Modele) string { return i18n.T("statusline") }, rang: 7,
 			faire: (*Modele).basculerOnglet},
-		{mode: enListe, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter sans rien changer (sauf en recherche)"), libelle: func(*Modele) string { return i18n.T("quitter") }, rang: 8, faire: quitter},
+		{mode: enListe, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter (demande d'abord s'il reste à enregistrer)"), libelle: func(*Modele) string { return i18n.T("quitter") }, rang: 8, faire: quitter},
 
 		{mode: enRecherche, nom: i18n.M("lettres"), effet: i18n.M("nom, titre ou couleur (bleu, rose…)")},
 		{mode: enRecherche, touches: []string{"up", "down"}, nom: "↑↓", effet: i18n.M("parcourir les résultats")},
@@ -106,23 +116,11 @@ func init() {
 			return nil
 		}},
 
-		{mode: enQuestion, touches: []string{"p"}, nom: "p", effet: i18n.M("pour ce projet (reconnu par son remote)"), rang: 1,
-			libelle: func(m *Modele) string { return i18n.T("ce projet (%s)", m.depot()) },
-			faire:   func(m *Modele) tea.Cmd { return m.garder(theme.SourceProjet) }},
-		{mode: enQuestion, touches: []string{"b"}, nom: "b", effet: i18n.M("pour la branche courante, dans tous les projets"), rang: 1, dispo: avecBranche,
-			libelle: func(m *Modele) string { return i18n.T("la branche %s", m.branche) },
-			faire:   func(m *Modele) tea.Cmd { return m.garder(theme.SourceBranche) }},
-		{mode: enQuestion, touches: []string{"d"}, nom: "d", effet: i18n.M("partout : le thème par défaut"), libelle: func(*Modele) string { return i18n.T("partout (défaut)") }, rang: 1,
-			faire: func(m *Modele) tea.Cmd { return m.garder(theme.SourceDefaut) }},
-		{mode: enQuestion, touches: []string{"u"}, nom: "u", effet: i18n.M("retirer le réglage d'ici (règle de branche, sinon thème du projet)"), rang: 1,
-			dispo: func(m *Modele) bool { _, ok := m.aRetirer(); return ok }, libelle: (*Modele).libelleRetirer, faire: (*Modele).retirer},
-		{mode: enQuestion, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("revenir à la liste"), libelle: func(*Modele) string { return i18n.T("retour") }, rang: 1,
-			faire: func(m *Modele) tea.Cmd {
-				m.confirmer = false
-				m.reagir("clin")
-				return nil
-			}},
-		{mode: enQuestion, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter sans rien changer"), faire: quitter},
+		{mode: enQuitter, touches: []string{"s", "ctrl+s"}, nom: "s", effet: i18n.M("enregistrer, puis quitter"), libelle: func(*Modele) string { return i18n.T("enregistrer et quitter") }, rang: 1,
+			faire: (*Modele).enregistrerEtQuitter},
+		{mode: enQuitter, touches: []string{"n"}, nom: "n", effet: i18n.M("quitter sans enregistrer"), rang: 1, faire: (*Modele).sortir},
+		{mode: enQuitter, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("revenir sans quitter"), libelle: func(*Modele) string { return i18n.T("revenir") }, rang: 1,
+			faire: func(m *Modele) tea.Cmd { m.questionQuitter = false; m.reagir("clin"); return nil }},
 
 		{mode: enStyle, touches: []string{"left", "h", "right", "l"}, nom: "←→", effet: i18n.M("choisir l'item (surligné sur l'aperçu)"), libelle: func(*Modele) string { return i18n.T("item") }, rang: 2,
 			faire: func(m *Modele) tea.Cmd { m.os.choisir(sensH(m.derniere)); return nil }},
@@ -148,11 +146,11 @@ func init() {
 			faire: func(m *Modele) tea.Cmd { m.os.st = style.Defaut(); m.os.changer(); m.os.borner(); return nil }},
 		{mode: enStyle, touches: []string{"tab", "shift+tab"}, nom: "Tab", effet: i18n.M("onglet Thèmes (l'aperçu prend le thème survolé)"), libelle: func(*Modele) string { return i18n.T("thèmes") }, rang: 8,
 			faire: (*Modele).basculerOnglet},
-		{mode: enStyle, touches: []string{"s"}, nom: "s", effet: i18n.M("garder ce style"), libelle: func(*Modele) string { return i18n.T("garder") }, rang: 1,
-			faire: func(m *Modele) tea.Cmd { m.os.confirmer = true; m.reagir("danse"); return nil }},
+		dans(enStyle, enregistrer),
+		dans(enStyle, annuler),
 		{mode: enStyle, touches: []string{"?"}, nom: "?", effet: i18n.M("cette aide"), libelle: func(*Modele) string { return i18n.T("aide") }, rang: 1,
 			faire: func(m *Modele) tea.Cmd { m.aide = true; return nil }},
-		{mode: enStyle, touches: []string{"esc", "q"}, nom: i18n.M("Échap q"), effet: i18n.M("quitter (modifications non gardées : le dit une fois)"), libelle: func(*Modele) string { return i18n.T("quitter") }, rang: 4, faire: quitter},
+		{mode: enStyle, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter (demande d'abord s'il reste à enregistrer)"), libelle: func(*Modele) string { return i18n.T("quitter") }, rang: 4, faire: quitter},
 
 		{mode: enStyleMenu, touches: []string{"up", "k", "down", "j"}, nom: "↑↓", effet: i18n.M("choisir la rangée"), rang: 3,
 			faire: func(m *Modele) tea.Cmd {
@@ -203,18 +201,6 @@ func init() {
 			return nil
 		}},
 
-		{mode: enStyleQuestion, touches: []string{"d"}, nom: "d", effet: i18n.M("partout : le style de toutes les statuslines"), libelle: func(*Modele) string { return i18n.T("partout (défaut)") }, rang: 1,
-			faire: (*Modele).garderStyle},
-		{mode: enStyleQuestion, touches: []string{"p"}, nom: "p", effet: i18n.M("pour ce projet : bientôt (le style par projet n'existe pas encore)"),
-			libelle: func(*Modele) string { return estompe + i18n.T("ce projet (bientôt)") + z }, rang: 1,
-			faire: func(m *Modele) tea.Cmd {
-				m.os.message = i18n.T("le style par projet arrive bientôt : d le garde pour tous les projets")
-				return nil
-			}},
-		{mode: enStyleQuestion, touches: []string{"esc"}, nom: i18n.M("Échap"), effet: i18n.M("revenir aux items"), libelle: func(*Modele) string { return i18n.T("retour") }, rang: 1,
-			faire: func(m *Modele) tea.Cmd { m.os.confirmer = false; m.reagir("clin"); return nil }},
-		{mode: enStyleQuestion, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter sans garder"), faire: quitter},
-
 		{mode: enAide, touches: []string{"esc", "?"}, nom: i18n.M("Échap ?"), effet: i18n.M("fermer l'aide"), libelle: func(*Modele) string { return i18n.T("fermer") }, rang: 1,
 			faire: func(m *Modele) tea.Cmd { m.aide = false; return nil }},
 		{mode: enAide, touches: []string{"q"}, nom: "q", effet: i18n.M("quitter"), rang: 2, faire: quitter},
@@ -225,10 +211,10 @@ func (m *Modele) mode() mode {
 	switch {
 	case m.aide:
 		return enAide
+	case m.questionQuitter:
+		return enQuitter
 	case m.onglet == 1 && m.os.saisie:
 		return enStyleSaisie
-	case m.onglet == 1 && m.os.confirmer:
-		return enStyleQuestion
 	case m.onglet == 1 && m.os.menu == menuAjout:
 		return enStyleAjout
 	case m.onglet == 1 && m.os.menu != sansMenu:
@@ -237,8 +223,6 @@ func (m *Modele) mode() mode {
 		return enStyle
 	case m.enRecherche:
 		return enRecherche
-	case m.confirmer:
-		return enQuestion
 	}
 	return enListe
 }
@@ -262,13 +246,9 @@ func (m *Modele) raccourciDe(touche string) (raccourci, bool) {
 // touche : la touche, puis la réaction de Pip à ce qu'elle a changé, puis la disposition.
 func (m *Modele) touche(k tea.KeyMsg) tea.Cmd {
 	theme, filtre, dormait, ver := m.i, m.f, m.dort(), m.os.ver
-	averti := m.avertiQuitter
 	m.derniereTouche = m.t
 	m.os.message = ""
 	cmd := m.toucheBrute(k)
-	if averti { // l'avertissement ne vaut que pour la touche qui suit
-		m.avertiQuitter = false
-	}
 	switch {
 	case dormait:
 		m.reagir("reveil")
@@ -357,7 +337,7 @@ func (m *Modele) retourListe() string {
 	case m.f != 0:
 		return i18n.T("filtre « tous »")
 	}
-	return i18n.T("quitter")
+	return ""
 }
 
 func (m *Modele) remonter() tea.Cmd {
@@ -367,7 +347,7 @@ func (m *Modele) remonter() tea.Cmd {
 	case m.f != 0:
 		m.f = 0
 	default:
-		return m.quitterOuAvertir()
+		return nil
 	}
 	m.calculerVue()
 	return nil
@@ -384,34 +364,7 @@ func visibleBientot() string {
 // erreur : le message de sortie d'une écriture impossible.
 func erreur(err error) string { return i18n.T("✗ Erreur : %s", err.Error()) }
 
-// garder : le thème affiché, gardé à cette source ; le message de sortie dit s'il restera masqué.
-func (m *Modele) garder(source string) tea.Cmd {
-	nom, titre := m.noms[m.i], m.titres[m.i]
-	var err error
-	var cible string
-	switch source {
-	case theme.SourceProjet:
-		err, cible = m.sources.Associer(m.projet, nom), i18n.T("pour le projet %s", m.projet)
-	case theme.SourceBranche:
-		err, cible = m.sources.RegleBranche(m.branche, nom), i18n.T("pour la branche %s (dans tous les projets)", m.branche)
-	default:
-		err, cible = m.sources.EcrireDefaut(nom), i18n.T("par défaut")
-	}
-	if err != nil {
-		m.Resultat = erreur(err)
-		return tea.Quit
-	}
-	m.Resultat = i18n.T("✓ %s %s : %s", titre, cible, visibleBientot())
-	if e, ok := theme.MasquePar(m.sources.Resoudre(m.dossier, m.branche, m.getenv), source); ok {
-		m.Resultat += i18n.T("\n⚠ Ici, %s reste prioritaire.", m.qui(e))
-	}
-	if m.os.modifie() { // l'autre onglet : ses réglages ne sont pas gardés, et il faut le dire
-		m.Resultat += i18n.T("\n⚠ Les modifications du style de la statusline n'ont pas été gardées (s dans l'onglet Statusline).")
-	}
-	return tea.Quit
-}
-
-// aRetirer : ce que u retire ici : la règle de branche qui s'applique, sinon le thème du projet.
+// aRetirer : ce que x retire ici : la règle de branche qui s'applique, sinon le thème du projet.
 func (m *Modele) aRetirer() (theme.Etape, bool) {
 	for _, e := range m.chaine {
 		if (e.Source == theme.SourceBranche || e.Source == theme.SourceProjet) && e.Nom != "" {
@@ -427,46 +380,6 @@ func (m *Modele) libelleRetirer() string {
 		return i18n.T("retirer la règle %s (%s)", e.Motif, m.titreDe(e.Nom))
 	}
 	return i18n.T("retirer le thème du projet (%s)", m.titreDe(e.Nom))
-}
-
-func (m *Modele) retirer() tea.Cmd {
-	e, _ := m.aRetirer()
-	var err error
-	quoi := i18n.T("Règle de branche %s", e.Motif)
-	if e.Source == theme.SourceBranche {
-		err = m.sources.RegleBranche(e.Motif, "")
-	} else {
-		err, quoi = m.sources.Associer(m.projet, ""), i18n.T("Thème du projet %s", m.projet)
-	}
-	if err != nil {
-		m.Resultat = erreur(err)
-		return tea.Quit
-	}
-	a := theme.Active(m.sources.Resoudre(m.dossier, m.branche, m.getenv))
-	m.Resultat = i18n.T("✓ %s retiré : %s (%s) en vigueur ici, %s", quoi, m.titreDe(a.Nom), pourquoi(a), visibleBientot())
-	return tea.Quit
-}
-
-// avertissement : la ligne « ⚠ » du panneau de validation, si un choix restera masqué ici.
-func (m *Modele) avertissement() string {
-	var masques []string
-	var par theme.Etape
-	for _, o := range []struct{ touche, source string }{{"p", theme.SourceProjet}, {"b", theme.SourceBranche}, {"d", theme.SourceDefaut}} {
-		if o.touche == "b" && m.branche == "" {
-			continue
-		}
-		if e, ok := theme.MasquePar(m.chaine, o.source); ok {
-			masques, par = append(masques, "["+o.touche+"]"), e
-		}
-	}
-	if len(masques) == 0 {
-		return ""
-	}
-	s := i18n.T("⚠ Ici, %s l'emporte sur %s", m.qui(par), strings.Join(masques, " "))
-	if e, ok := m.aRetirer(); ok && e.Source == par.Source {
-		s += i18n.T(" ; [u] le retire")
-	}
-	return s
 }
 
 // --- Pied de page et aide -------------------------------------------------------------------------
@@ -517,7 +430,7 @@ func lignesAide(w int, modes []mode) []string {
 		}
 		l = append(l, gras+i18n.T(nomsModes[md])+z)
 		for _, r := range raccourcis {
-			if r.mode != md {
+			if r.mode != md || r.effet == "" {
 				continue
 			}
 			nom := " " + r.touche() + espaces(colonneTouche-largeur(r.touche())) + " "

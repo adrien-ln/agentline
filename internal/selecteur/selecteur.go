@@ -1,8 +1,10 @@
 // Package selecteur : le sélecteur de thèmes interactif (« agentline theme »), avec Bubble Tea.
 // En-tête (titre centré, thème en vigueur et pourquoi), liste filtrable, Pip perché sur la mini-fenêtre
 // Claude Code (session animée, vraie statusline calculée dans le même processus), à la taille du terminal.
-// Rien n'est écrit pendant la navigation, seulement à la validation (Entrée, puis p, b, d ou u). Un second
-// onglet (Tab), « Statusline », règle les items de la statusline (internal/style).
+// Rien n'est écrit pendant la navigation : Entrée choisit un thème, le second onglet (Tab, « Statusline ») règle
+// les items de la statusline (internal/style), et s enregistre ce brouillon d'un coup, sans fermer.
+//
+//	brouillon.go     ce qui reste à enregistrer, s, u, q, le message de sortie
 //
 //	selecteur.go     l'état, son initialisation, la liste filtrée, le message de sortie
 //	touches.go       la table des touches (actions, pied de page, aide « ? »)
@@ -52,7 +54,6 @@ type Modele struct {
 	f                int
 	recherche        string
 	enRecherche      bool
-	confirmer        bool  // la question « où garder ce thème ? » est posée
 	aide             bool  // l'aide complète (?) est affichée
 	vue              []int // index (dans noms) des thèmes affichés
 	p, haut, i       int   // position dans vue, début de la liste, thème affiché
@@ -68,7 +69,7 @@ type Modele struct {
 	scenes   []scene   // sessions Claude Code fictives, jouées en boucle
 	t        int       // temps écoulé depuis l'ouverture (ms)
 	debut    time.Time // ouverture (horloge réelle)
-	mascotte int       // 0 dégradé du thème, 1 couleur unie, 2 aucune (touche m)
+	mascotte int       // 0 couleur unie, 1 aucune (touche m)
 
 	derniereTouche int         // instant de la dernière touche (ms) : Pip s'endort après 20 s sans rien
 	reaction       string      // dernière réaction de Pip, et son instant
@@ -76,10 +77,16 @@ type Modele struct {
 	lignesListe    int         // thèmes visibles dans la liste, selon la hauteur du terminal (Page préc./suiv.)
 	d              disposition // calculée par ajuster, à chaque touche et redimensionnement
 
-	onglet        int         // 0 Thèmes, 1 Statusline (Tab)
-	os            ongletStyle // l'onglet Statusline (onglet_style.go)
-	avertiQuitter bool        // des modifications du style non gardées : la prochaine q ou Échap quitte
-	derniere      string      // la touche en cours (nom Bubble Tea), pour les raccourcis à plusieurs touches
+	onglet          int         // 0 Thèmes, 1 Statusline (Tab)
+	os              ongletStyle // l'onglet Statusline (onglet_style.go)
+	choix           string      // le thème choisi (Entrée), à enregistrer ; vide : aucun
+	portee          string      // où l'enregistrer : projet, branche ou défaut (p, b, d)
+	retrait         bool        // x : le réglage d'ici (règle de branche, sinon thème du projet) sera retiré
+	questionQuitter bool        // q avec un brouillon : enregistrer, quitter sans, ou revenir ?
+	flash           string      // « ✓ Enregistré … » après s, et son instant
+	flashT          int         //
+	gardes, avertis []string    // ce que s a écrit pendant la session, et ses avertissements, pour la sortie
+	derniere        string      // la touche en cours (nom Bubble Tea), pour les raccourcis à plusieurs touches
 }
 
 type tic time.Time
@@ -112,6 +119,7 @@ func Nouveau(s theme.Sources, apercu render.Env, dossier string, getenv func(str
 	m.branche = theme.BrancheDe(dossier)
 	m.chaine = s.Resoudre(dossier, m.branche, getenv)
 	m.avant = theme.Active(m.chaine).Nom
+	m.portee = m.porteeInitiale()
 	for k, n := range m.noms {
 		if n == m.avant {
 			m.i = k
@@ -251,9 +259,5 @@ func (m *Modele) Message() string {
 	if m.Resultat != "" {
 		return m.Resultat
 	}
-	s := i18n.T("Annulé : %s reste en vigueur (%s).", m.titreDe(m.avant), pourquoi(theme.Active(m.chaine)))
-	if m.os.modifie() {
-		s += i18n.T("\nLes modifications du style de la statusline n'ont pas été gardées.")
-	}
-	return s
+	return m.resume() // Ctrl+C
 }

@@ -173,8 +173,8 @@ func TestRechercheEtDefaut(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(config, "defaut")); err == nil {
 		t.Fatal("rien ne doit être écrit avant la validation")
 	}
-	if !appuyer(m, "entrée", "d") {
-		t.Fatal("Entrée puis d doivent fermer le sélecteur")
+	if appuyer(m, "entrée", "d", "s") {
+		t.Fatal("Entrée, d puis s enregistrent sans fermer le sélecteur")
 	}
 	if b, _ := os.ReadFile(filepath.Join(config, "defaut")); string(b) != "dracula\n" {
 		t.Errorf("defaut = %q, attendu dracula", b)
@@ -191,14 +191,14 @@ func TestRechercheSansResultat(t *testing.T) {
 		t.Errorf("bordures décalées : %v", w)
 	}
 	appuyer(m, "entrée")
-	if m.confirmer {
-		t.Error("Entrée sans thème ne doit rien proposer de garder")
+	if m.choix != "" {
+		t.Error("Entrée sans thème ne doit rien choisir")
 	}
 	if appuyer(m, "échap") || m.recherche != "" || len(m.vue) != len(m.noms) {
 		t.Error("Échap doit d'abord effacer la recherche, sans quitter")
 	}
-	if !appuyer(m, "échap") || m.Message() != "Annulé : Tokyo Night reste en vigueur (intégré)." {
-		t.Errorf("Échap : %q", m.Message())
+	if appuyer(m, "échap") || !appuyer(m, "q") || m.Message() != "Rien n'a changé : Tokyo Night reste en vigueur (intégré)." {
+		t.Errorf("Échap ne quitte pas, q si : %q", m.Message())
 	}
 	if e, _ := os.ReadDir(config); len(e) != 0 {
 		t.Errorf("des réglages ont été écrits : %v", e)
@@ -237,82 +237,88 @@ func BenchmarkImageEnCache(b *testing.B) {
 
 func TestThemeDuProjet(t *testing.T) {
 	m, config := nouveau(t)
-	appuyer(m, "↑", "entrée")
-	if !m.confirmer {
-		t.Fatal("Entrée doit demander quoi garder")
+	appuyer(m, "↑", "entrée", "p")
+	nom, titre := m.noms[m.i], m.titres[m.i]
+	if m.choix != nom || !strings.Contains(aplati(ecran(m)), "Non enregistré : thème "+titre+" pour ce projet") {
+		t.Fatalf("Entrée puis p : le choix doit attendre dans la barre :\n%s", ecran(m))
 	}
-	appuyer(m, "échap")
-	if m.confirmer {
-		t.Fatal("Échap doit revenir à la liste")
+	if _, err := os.Stat(filepath.Join(config, "projets")); err == nil {
+		t.Fatal("rien ne doit être écrit avant s")
 	}
-	nom := m.noms[m.i]
-	if !appuyer(m, "entrée", "p") {
-		t.Fatal("Entrée puis p doivent fermer le sélecteur")
+	if appuyer(m, "s") {
+		t.Fatal("s enregistre sans fermer")
 	}
 	b, _ := os.ReadFile(filepath.Join(config, "projets"))
-	if !strings.HasSuffix(string(b), "\t"+nom+"\n") || !strings.Contains(m.Message(), "pour le projet") {
-		t.Errorf("projets = %q, message = %q", b, m.Message())
+	if !strings.HasSuffix(string(b), "\t"+nom+"\n") || !strings.Contains(aplati(ecran(m)), "✓ Enregistré : thème "+titre) || m.aEnregistrer() {
+		t.Errorf("projets = %q, écran :\n%s", b, ecran(m))
 	}
-	// le message de sortie : le titre, quand ce sera visible, et rien de masqué ici
-	if msg := m.Message(); !strings.HasPrefix(msg, "✓ "+m.titres[m.i]+" ") || !strings.Contains(msg, "prochain rafraîchissement") || strings.Contains(msg, "⚠") {
+	if m.avant != nom {
+		t.Errorf("le thème en vigueur doit suivre ce qui est enregistré : %s", m.avant)
+	}
+	if !appuyer(m, "q") {
+		t.Fatal("tout est enregistré : q quitte sans question")
+	}
+	if msg := m.Message(); !strings.HasPrefix(msg, "✓ Enregistré : thème "+titre+" pour ce projet") || !strings.Contains(msg, "prochain rafraîchissement") || strings.Contains(msg, "⚠") {
 		t.Errorf("message de sortie : %q", msg)
 	}
 }
 
-// TestValidation80Colonnes : à 80×24, avec un vrai remote, le panneau de validation montre toutes ses
-// touches (replié, jamais tronqué) et remplace le pied de page.
-func TestValidation80Colonnes(t *testing.T) {
+// aplati : l'écran sans retours à la ligne ni espaces répétés (la barre et la question se replient).
+func aplati(e string) string { return strings.Join(strings.Fields(e), " ") }
+
+// TestBarre80Colonnes : à 80×24, avec un vrai remote, la barre du brouillon et la question de sortie se
+// replient sans rien tronquer ; la question remplace le pied de page.
+func TestBarre80Colonnes(t *testing.T) {
 	m, _ := nouveauDepot(t, "git@gitlab.com:adrien-ln/statusline.git", "feat/interface")
 	m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	appuyer(m, "entrée")
-	e := ecran(m)
-	for _, x := range []string{"[p] ce projet (statusline)", "[b] la branche feat/interface", "[d] partout (défaut)", "[Échap] retour"} {
-		if !strings.Contains(e, x) {
-			t.Errorf("%q absent du panneau :\n%s", x, e)
+	appuyer(m, "↓", "entrée", "b")
+	verifier := func(quoi string, attendus ...string) {
+		e := ecran(m)
+		for _, x := range attendus {
+			if !strings.Contains(aplati(e), x) {
+				t.Errorf("%s : %q absent :\n%s", quoi, x, e)
+			}
+		}
+		for k, l := range strings.Split(m.View(), "\n") {
+			if largeur(l) > 80 {
+				t.Errorf("%s : ligne %d de %d colonnes", quoi, k, largeur(l))
+			}
 		}
 	}
-	if strings.Contains(e, "[u]") {
-		t.Error("rien à retirer ici : pas de [u]")
+	verifier("barre", "Non enregistré : thème", "pour la branche feat/interface", "s enregistrer · u annuler")
+	if appuyer(m, "q") {
+		t.Fatal("un thème choisi : q demande d'abord")
 	}
-	if strings.Contains(e, "↑↓ parcourir") {
-		t.Error("le panneau remplace le pied de page")
+	verifier("question", "[s] enregistrer et quitter", "[n] quitter sans enregistrer", "[Échap] revenir")
+	if strings.Contains(ecran(m), "↑↓ parcourir") {
+		t.Error("la question remplace le pied de page")
 	}
-	for k, l := range strings.Split(m.View(), "\n") {
-		if largeur(l) > 80 {
-			t.Errorf("ligne %d de %d colonnes", k, largeur(l))
-		}
+	if appuyer(m, "échap") || m.questionQuitter {
+		t.Error("Échap : retour à la liste, sans quitter")
 	}
-	if len(m.d.pied) < 2 {
-		t.Errorf("à 80 colonnes, le panneau doit se replier : %d ligne(s)", len(m.d.pied))
+	if !appuyer(m, "q", "n") || !strings.Contains(m.Message(), "Non enregistré : thème") {
+		t.Errorf("q puis n : quitter sans enregistrer, et le dire : %q", m.Message())
 	}
 }
 
-// TestEchapParCrans : Échap remonte d'un cran (question, recherche, filtre, puis quitter) ; q quitte toujours.
+// TestEchapParCrans : Échap remonte d'un cran (recherche, puis filtre) sans jamais quitter ; q quitte.
 func TestEchapParCrans(t *testing.T) {
 	m, _ := nouveau(t)
-	appuyer(m, "→", "/", "z", "z", "z", "entrée", "entrée")
-	if m.confirmer || m.recherche != "zzz" || m.f == 0 {
-		t.Fatalf("préparation : question %v, recherche %q, filtre %d", m.confirmer, m.recherche, m.f)
+	appuyer(m, "→", "/", "z", "z", "z", "entrée")
+	if m.recherche != "zzz" || m.f == 0 {
+		t.Fatalf("préparation : recherche %q, filtre %d", m.recherche, m.f)
 	}
-	appuyer(m, "↓") // retrouver un thème pour pouvoir poser la question
 	appuyer(m, "échap")
 	if m.recherche != "" || m.f == 0 {
 		t.Errorf("1er Échap : la recherche seule doit être effacée (recherche %q, filtre %d)", m.recherche, m.f)
 	}
-	appuyer(m, "entrée")
-	if !m.confirmer {
-		t.Fatal("Entrée doit poser la question")
-	}
-	if appuyer(m, "échap") || m.confirmer || m.f == 0 {
-		t.Error("Échap dans la question : retour à la liste, filtre gardé")
-	}
 	if appuyer(m, "échap") || m.f != 0 {
 		t.Errorf("2e Échap : le filtre doit revenir à « tous » (%s)", m.filtres[m.f])
 	}
-	if !appuyer(m, "échap") {
-		t.Error("3e Échap : quitter")
+	if appuyer(m, "échap") {
+		t.Error("3e Échap : rien (q quitte)")
 	}
-	for _, avant := range [][]string{{"entrée"}, {"?"}, {"→"}} {
+	for _, avant := range [][]string{{"?"}, {"→"}, {"tab"}} {
 		m, _ := nouveau(t)
 		appuyer(m, avant...)
 		if !appuyer(m, "q") {
@@ -320,72 +326,73 @@ func TestEchapParCrans(t *testing.T) {
 		}
 	}
 	m, _ = nouveau(t)
+	if appuyer(m, "tab", "échap") {
+		t.Error("onglet Statusline : Échap ne quitte pas")
+	}
+	m, _ = nouveau(t)
 	if appuyer(m, "/", "q") || m.recherche != "q" {
 		t.Error("en recherche, q est une lettre comme les autres")
 	}
 }
 
-// TestAvertissementMasque : la question signale le choix qui restera masqué ici, et le message de sortie aussi.
+// TestAvertissementMasque : la barre signale le choix qui restera masqué ici, et le message de sortie aussi.
 func TestAvertissementMasque(t *testing.T) {
 	d := depotFictif(t, "git@gitlab.com:a/b.git", "main")
-	m, config := ouvrir(t, d, nil, func(s theme.Sources) { s.RegleBranche("main", "nord") })
-	appuyer(m, "↓", "entrée")
-	e := ecran(m)
-	if !strings.Contains(e, "⚠ Ici, la branche main (Nord) l'emporte sur [p] [d] ; [u] le retire") {
-		t.Errorf("avertissement absent ou faux :\n%s", e)
+	m, _ := ouvrir(t, d, nil, func(s theme.Sources) { s.RegleBranche("main", "nord") })
+	if m.portee != theme.SourceBranche {
+		t.Errorf("portée de départ : %s, attendu celle du thème en vigueur (branche)", m.portee)
 	}
-	if !strings.Contains(e, "[u] retirer la règle main (Nord)") {
-		t.Errorf("[u] doit dire ce qu'il retire :\n%s", e)
+	appuyer(m, "↓", "entrée", "p")
+	if e := aplati(ecran(m)); !strings.Contains(e, "⚠ Ici, la branche main (Nord) reste prioritaire.") {
+		t.Errorf("avertissement absent ou faux :\n%s", ecran(m))
 	}
-	appuyer(m, "p")
+	appuyer(m, "s", "q")
 	if !strings.Contains(m.Message(), "⚠ Ici, la branche main (Nord) reste prioritaire") {
 		t.Errorf("message de sortie sans avertissement : %q", m.Message())
 	}
 
 	m, _ = ouvrir(t, d, map[string]string{"AGENTLINE_THEME": "dracula"}, nil)
-	appuyer(m, "entrée")
-	if e := ecran(m); !strings.Contains(e, "AGENTLINE_THEME=dracula (Dracula) l'emporte sur [p] [b] [d]") {
-		t.Errorf("AGENTLINE_THEME doit masquer tous les choix :\n%s", e)
+	appuyer(m, "↓", "entrée")
+	if e := aplati(ecran(m)); !strings.Contains(e, "AGENTLINE_THEME=dracula (Dracula) reste prioritaire") {
+		t.Errorf("AGENTLINE_THEME doit masquer le choix :\n%s", ecran(m))
 	}
 	m, _ = ouvrir(t, d, nil, nil)
-	appuyer(m, "entrée")
+	appuyer(m, "↓", "entrée")
 	if strings.Contains(ecran(m), "⚠") {
 		t.Error("rien de réglé : aucun avertissement")
 	}
-	_ = config
 }
 
-// TestBrancheEtRetirer : b garde le thème pour la branche courante, u retire ce qui s'applique ici.
+// TestBrancheEtRetirer : b enregistre le thème pour la branche courante, x retire ce qui s'applique ici.
 func TestBrancheEtRetirer(t *testing.T) {
 	d := depotFictif(t, "git@gitlab.com:a/b.git", "feat/x")
 	m, config := ouvrir(t, d, nil, nil)
 	appuyer(m, "↓")
 	nom := m.noms[m.i]
-	if !appuyer(m, "entrée", "b") {
-		t.Fatal("Entrée puis b doivent fermer le sélecteur")
+	if appuyer(m, "entrée", "b", "s") {
+		t.Fatal("s enregistre sans fermer")
 	}
 	if b, _ := os.ReadFile(filepath.Join(config, "branches")); string(b) != "feat/x\t"+nom+"\n" {
 		t.Errorf("branches = %q", b)
 	}
-	if !strings.Contains(m.Message(), "pour la branche feat/x") {
-		t.Errorf("message : %q", m.Message())
+	if !strings.Contains(aplati(ecran(m)), "pour la branche feat/x") {
+		t.Errorf("le « ✓ Enregistré » doit dire où :\n%s", ecran(m))
 	}
-	s := theme.Sources{Config: config, Integre: agentline.Themes, Windows: runtime.GOOS == "windows"}
 	m, _ = ouvrir(t, d, nil, func(x theme.Sources) {
 		x.RegleBranche("feat/x", nom)
 		x.Associer(x.ProjetID(filepath.ToSlash(d)), "nord")
 	})
-	if !appuyer(m, "entrée", "u") || !strings.Contains(m.Message(), "Règle de branche feat/x retiré") || !strings.Contains(m.Message(), "Nord (projet)") {
-		t.Errorf("u doit retirer la règle de la branche d'abord : %q", m.Message())
+	appuyer(m, "x")
+	if e := aplati(ecran(m)); !strings.Contains(e, "Non enregistré : retirer la règle feat/x") {
+		t.Errorf("x : le retrait attend dans la barre :\n%s", ecran(m))
 	}
-	_ = s
-	m, _ = nouveau(t) // hors Git : pas de branche à proposer
-	appuyer(m, "entrée")
-	if e := ecran(m); strings.Contains(e, "[b]") || strings.Contains(e, "[u]") {
-		t.Errorf("hors Git et sans réglage : ni [b] ni [u] :\n%s", e)
+	appuyer(m, "s", "q")
+	if msg := m.Message(); !strings.Contains(msg, "règle feat/x retirée") || m.avant != "nord" {
+		t.Errorf("x puis s : la règle de branche part d'abord, le thème du projet reprend : %q (%s)", msg, m.avant)
 	}
-	if appuyer(m, "b") || !m.confirmer {
-		t.Error("b indisponible : la touche ne fait rien")
+	m, _ = nouveau(t) // hors Git et sans réglage : ni branche ni réglage à retirer
+	if appuyer(m, "b", "x") || m.portee == theme.SourceBranche || m.retrait {
+		t.Error("b et x indisponibles : les touches ne font rien")
 	}
 }
 
@@ -429,14 +436,14 @@ func TestAideComplete(t *testing.T) {
 	appuyer(m, "?")
 	e := ecran(m)
 	for _, r := range raccourcis {
-		if r.mode >= enStyle { // l'aide de l'onglet Statusline : TestAideStyle
+		if r.mode >= enStyle || r.effet == "" { // l'aide de l'onglet Statusline : TestAideStyle ; sans effet : le pied seul
 			continue
 		}
 		if !strings.Contains(e, r.effet) && !strings.Contains(e, strings.Fields(r.effet)[0]) {
 			t.Errorf("%s (%s) absent de l'aide", r.nom, r.effet)
 		}
 	}
-	for _, md := range []mode{enListe, enRecherche, enQuestion} {
+	for _, md := range []mode{enListe, enRecherche, enQuitter} {
 		if !strings.Contains(e, nomsModes[md]) {
 			t.Errorf("section %s absente de l'aide", nomsModes[md])
 		}
