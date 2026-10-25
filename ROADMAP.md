@@ -20,7 +20,6 @@ Everything below is covered by automated tests or simulations only. The CI runs 
 
 ## To decide
 
-- [ ] **Clawd in public**: the mascot drawing belongs to Anthropic; check that showing it in a public project is fine.
 - [ ] **`*` branch rule and detached HEAD**: a `*` branch rule also applies on a detached HEAD (the renderer then sees the start of the SHA). Acceptable for now.
 - [ ] **Old `SL_*` names**: read as a fallback, deprecated. Decide when to remove them.
 

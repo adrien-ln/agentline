@@ -8,7 +8,7 @@ Model, Git, PR, context and quotas on two lines, in 49 themes: one by default, o
 [![Latest release](https://img.shields.io/github/v/release/adrien-ln/agentline?style=flat-square&color=7dcfff&labelColor=1a1b26)](https://github.com/adrien-ln/agentline/releases/latest)
 [![MIT license](https://img.shields.io/github/license/adrien-ln/agentline?style=flat-square&color=f7768e&labelColor=1a1b26)](LICENSE)
 
-<img src="docs/demo/selecteur.gif" alt="The theme picker: filterable list, an animated Claude Code mini-session in the highlighted theme, and Clawd" width="760">
+<img src="docs/demo/selecteur.gif" alt="The theme picker: filterable list, an animated Claude Code mini-session in the highlighted theme, and Pip, the agentline mascot" width="760">
 
 </div>
 
