@@ -250,3 +250,37 @@ func TestEcrituresAtomiques(t *testing.T) {
 		t.Errorf("fond : %q", b)
 	}
 }
+
+// TestCorrespondCommeAvant : le filtre sans expression régulière répond comme l'ancienne version (motif
+// traduit en expression régulière) sur des motifs et des branches tirés au hasard.
+func TestCorrespondCommeAvant(t *testing.T) {
+	ancienne := func(motif, branche string) bool {
+		e := strings.NewReplacer(`\*`, ".*", `\?`, ".").Replace(regexp.QuoteMeta(motif))
+		ok, _ := regexp.MatchString("^"+e+"$", branche)
+		return ok
+	}
+	lettres := []rune("ab/.*?é")
+	graine := uint64(42)
+	hasard := func(n int) string {
+		r := make([]rune, int(graine>>33)%n)
+		for i := range r {
+			graine = graine*6364136223846793005 + 1442695040888963407
+			r[i] = lettres[int(graine>>33)%len(lettres)]
+		}
+		graine = graine*6364136223846793005 + 1442695040888963407
+		return string(r)
+	}
+	oui := 0
+	for k := 0; k < 20000; k++ {
+		m, b := hasard(7), strings.NewReplacer("*", "a", "?", "b").Replace(hasard(9))
+		if ancienne(m, b) {
+			oui++
+		}
+		if Correspond(m, b) != ancienne(m, b) {
+			t.Fatalf("Correspond(%q, %q) = %v, avant : %v", m, b, Correspond(m, b), ancienne(m, b))
+		}
+	}
+	if oui < 500 || oui > 19500 {
+		t.Errorf("tirage trop pauvre : %d correspondances sur 20000", oui)
+	}
+}

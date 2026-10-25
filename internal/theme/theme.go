@@ -241,10 +241,29 @@ func (s Sources) RegleDeBranche(branche string) (motif, nom string) {
 // Correspond : la branche est-elle couverte par le motif ? « * » couvre n'importe quelle suite de
 // caractères, « / » compris, et « ? » un seul caractère.
 func Correspond(motif, branche string) bool {
-	e := regexp.QuoteMeta(motif)
-	e = strings.NewReplacer(`\*`, ".*", `\?`, ".").Replace(e)
-	ok, _ := regexp.MatchString("^"+e+"$", branche)
-	return ok
+	// « * » : n'importe quelle suite (barres obliques comprises), « ? » : un caractère ; sans expression
+	// régulière à compiler pour chaque règle, à chaque rendu. Retour arrière sur la dernière étoile.
+	m, b := []rune(motif), []rune(branche)
+	i, j, etoile, reprise := 0, 0, -1, 0
+	for j < len(b) {
+		switch {
+		case i < len(m) && (m[i] == '?' || m[i] == b[j]):
+			i++
+			j++
+		case i < len(m) && m[i] == '*':
+			etoile, reprise = i, j
+			i++
+		case etoile >= 0:
+			reprise++
+			i, j = etoile+1, reprise
+		default:
+			return false
+		}
+	}
+	for i < len(m) && m[i] == '*' {
+		i++
+	}
+	return i == len(m)
 }
 
 func premiereLigne(f string) string {
