@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-25
+
 ### Changed
 
 - The Statusline tab edits the statusline in place: ←→ and ↑↓ pick an item on the live preview, Enter opens its menu (options, join, remove), + adds an item, g opens the general options, s keeps the style.
@@ -33,6 +35,7 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/adrien-ln/agentline/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/adrien-ln/agentline/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/adrien-ln/agentline/releases/tag/v0.1.0
