@@ -288,11 +288,11 @@ func TestOngletStyleGarder(t *testing.T) {
 }
 
 func TestOngletStyleQuitterSansGarder(t *testing.T) {
-	m, config := ouvrirStyle(t)
+	m, _ := ouvrirStyle(t)
 	if !appuyer(m, "q") {
 		t.Fatal("sans modification, q quitte")
 	}
-	m, config = ouvrirStyle(t)
+	m, config := ouvrirStyle(t)
 	appuyer(m, "x")
 	if appuyer(m, "q") {
 		t.Fatal("modifications non gardées : q avertit d'abord")
