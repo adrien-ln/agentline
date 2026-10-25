@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-25
+
 ### Changed
 
 - The picker saves in one place: Enter chooses a theme, p, b or d sets where it applies, and s saves the theme and the statusline style together without closing. A bar shows what is not saved yet, u forgets it, and q asks before quitting with unsaved changes. Esc only steps back.
@@ -94,7 +96,8 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/adrien-ln/agentline/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/adrien-ln/agentline/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/adrien-ln/agentline/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/adrien-ln/agentline/compare/v0.3.1...v0.3.2
