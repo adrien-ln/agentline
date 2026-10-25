@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-25
+
 ### Added
 
 - Antigravity CLI and Copilot CLI: `agentline render --from antigravity|copilot` reads their statusline input (recognized from the JSON without `--from`), and `agentline install` offers to set their statusline when they are installed.
@@ -72,7 +74,8 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/adrien-ln/agentline/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/adrien-ln/agentline/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/adrien-ln/agentline/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/adrien-ln/agentline/compare/v0.2.0...v0.3.0
