@@ -373,7 +373,14 @@ func preparer(ss etat.Session, env Env) *rendu {
 		p := env.Themes.ChoisirSurBranche(d, g.branche, env.Getenv).Palette
 		palette = &p
 	}
-	r := &rendu{env: env, o: optionsDe(env.Style, env.SSH), p: palette.PourFond(clair),
+	// --- Style : le général, puis celui du projet par-dessus (sauf AGENTLINE_STYLE=default)
+	st := env.Style
+	if env.Themes.Config != "" && !style.Force(env.Getenv) {
+		if sp := style.ChargerProjet(env.Themes.Config, env.Themes.ProjetID(d)); sp != nil {
+			st = style.Superposer(st, sp)
+		}
+	}
+	r := &rendu{env: env, o: optionsDe(st, env.SSH), p: palette.PourFond(clair),
 		riche: !env.SSH || env.SSHRiche || env.CouleursImposees, c: env.Couleurs}
 	c := r.c
 	if r.riche {

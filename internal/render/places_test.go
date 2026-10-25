@@ -88,3 +88,37 @@ func TestPaletteImposee(t *testing.T) {
 		}
 	}
 }
+
+// TestStyleDuProjet : le style d'un projet s'ajoute au style général, dans ce projet seulement ;
+// AGENTLINE_STYLE=default l'ignore aussi.
+func TestStyleDuProjet(t *testing.T) {
+	config := t.TempDir()
+	e := env(t, modes["riche"], config)
+	e.GitFictif = &GitFictif{Branche: "dev"}
+	s := claude.Lire([]byte(casJSON(t, "complet", "/x")))
+	projet := s.Projet
+	if projet == "" {
+		projet = s.Dossier
+	}
+	sp := &style.Surcharge{}
+	sp.Definir("hide", "pr")
+	if err := style.EcrireProjet(config, e.Themes.ProjetID(projet), sp); err != nil {
+		t.Fatal(err)
+	}
+	if v := ansi.Visible(RenderSession(s, e)); strings.Contains(v, "#42") {
+		t.Errorf("le projet masque la PR :\n%s", v)
+	}
+	autre := claude.Lire([]byte(casJSON(t, "complet", "/ailleurs")))
+	if v := ansi.Visible(RenderSession(autre, e)); !strings.Contains(v, "#42") {
+		t.Errorf("un autre projet garde la PR :\n%s", v)
+	}
+	e.Getenv = func(k string) string {
+		if k == "AGENTLINE_STYLE" {
+			return "default"
+		}
+		return ""
+	}
+	if v := ansi.Visible(RenderSession(s, e)); !strings.Contains(v, "#42") {
+		t.Errorf("AGENTLINE_STYLE=default ignore le style du projet :\n%s", v)
+	}
+}
