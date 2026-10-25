@@ -120,17 +120,17 @@ func (m *Modele) piedDuMode(w int) []string {
 	case enQuitter:
 		morceaux := []string{gras + i18n.T("Quitter :") + z}
 		for _, r := range m.raccourcisDuPied(md) {
-			morceaux = append(morceaux, "["+m.capsule(r.touche())+"] "+r.maintenant(m))
+			morceaux = append(morceaux, m.capsule(r.touche())+" "+r.maintenant(m))
 		}
 		return replier(morceaux, "  ", w)
 	case enStyleSaisie:
 		debut := gras + i18n.T("%s : %s", m.os.cle().Nom, m.os.texte) + z + "▏   "
-		return []string{tronquer(debut+estompe+m.aideCourte(md, w-largeur(debut))+z, w)}
+		return []string{tronquer(debut+m.aideCourte(md, w-largeur(debut)), w)}
 	case enRecherche:
 		debut := gras + i18n.T("Chercher : %s", m.recherche) + z + "▏   "
-		return []string{tronquer(debut+estompe+m.aideCourte(md, w-largeur(debut))+z, w)}
+		return []string{tronquer(debut+m.aideCourte(md, w-largeur(debut)), w)}
 	default:
-		return []string{tronquer(estompe+m.aideCourte(md, w)+z, w)}
+		return []string{tronquer(m.aideCourte(md, w), w)}
 	}
 }
 

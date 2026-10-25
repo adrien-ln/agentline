@@ -285,11 +285,11 @@ func TestBarre80Colonnes(t *testing.T) {
 			}
 		}
 	}
-	verifier("barre", "Non enregistré : thème", "pour la branche feat/interface", "s enregistrer · u annuler")
+	verifier("barre", "Non enregistré : thème", "pour la branche feat/interface")
 	if appuyer(m, "q") {
 		t.Fatal("un thème choisi : q demande d'abord")
 	}
-	verifier("question", "[s] enregistrer et quitter", "[n] quitter sans enregistrer", "[Échap] revenir")
+	verifier("question", "Quitter : s enregistrer et quitter n quitter sans enregistrer", "revenir")
 	if strings.Contains(ecran(m), "↑↓ parcourir") {
 		t.Error("la question remplace le pied de page")
 	}
@@ -430,7 +430,7 @@ func TestRienNeCorrespond(t *testing.T) {
 // TestAideComplete : ? montre toutes les touches de la table, Échap la referme.
 func TestAideComplete(t *testing.T) {
 	m, _ := nouveau(t)
-	if !strings.Contains(ecran(m), "? aide") {
+	if !strings.Contains(aplati(ecran(m)), "? aide") {
 		t.Error("le pied doit rappeler ? aide")
 	}
 	appuyer(m, "?")
@@ -450,5 +450,28 @@ func TestAideComplete(t *testing.T) {
 	}
 	if appuyer(m, "échap") || m.aide {
 		t.Error("Échap doit refermer l'aide sans quitter")
+	}
+}
+
+// TestCapsules : les touches rappelées sont des capsules ; Entrée, Tab, Échap prennent leur glyphe Nerd Font
+// avec icons=nerd (le défaut), leur nom avec icons=text ; la ligne surlignée rappelle la touche utile.
+func TestCapsules(t *testing.T) {
+	m, _ := nouveau(t)
+	if c := visible(m.capsule("Entrée")); c != " "+glyphesTouches["Entrée"]+" " {
+		t.Errorf("icons=nerd : %q", c)
+	}
+	if c := visible(m.capsule("Maj+←→ H L")); c != " "+glypheMaj+"←→ "+"  H   L " {
+		t.Errorf("Maj+←→ H L : %q", c)
+	}
+	if !strings.Contains(m.ligneListe(m.i, true, 60), "choisir") {
+		t.Error("la ligne surlignée doit rappeler Entrée choisir")
+	}
+	appuyer(m, "entrée")
+	if !strings.Contains(m.ligneListe(m.i, true, 60), "s enregistrer") {
+		t.Error("thème choisi : la ligne surlignée doit rappeler s enregistrer")
+	}
+	m.os.st.Definir("icons", "text")
+	if c := visible(m.capsule("Entrée")); c != " Entrée " {
+		t.Errorf("icons=text : %q", c)
 	}
 }

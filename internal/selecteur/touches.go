@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/adrien-ln/agentline/internal/ansi"
 	"github.com/adrien-ln/agentline/internal/i18n"
 	"github.com/adrien-ln/agentline/internal/style"
 	"github.com/adrien-ln/agentline/internal/theme"
@@ -56,8 +57,44 @@ func (r raccourci) maintenant(m *Modele) string {
 // touche : le nom de la touche, tel qu'affiché dans la langue des textes (« Entrée », « Enter »).
 func (r raccourci) touche() string { return i18n.T(r.nom) }
 
-// capsule : une touche (son nom déjà traduit) telle que le sélecteur la dessine, partout où il la rappelle.
-func (m *Modele) capsule(nom string) string { return nom }
+// glyphesTouches : les touches qui ont leur glyphe dans les Nerd Fonts (md-keyboard_*), sous leurs noms français
+// et anglais ; prefixesTouches : les modificateurs (Maj+…).
+var (
+	glyphesTouches = map[string]string{
+		"Entrée": "\U000f0311", "Enter": "\U000f0311", "Échap": "\U000f12b7", "Esc": "\U000f12b7",
+		"Tab": "\U000f0312", "⌫": "\U000f030d",
+	}
+	prefixesTouches = []string{"Maj+", "Shift+"}
+)
+
+const glypheMaj = "\U000f0636" // md-apple_keyboard_shift
+
+// capsule : une touche (son nom déjà traduit) telle que le sélecteur la dessine, partout où il la rappelle :
+// chaque touche du nom sur un fond discret (SEP du thème) ; avec une Nerd Font (icons=nerd), Entrée, Tab,
+// Échap, ⌫ et Maj prennent leur glyphe ; en gras, pour rester distincte de l'effet estompé même sans couleur.
+func (m *Modele) capsule(nom string) string {
+	if nom == i18n.T("lettres") { // pas une touche : ce qu'on tape
+		return nom
+	}
+	nerd := m.os.st.Valeur("icons") == "nerd"
+	p := m.palette(m.noms[m.i])
+	var l []string
+	for _, t := range strings.Fields(nom) {
+		if g, ok := glyphesTouches[t]; ok && nerd {
+			t = g
+		}
+		for _, pr := range prefixesTouches {
+			if r, ok := strings.CutPrefix(t, pr); ok && nerd {
+				t = glypheMaj + r
+			}
+		}
+		l = append(l, ansi.Bg(p.Sep)+ansi.Fg(p.Texte)+gras+" "+t+" "+z)
+	}
+	return strings.Join(l, " ")
+}
+
+// rappel : une touche et ce qu'elle fait, l'effet estompé.
+func (m *Modele) rappel(nom, effet string) string { return m.capsule(nom) + " " + estompe + effet + z }
 
 func (r raccourci) disponible(m *Modele) bool { return r.dispo == nil || r.dispo(m) }
 
@@ -398,16 +435,16 @@ func (m *Modele) raccourcisDuPied(md mode) []raccourci {
 	return l
 }
 
-// aideCourte : « touche effet · … » sur une ligne de largeur w ; faute de place, les raccourcis de plus
+// aideCourte : « touche effet  touche effet… » sur une ligne de largeur w ; faute de place, les raccourcis de plus
 // grand rang sont retirés d'abord (jamais une touche à moitié coupée).
 func (m *Modele) aideCourte(md mode, w int) string {
 	l := m.raccourcisDuPied(md)
 	for {
 		var t []string
 		for _, r := range l {
-			t = append(t, m.capsule(r.touche())+" "+r.maintenant(m))
+			t = append(t, m.rappel(r.touche(), r.maintenant(m)))
 		}
-		s := strings.Join(t, " · ")
+		s := strings.Join(t, "  ")
 		if largeur(s) <= w || len(l) <= 1 {
 			return s
 		}

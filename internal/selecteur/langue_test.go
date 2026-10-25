@@ -26,23 +26,23 @@ func TestAnglais(t *testing.T) {
 	contient := func(quoi, e string, attendus ...string) {
 		t.Helper()
 		for _, a := range attendus {
-			if !strings.Contains(e, a) {
+			if !strings.Contains(aplati(e), a) { // les touches sont des capsules : espaces autour
 				t.Errorf("%s : %q absent\n%s", quoi, a, e)
 			}
 		}
 	}
 	e := ecran(m)
-	contient("liste", e, "in effect: Tokyo Night (built-in)", strconv.Itoa(len(m.noms))+" themes", "◂ all ▸", "Enter choose", "? help", "Claude Code · my-project", "> run the tests")
+	contient("liste", e, "in effect: Tokyo Night (built-in)", strconv.Itoa(len(m.noms))+" themes", "◂ all ▸", "choose", "? help", "Claude Code · my-project", "> run the tests")
 	appuyer(m, "→")
 	contient("filtre", ecran(m), "◂ popular ▸")
 	appuyer(m, "?")
-	contient("aide", ecran(m), "Themes: list", "Themes: search (/)", "browse", "Esc ?")
+	contient("aide", ecran(m), "Themes: list", "Themes: search (/)", "browse", "close")
 	appuyer(m, "échap", "↓", "entrée", "b")
-	contient("brouillon", ecran(m), "Not saved: theme", "for the branch main", "s save · u cancel", "scope: the branch main")
+	contient("brouillon", ecran(m), "Not saved: theme", "for the branch main", "scope: the branch main")
 	appuyer(m, "échap", "tab")
 	m.os.st.Definir("ssh.short", "yes")
 	m.os.changer()
-	contient("onglet Statusline", ecran(m), " Themes ", "▲ model · Line 1", "Preview · full (v)", "SSH Opus", "s save", "Enter menu")
+	contient("onglet Statusline", ecran(m), " Themes ", "▲ model · Line 1", "Preview · full (v)", "SSH Opus", "s save", "menu")
 	appuyer(m, "↑")
 	contient("ligne SSH", ecran(m), "SSH line")
 	appuyer(m, "g")

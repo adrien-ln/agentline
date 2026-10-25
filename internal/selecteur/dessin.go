@@ -294,6 +294,9 @@ func (m *Modele) ligneListe(k int, sel bool, lw int) string {
 	t := tronquer(m.titres[k], lw-4)
 	pad := espaces(lw - 4 - largeur(t))
 	if sel {
+		if r := m.rappelLigne(); largeur(pad) >= largeur(r)+3 { // la touche qui agit sur ce thème, s'il y a la place
+			pad = espaces(largeur(pad)-largeur(r)-1) + r + " "
+		}
 		return inverse + " › " + t + pad + " " + z
 	}
 	if m.noms[k] == m.choix && m.themeEnAttente() { // choisi, pas encore enregistré
@@ -303,6 +306,22 @@ func (m *Modele) ligneListe(k int, sel bool, lw int) string {
 		return "  " + estompe + "●" + z + t + pad + " "
 	}
 	return "   " + t + pad + " "
+}
+
+// rappelLigne : au bout de la ligne surlignée, ce que fait la touche utile ici (Entrée pour choisir, s pour
+// enregistrer le thème déjà choisi), estompé dans le surlignage.
+func (m *Modele) rappelLigne() string {
+	if m.onglet != 0 || len(m.vue) == 0 {
+		return ""
+	}
+	touche, effet := i18n.T("Entrée"), i18n.T("choisir")
+	if m.noms[m.i] == m.choix && m.themeEnAttente() {
+		touche, effet = "s", i18n.T("enregistrer")
+	}
+	if g, ok := glyphesTouches[touche]; ok && m.os.st.Valeur("icons") == "nerd" {
+		touche = g
+	}
+	return estompe + touche + " " + effet + "\x1b[22m"
 }
 
 // indicateur aligne « ↑ n de plus » et « ↓ n de plus » sur les noms des thèmes (après la marge de « › »).
@@ -338,7 +357,7 @@ func (m *Modele) lignesEntete(nom string, w int) []string {
 	a := theme.Active(m.chaine)
 	infos := []string{i18n.T("en vigueur : %s (%s)", m.titreDe(a.Nom), pourquoi(a))}
 	if m.onglet == 0 {
-		infos = append(infos, i18n.T("portée : %s", m.libellePortee()))
+		infos = append(infos, i18n.T("portée : %s (p b d)", m.libellePortee()))
 	}
 	if nom != a.Nom {
 		infos = append(infos, i18n.T("survolé : %s", m.titres[m.i]))

@@ -36,6 +36,17 @@ func (m *Modele) libellePortee() string {
 	return i18n.T("partout (défaut)")
 }
 
+// ou : la portée dans une phrase (« thème Nord pour ce projet », « … partout »).
+func (m *Modele) ou() string {
+	switch m.portee {
+	case theme.SourceProjet:
+		return i18n.T("pour ce projet (%s)", m.depot())
+	case theme.SourceBranche:
+		return i18n.T("pour la branche %s", m.branche)
+	}
+	return i18n.T("partout")
+}
+
 // changerPortee : p, b ou d ; le choix du thème reste.
 func (m *Modele) changerPortee(source string) tea.Cmd {
 	m.portee = source
@@ -83,7 +94,7 @@ func (m *Modele) reglagesStyle() int {
 func (m *Modele) enAttente() []string {
 	var l []string
 	if m.themeEnAttente() {
-		l = append(l, i18n.T("thème %s pour %s", m.titreDe(m.choix), m.libellePortee()))
+		l = append(l, i18n.T("thème %s %s", m.titreDe(m.choix), m.ou()))
 	}
 	if m.retrait {
 		if _, ok := m.aRetirer(); ok {
@@ -148,7 +159,7 @@ func (m *Modele) ecrire() (faits, avert []string) {
 			m.Resultat = erreur(err)
 			return nil, nil
 		}
-		faits = append(faits, i18n.T("thème %s pour %s", titre, m.libellePortee()))
+		faits = append(faits, i18n.T("thème %s %s", titre, m.ou()))
 	}
 	if e, ok := m.aRetirer(); m.retrait && ok {
 		var err error
@@ -247,7 +258,7 @@ func (m *Modele) lignesBrouillon(w int) []string {
 		return l
 	}
 	if a := m.enAttente(); len(a) > 0 {
-		ajouter("● " + i18n.T("Non enregistré : %s", strings.Join(a, " · ")) + "  ·  " + i18n.T("s enregistrer · u annuler"))
+		ajouter("● " + i18n.T("Non enregistré : %s", strings.Join(a, " · "))) // s et u sont rappelés juste en dessous, dans le pied
 		if x := m.masque(); x != "" {
 			ajouter(x)
 		}
