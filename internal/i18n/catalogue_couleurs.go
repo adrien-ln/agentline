@@ -22,5 +22,10 @@ var couleurs = map[string]string{
 	"fond inconnu : %s (dark, light ou auto)":                                                    "unknown background: %s (dark, light or auto)",
 	"✓ fond : détection automatique (%s, %s)\n":                                                  "✓ background: automatic detection (%s, %s)\n",
 	"✓ fond → %s\n": "✓ background → %s\n",
-	"⚠ AGENTLINE_BACKGROUND=%s l'emporte tant qu'elle est définie": "⚠ AGENTLINE_BACKGROUND=%s wins while it is set",
+	"⚠ AGENTLINE_BACKGROUND=%s l'emporte tant qu'elle est définie":    "⚠ AGENTLINE_BACKGROUND=%s wins while it is set",
+	"format inconnu : ni Windows Terminal, ni iTerm2, ni base16 (%v)": "unknown format: neither Windows Terminal, iTerm2 nor base16 (%v)",
+	"jeu de couleurs incomplet : il manque des couleurs ANSI":         "incomplete color scheme: some ANSI colors are missing",
+	"jeu de couleurs introuvable : %q (dans le fichier : %s)":         "color scheme not found: %q (in the file: %s)",
+	"fichier iTerm2 illisible : %v":                                   "unreadable iTerm2 file: %v",
+	"jeu de couleurs incomplet : il manque le fond ou le texte":       "incomplete color scheme: the background or the text is missing",
 }

@@ -1,0 +1,9 @@
+// Un settings.json de Windows Terminal, avec commentaires et virgules finales
+{
+    "profiles": { "defaults": { "colorScheme": "Solarized Light" }, "list": [] },
+    "schemes": [
+        /* un jeu sombre */
+        { "name": "Nuit", "background": "#1A1B26", "foreground": "#C0CAF5", "black": "#15161E", "red": "#F7768E", "green": "#9ECE6A", "yellow": "#E0AF68", "blue": "#7AA2F7", "purple": "#BB9AF7", "cyan": "#7DCFFF", "white": "#A9B1D6", "brightBlack": "#414868", "brightRed": "#F7768E", "brightGreen": "#9ECE6A", "brightYellow": "#E0AF68", "brightBlue": "#7AA2F7", "brightPurple": "#BB9AF7", "brightCyan": "#7DCFFF", "brightWhite": "#C0CAF5", },
+        { "name": "Solarized Light", "background": "#FDF6E3", "foreground": "#657B83", "black": "#002B36", "red": "#DC322F", "green": "#859900", "yellow": "#B58900", "blue": "#268BD2", "purple": "#D33682", "cyan": "#2AA198", "white": "#EEE8D5", "brightBlack": "#073642", "brightRed": "#CB4B16", "brightGreen": "#586E75", "brightYellow": "#657B83", "brightBlue": "#839496", "brightPurple": "#6C71C4", "brightCyan": "#93A1A1", "brightWhite": "#FDF6E3" },
+    ],
+}
