@@ -91,7 +91,7 @@ while (( $# )); do
       verifier_sujet "pull request title" "$2"
       shift 2 ;;
     --file)
-      (( $# >= 2 )) && [[ -f $2 ]] || usage
+      if (( $# < 2 )) || [[ ! -f $2 ]]; then usage; fi
       # Comme git : lignes de commentaire retirées, lignes vides de tête ignorées
       message=$(grep -v '^#' "$2" | sed '/./,$!d')
       verifier_message "commit message" "$message"

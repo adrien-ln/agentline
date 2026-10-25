@@ -57,4 +57,5 @@ remplir() {
 remplir "$depot/packaging/scoop/agentline.json.modele" > "$dist/agentline.json"
 remplir "$depot/packaging/homebrew/agentline.rb.modele" > "$dist/agentline.rb"
 grep -qE '@[A-Z_]+@|""' "$dist/agentline.json" "$dist/agentline.rb" && { echo "incomplete manifest (missing field or checksum)" >&2; exit 1; }
-echo "dist/$version: $(ls "$dist" | wc -l) files (archives, SHA256SUMS, agentline.json for Scoop, agentline.rb for Homebrew)"
+fichiers=("$dist"/*)
+echo "dist/$version: ${#fichiers[@]} files (archives, SHA256SUMS, agentline.json for Scoop, agentline.rb for Homebrew)"
