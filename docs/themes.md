@@ -1,5 +1,16 @@
 # Make your own theme
 
+## With the editor
+
+```bash
+agentline theme new my-theme --from nord   # a copy of nord, named my-theme
+agentline theme edit my-theme              # change it later (a built-in theme opens as a copy)
+```
+
+Or press `e` on a theme in the picker, or Tab to its **Create** tab. Each of the 17 colors is tuned by lightness, chroma or hue (`c` switches, ←→ tunes, Shift for bigger steps) or by typing its code (Enter). The contrast of each color against its background is shown, with ⚠ when text would be hard to read. The preview shows the statusline in three situations, on the other background with `f` and at 256 or 16 colors with `v`. `n` renames the theme, `s` saves it to `~/.config/agentline/themes/<name>.theme` without closing, `u` drops the changes.
+
+## By hand
+
 Copy a file from [`themes/`](../themes) to `~/.config/agentline/themes/<name>.theme`:
 
 ```bash

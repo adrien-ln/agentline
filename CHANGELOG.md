@@ -6,6 +6,7 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ### Added
 
+- A theme editor: the picker's new Create tab (or `e` on a theme, `agentline theme new <name> [--from <theme>]`, `agentline theme edit <theme>`) tunes each color by lightness, chroma or hue or by its code, warns about low contrast, and previews the statusline on either background and at 256 or 16 colors; `s` saves it to your themes folder.
 - `agentline font test` draws every glyph agentline uses in the current font, so a missing or too wide glyph shows at a glance.
 
 ## [0.6.0] - 2026-10-25
