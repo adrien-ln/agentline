@@ -14,8 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# Pas de GOTOOLCHAIN=local ici : setup-go ignorerait alors la ligne toolchain de go.mod (1.27.3) pour la ligne go
+# (1.26.0). Le go installé est déjà celui de la ligne toolchain, il ne télécharge donc rien d'autre.
 env:
-  GOTOOLCHAIN: local
   GOFLAGS: -mod=readonly
 
 defaults:

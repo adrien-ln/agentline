@@ -14,8 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Pas de GOTOOLCHAIN=local ici : setup-go ignorerait alors la ligne toolchain de go.mod (1.27.3) pour la ligne go
+# (1.26.0). Le go installé est déjà celui de la ligne toolchain, il ne télécharge donc rien d'autre.
 env:
-  GOTOOLCHAIN: local # la version de go.mod, installée par setup-go : pas d'autre téléchargement
   GOFLAGS: -mod=readonly
 
 defaults:
@@ -61,6 +62,8 @@ jobs:
   go-minimum:
     # la version de la ligne go de go.mod (celle que demande golang.org/x/sys) : go install doit y marcher
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: local # sinon go passerait à la 1.27.3 de la ligne toolchain
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
