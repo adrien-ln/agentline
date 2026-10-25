@@ -80,6 +80,10 @@ jobs:
         with:
           go-version-file: go.mod
       - name: shellcheck
-        run: shellcheck --version && shellcheck scripts/*.sh # préinstallé sur ubuntu-latest
+        # préinstallé sur ubuntu-latest ; chaque remarque devient une annotation (visible sans se connecter)
+        run: |
+          shellcheck --version
+          shellcheck -f gcc scripts/*.sh | awk -F: '{ m = $0; sub(/^[^:]*:[0-9]+:[0-9]+: /, "", m); printf "::error file=%s,line=%s,col=%s::%s\n", $1, $2, $3, m }'
+          exit "${PIPESTATUS[0]}"
       - name: actionlint
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 # vérifie aussi les run: avec shellcheck
