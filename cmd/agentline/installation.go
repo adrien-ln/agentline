@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,6 +49,22 @@ func demander(sortie io.Writer) func(string) bool {
 			return true
 		}
 		return false
+	}
+}
+
+// choisir : affiche les choix numérotés, lit le numéro ; vide ou invalide : le premier.
+func choisir(sortie io.Writer) func(string, []string) int {
+	return func(q string, choix []string) int {
+		fmt.Fprintln(sortie, q)
+		for i, c := range choix {
+			fmt.Fprintf(sortie, "  %d) %s\n", i+1, c)
+		}
+		fmt.Fprint(sortie, "[1] ")
+		l, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		if n, err := strconv.Atoi(strings.TrimSpace(l)); err == nil && n >= 1 && n <= len(choix) {
+			return n - 1
+		}
+		return 0
 	}
 }
 
@@ -113,7 +130,8 @@ func optionsReelles(a *appel) installation.Options {
 	o := installation.Options{OS: runtime.GOOS, Horodatage: time.Now().Format("20060102-150405"), Sortie: a.sortie,
 		Getenv: getenv, Lancer: lancerCommande, Registre: installation.RegistreReel(), Diffuser: installation.DiffuserReel,
 		Chercher: exec.LookPath, Telecharger: telecharger, PolicesSysteme: installation.PolicesSystemeDe(runtime.GOOS, getenv),
-		Interactif: terminal(os.Stdin) && terminal(os.Stdout), Demander: demander(a.sortie), SansPolice: a.opts["--no-font"]}
+		Interactif: terminal(os.Stdin) && terminal(os.Stdout), Demander: demander(a.sortie), Choisir: choisir(a.sortie),
+		SansPolice: a.opts["--no-font"], Police: a.vals["--font"], PoliceImposee: a.vals["--font"] != "", Reglages: dossierConfig()}
 	o.SurPlace = a.opts["--in-place"]
 	o.Court = courtIci()
 	o.Home, _ = os.UserHomeDir()
@@ -136,6 +154,11 @@ func optionsReelles(a *appel) installation.Options {
 
 // commandeInstallation : « agentline install » et « agentline uninstall » ; renvoie le code de sortie.
 func commandeInstallation(retirer bool, a *appel) int {
+	if n := a.vals["--font"]; n != "" {
+		if _, ok := installation.PoliceNommee(n); !ok {
+			return a.usage(i18n.T("police inconnue : %s (au choix : %s)"), n, strings.Join(installation.NomsPolices(), ", "))
+		}
+	}
 	o := optionsReelles(a)
 	f := installation.Installer
 	if retirer {

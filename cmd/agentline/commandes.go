@@ -33,6 +33,7 @@ type commande struct {
 type option struct {
 	nom, aide string
 	anciens   []string
+	valeur    string // le nom de sa valeur dans l'aide (« name ») ; vide : une option sans valeur
 }
 
 // appel : une commande lancée, ses arguments et options, où écrire.
@@ -41,6 +42,7 @@ type appel struct {
 	prefixe         string // « agentline » ou « agentline theme »
 	args            []string
 	opts            map[string]bool
+	vals            map[string]string // la valeur des options qui en ont une (--font firacode)
 	sortie, erreurs io.Writer
 }
 
@@ -79,21 +81,36 @@ func estAide(a string) bool { return a == "-h" || a == "--help" }
 // lancer : sépare options et arguments, vérifie leur nombre, puis exécute la commande ; -h ou --help
 // affiche son aide.
 func lancer(c commande, prefixe string, args []string, sortie, erreurs io.Writer) int {
-	a := &appel{cmd: c, prefixe: prefixe, opts: map[string]bool{}, sortie: sortie, erreurs: erreurs}
+	a := &appel{cmd: c, prefixe: prefixe, opts: map[string]bool{}, vals: map[string]string{}, sortie: sortie, erreurs: erreurs}
 	if c.brut {
 		a.args = args
 		return c.faire(a)
 	}
-	for _, x := range args {
+	for k := 0; k < len(args); k++ {
+		x := args[k]
 		switch {
 		case estAide(x):
 			io.WriteString(sortie, usageDe(c, prefixe))
 			return 0
 		case strings.HasPrefix(x, "-") && x != "-":
-			if !aOption(c, x) {
+			nom, val, avecEgal := strings.Cut(x, "=")
+			o, ok := optionDe(c, nom)
+			switch {
+			case !ok:
 				return a.usage(i18n.T("option inconnue : %s%s"), x, listeOptions(c))
+			case o.valeur == "" && avecEgal:
+				return a.usage(i18n.T("%s ne prend pas de valeur"), o.nom)
+			case o.valeur != "" && !avecEgal:
+				if k+1 >= len(args) {
+					return a.usage(i18n.T("il manque la valeur de %s"), o.nom)
+				}
+				k++
+				val = args[k]
 			}
-			a.opts[nomOption(c, x)] = true
+			a.opts[o.nom] = true
+			if o.valeur != "" {
+				a.vals[o.nom] = val
+			}
 		default:
 			a.args = append(a.args, x)
 		}
@@ -107,16 +124,14 @@ func lancer(c commande, prefixe string, args []string, sortie, erreurs io.Writer
 	return c.faire(a)
 }
 
-func aOption(c commande, x string) bool { return nomOption(c, x) != "" }
-
-// nomOption : le nom de l'option x (son nom actuel si x en est un ancien) ; vide si la commande ne l'a pas.
-func nomOption(c commande, x string) string {
+// optionDe : l'option x de la commande (par son nom actuel ou un ancien) ; faux si elle ne l'a pas.
+func optionDe(c commande, x string) (option, bool) {
 	for _, o := range c.options {
 		if o.nom == x || slices.Contains(o.anciens, x) {
-			return o.nom
+			return o, true
 		}
 	}
-	return ""
+	return option{}, false
 }
 
 func listeOptions(c commande) string {
@@ -154,7 +169,11 @@ func usageDe(c commande, prefixe string) string {
 	if len(c.options) > 0 {
 		b.WriteString(i18n.T("\nOptions :\n"))
 		for _, o := range c.options {
-			b.WriteString(ligneAide(o.nom, o.aide))
+			nom := o.nom
+			if o.valeur != "" {
+				nom += " <" + o.valeur + ">"
+			}
+			b.WriteString(ligneAide(nom, o.aide))
 		}
 	}
 	return b.String()

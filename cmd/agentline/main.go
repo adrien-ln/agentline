@@ -15,6 +15,7 @@ import (
 	"github.com/adrien-ln/agentline"
 	"github.com/adrien-ln/agentline/internal/ansi"
 	"github.com/adrien-ln/agentline/internal/i18n"
+	"github.com/adrien-ln/agentline/internal/installation"
 	"github.com/adrien-ln/agentline/internal/render"
 	"github.com/adrien-ln/agentline/internal/style"
 	"github.com/adrien-ln/agentline/internal/theme"
@@ -93,7 +94,9 @@ func commandesAgentline() []commande {
 			faire: func(a *appel) int { return commandeTheme(a.args, a.sortie, a.erreurs) }},
 		{nom: "style", args: i18n.T("[commande]"), aide: i18n.T("sans commande : les items de la statusline, dans le sélecteur ; voir ci-dessous"), brut: true,
 			faire: func(a *appel) int { return commandeStyle(a.args, a.sortie, a.erreurs) }},
-		{nom: "install", args: "[options]", aide: i18n.T("installe agentline et déclare la statusline dans Claude Code"), max: 0, options: optionsInstallation(),
+		{nom: "install", args: "[options]", aide: i18n.T("installe agentline et déclare la statusline dans Claude Code"), max: 0,
+			options: append(optionsInstallation(), option{nom: "--font", valeur: "name",
+				aide: i18n.T("installe cette Nerd Font et la choisit dans tes terminaux, même à la place d'une autre (%s)", strings.Join(installation.NomsPolices(), ", "))}),
 			faire: func(a *appel) int { return commandeInstallation(false, a) }},
 		{nom: "uninstall", args: "[options]", aide: i18n.T("retire la statusline de Claude Code (tes réglages restent)"), max: 0, options: optionsInstallation(),
 			faire: func(a *appel) int { return commandeInstallation(true, a) }},

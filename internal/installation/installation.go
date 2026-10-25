@@ -40,9 +40,13 @@ type Options struct {
 	PolicesSysteme []string // dossiers de polices de tous les utilisateurs (PolicesSystemeDe)
 
 	// La police : proposée seulement si Interactif, installée seulement si Demander répond oui.
-	Interactif bool
-	Demander   func(question string) bool
-	SansPolice bool // --no-font : ne rien proposer, afficher la commande
+	Interactif    bool
+	Demander      func(question string) bool
+	Choisir       func(question string, choix []string) int // l'index choisi ; nil : le premier
+	SansPolice    bool                                      // --no-font : ne rien proposer, afficher la commande
+	Police        string                                    // la Nerd Font demandée (--font) ; vide : celle des réglages, sinon la première
+	PoliceImposee bool                                      // --font : installer et choisir Police sans autre question
+	Reglages      string                                    // le dossier des réglages d'agentline, où la police choisie est retenue
 }
 
 func (o Options) windows() bool { return o.OS == "windows" }
@@ -202,6 +206,12 @@ func Installer(o Options) error {
 		return err
 	}
 
+	if o.PoliceImposee {
+		if err := o.AppliquerPolice(); err != nil {
+			o.etape(i18n.T("Attention"), i18n.T("police non installée (%s). À la main : %s", err.Error(), o.CommandePolice()))
+		}
+		return nil
+	}
 	o.proposerPolice()
 	return nil
 }

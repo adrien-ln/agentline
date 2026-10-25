@@ -21,11 +21,14 @@ const (
 	tailleMaxZip = 200 << 20
 	// archivesPolices : les archives officielles de la dernière version de Nerd Fonts.
 	archivesPolices = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/"
+	// fichierPolice : dans les réglages d'agentline, le nom court de la police choisie.
+	fichierPolice = "police"
 )
 
 // Police : une Nerd Font proposée, avec ce qu'il faut pour l'installer et la choisir dans un terminal.
 type Police struct {
 	Nom      string // le nom court, pour la ligne de commande
+	Titre    string // le nom affiché dans le choix
 	Famille  string // le nom de famille, celui que les terminaux attendent
 	Archive  string // l'archive officielle de Nerd Fonts
 	Fichiers string // le début du nom des .ttf de la famille principale (ni Mono ni Propo)
@@ -33,14 +36,78 @@ type Police struct {
 	Cask     string // Homebrew (dépôt principal des casks depuis 2024)
 }
 
-// Polices : les Nerd Fonts proposées ; la première est celle par défaut.
+// Polices : les Nerd Fonts proposées ; la première est celle par défaut. Familles, fichiers et paquets
+// d'après Nerd Fonts 3 (bin/scripts/lib/fonts.json), le dépôt Scoop « nerd-fonts » et les casks Homebrew.
 var Polices = []Police{
-	{Nom: "firacode", Famille: "FiraCode Nerd Font", Archive: archivesPolices + "FiraCode.zip", Fichiers: "FiraCodeNerdFont-",
-		Scoop: "nerd-fonts/FiraCode-NF", Cask: "font-fira-code-nerd-font"},
+	{Nom: "firacode", Titre: "Fira Code", Famille: "FiraCode Nerd Font", Archive: archivesPolices + "FiraCode.zip",
+		Fichiers: "FiraCodeNerdFont-", Scoop: "nerd-fonts/FiraCode-NF", Cask: "font-fira-code-nerd-font"},
+	{Nom: "jetbrainsmono", Titre: "JetBrains Mono", Famille: "JetBrainsMono Nerd Font", Archive: archivesPolices + "JetBrainsMono.zip",
+		Fichiers: "JetBrainsMonoNerdFont-", Scoop: "nerd-fonts/JetBrainsMono-NF", Cask: "font-jetbrains-mono-nerd-font"},
+	{Nom: "cascadia", Titre: "Cascadia Code (CaskaydiaCove)", Famille: "CaskaydiaCove Nerd Font", Archive: archivesPolices + "CascadiaCode.zip",
+		Fichiers: "CaskaydiaCoveNerdFont-", Scoop: "nerd-fonts/CascadiaCode-NF", Cask: "font-caskaydia-cove-nerd-font"},
+	{Nom: "hack", Titre: "Hack", Famille: "Hack Nerd Font", Archive: archivesPolices + "Hack.zip",
+		Fichiers: "HackNerdFont-", Scoop: "nerd-fonts/Hack-NF", Cask: "font-hack-nerd-font"},
+	{Nom: "meslo", Titre: "Meslo (MesloLGS)", Famille: "MesloLGS Nerd Font", Archive: archivesPolices + "Meslo.zip",
+		Fichiers: "MesloLGSNerdFont-", Scoop: "nerd-fonts/Meslo-NF", Cask: "font-meslo-lg-nerd-font"},
 }
 
-// police : la Nerd Font à installer et à choisir dans les terminaux.
-func (o Options) police() Police { return Polices[0] }
+// NomsPolices : les noms courts acceptés par --font et « agentline font set ».
+func NomsPolices() []string {
+	n := make([]string, len(Polices))
+	for i, p := range Polices {
+		n[i] = p.Nom
+	}
+	return n
+}
+
+// PoliceNommee : la police de ce nom court, de ce titre ou de cette famille (sans casse, espaces ni tirets).
+func PoliceNommee(nom string) (Police, bool) {
+	simple := func(s string) string {
+		return strings.NewReplacer(" ", "", "-", "", "_", "").Replace(strings.ToLower(s))
+	}
+	n := simple(nom)
+	for _, p := range Polices {
+		if n != "" && (n == p.Nom || n == simple(p.Titre) || n == simple(p.Famille) || n == simple(strings.TrimSuffix(p.Famille, " Nerd Font"))) {
+			return p, true
+		}
+	}
+	return Police{}, false
+}
+
+// police : la Nerd Font à installer et à choisir dans les terminaux : celle demandée (--font), sinon celle
+// retenue dans les réglages, sinon la première.
+func (o Options) police() Police {
+	for _, n := range []string{o.Police, o.policeRetenue()} {
+		if p, ok := PoliceNommee(n); ok {
+			return p
+		}
+	}
+	return Polices[0]
+}
+
+// policeRetenue : le nom de la police retenue dans les réglages ; vide s'il n'y en a pas.
+func (o Options) policeRetenue() string {
+	if o.Reglages == "" {
+		return ""
+	}
+	b, err := os.ReadFile(filepath.Join(o.Reglages, fichierPolice))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(b))
+}
+
+// retenirPolice : écrit la police choisie dans les réglages (atomiquement), pour les installations suivantes.
+func (o Options) retenirPolice(p Police) {
+	if o.Reglages == "" || o.policeRetenue() == p.Nom {
+		return
+	}
+	f := filepath.Join(o.Reglages, fichierPolice)
+	if os.MkdirAll(o.Reglages, 0o755) != nil || os.WriteFile(f+".tmp", []byte(p.Nom+"\n"), 0o644) != nil {
+		return
+	}
+	os.Rename(f+".tmp", f)
+}
 
 // PolicesSystemeDe : les dossiers de polices communs à tous les utilisateurs, selon l'OS.
 func PolicesSystemeDe(goos string, getenv func(string) string) []string {
@@ -107,6 +174,18 @@ func (o Options) policeNerdFont() bool {
 	if o.env("SSH_CONNECTION") != "" {
 		return true
 	}
+	return o.chercherPolice(estNerdFont, "nerd font")
+}
+
+// policeInstallee : la police p est-elle installée (ses fichiers, ou sa famille pour fc-list) ?
+func (o Options) policeInstallee(p Police) bool {
+	debut := strings.ToLower(p.Fichiers)
+	return o.chercherPolice(func(nom string) bool { return estNerdFont(nom) && strings.HasPrefix(strings.ToLower(nom), debut) }, strings.ToLower(p.Famille))
+}
+
+// chercherPolice : un fichier de police accepté dans les dossiers de polices, ou (hors Windows) une famille
+// qui contient famille dans la liste de fc-list.
+func (o Options) chercherPolice(accepte func(nom string) bool, famille string) bool {
 	for _, d := range o.dossiersPolices() {
 		trouve := false
 		filepath.WalkDir(d, func(p string, e fs.DirEntry, err error) error {
@@ -116,7 +195,7 @@ func (o Options) policeNerdFont() bool {
 			if e.IsDir() && strings.Count(strings.TrimPrefix(p, d), string(filepath.Separator)) > 3 {
 				return filepath.SkipDir // assez profond
 			}
-			if !e.IsDir() && estNerdFont(e.Name()) {
+			if !e.IsDir() && accepte(e.Name()) {
 				trouve = true
 				return filepath.SkipAll
 			}
@@ -127,7 +206,7 @@ func (o Options) policeNerdFont() bool {
 		}
 	}
 	if !o.windows() {
-		if s, err := o.lancer("fc-list", ":", "family"); err == nil && strings.Contains(strings.ToLower(s), "nerd font") {
+		if s, err := o.lancer("fc-list", ":", "family"); err == nil && strings.Contains(strings.ToLower(s), famille) {
 			return true
 		}
 	}
@@ -168,15 +247,56 @@ func (o Options) proposerPolice() {
 		o.etape(i18n.T("Police"), manque)
 		return
 	}
-	if !o.Demander(i18n.T("Installer %s et régler ton terminal ? [O/n] ", o.police().Famille)) {
+	// sans police demandée ni retenue, on demande d'abord si l'on installe, puis laquelle
+	choix := o.Police == "" && o.policeRetenue() == "" && o.Choisir != nil
+	question := i18n.T("Installer %s et régler ton terminal ? [O/n] ", o.police().Famille)
+	if choix {
+		question = i18n.T("Installer une Nerd Font et régler ton terminal ? [O/n] ")
+	}
+	if !o.Demander(question) {
 		o.etape(i18n.T("Police"), i18n.T("pas installée. Plus tard : %s", o.CommandePolice()))
 		return
+	}
+	if choix {
+		titres := make([]string, len(Polices))
+		for i, p := range Polices {
+			titres[i] = p.Titre
+		}
+		if i := o.Choisir(i18n.T("Quelle Nerd Font ?"), titres); i >= 0 && i < len(Polices) {
+			o.Police = Polices[i].Nom
+		}
 	}
 	if err := o.installerPolice(); err != nil {
 		o.etape(i18n.T("Attention"), i18n.T("police non installée (%s). À la main : %s", err.Error(), o.CommandePolice()))
 		return
 	}
-	o.reglerTerminaux()
+	o.retenirPolice(o.police())
+	o.reglerTerminaux(false)
+}
+
+// AppliquerPolice : la police demandée (--font, « agentline font set ») est installée si elle manque, puis
+// choisie dans Windows Terminal et VS Code, même à la place d'une autre Nerd Font, et retenue dans les
+// réglages. Dans un terminal, on confirme avant de télécharger ; sans terminal, la demande vaut accord.
+func (o Options) AppliquerPolice() error {
+	p := o.police()
+	if o.env("SSH_CONNECTION") != "" {
+		o.etape(i18n.T("Police"), i18n.T("en SSH, c'est celle du terminal de ta machine qui compte"))
+		return nil
+	}
+	if o.policeInstallee(p) {
+		o.etape(i18n.T("Police"), i18n.T("%s déjà installée", p.Famille))
+	} else {
+		if o.Interactif && o.Demander != nil && !o.Demander(i18n.T("Installer %s et régler ton terminal ? [O/n] ", p.Famille)) {
+			o.etape(i18n.T("Police"), i18n.T("pas installée. Plus tard : %s", o.CommandePolice()))
+			return nil
+		}
+		if err := o.installerPolice(); err != nil {
+			return err
+		}
+	}
+	o.retenirPolice(p)
+	o.reglerTerminaux(true)
+	return nil
 }
 
 // installerPolice : par le gestionnaire de paquets s'il y en a un (Scoop, Homebrew), sinon par
@@ -335,14 +455,21 @@ func (o Options) reglagesTerminaux() []reglage {
 }
 
 // reglerTerminaux : la police dans Windows Terminal et VS Code (copie .bak avant) ; pour le terminal en
-// cours, s'il n'est ni l'un ni l'autre, ce qu'il faut faire à la main.
-func (o Options) reglerTerminaux() {
+// cours, s'il n'est ni l'un ni l'autre, ce qu'il faut faire à la main. Une Nerd Font déjà choisie est
+// gardée, sauf si forcer (la police a été demandée par son nom).
+func (o Options) reglerTerminaux(forcer bool) {
 	famille := o.police().Famille
+	bonne := func(v string) bool {
+		if forcer {
+			return v == famille
+		}
+		return strings.Contains(strings.ToLower(v), "nerd font")
+	}
 	regle := map[string]bool{}
 	for _, r := range o.reglagesTerminaux() {
 		res, copie, err := o.modifier(r.fichier, func(c string) (string, string) {
-			if v, ok := ChaineJSONC(c, r.chemin...); ok && strings.Contains(strings.ToLower(v), "nerd font") {
-				return c, "identique" // déjà une Nerd Font
+			if v, ok := ChaineJSONC(c, r.chemin...); ok && bonne(v) {
+				return c, "identique" // déjà la bonne police
 			}
 			n, res, err := PoserChaineJSONC(c, famille, r.chemin...)
 			if err != nil {
@@ -356,7 +483,7 @@ func (o Options) reglerTerminaux() {
 		case res == identique:
 			if c, _ := os.ReadFile(r.fichier); jsoncValide(string(c)) != nil {
 				o.etape(i18n.T("Attention"), i18n.T("%s : %s illisible, choisis la police %s à la main", r.terminal, r.fichier, famille))
-			} else if v, _ := ChaineJSONC(string(c), r.chemin...); !strings.Contains(strings.ToLower(v), "nerd font") {
+			} else if v, _ := ChaineJSONC(string(c), r.chemin...); !bonne(v) {
 				o.etape(i18n.T("Attention"), i18n.T("%s : %s introuvable dans %s, choisis la police %s à la main", r.terminal, strings.Join(r.chemin, "."), r.fichier, famille))
 			} else {
 				o.etape(i18n.T("À jour"), i18n.T("%s : %s", r.terminal, r.fichier))
