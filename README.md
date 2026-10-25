@@ -72,6 +72,26 @@ agentline help     # every command
 <img src="docs/demo/statusline.png" alt="The statusline in the Tokyo Night, Miami, Prairie and Dracula themes" width="480">
 </div>
 
+## Why agentline
+
+Claude Code runs the statusline command again and again during a session, so it has to start fast and stay out of the way.
+
+- **One native binary**: no Node.js, Bun or `npx`. A render takes about 50 ms on Windows (from Git Bash, which costs about 20 ms to start any process), Git state cached for 5 s.
+- **No network calls** from the statusline: everything comes from what the tool sends and from `git`; nothing leaves your machine.
+- **A theme per project and per branch**, and **one look for several agents**: Claude Code, Antigravity CLI and Copilot CLI.
+
+Compared with [ccstatusline](https://github.com/sirmalloc/ccstatusline), the most popular Claude Code statusline:
+
+| | agentline | ccstatusline |
+|---|---|---|
+| Runs with | a single binary | Node.js or Bun (`npx`, `bunx` or a global install) |
+| Time per render | about 50 ms (measured above) | 1.1 s with `npx`, 0.2 to 0.6 s with `bunx` (from its README) |
+| Network | none | its usage and Claude status widgets call online services |
+| Tools | Claude Code, Antigravity CLI, Copilot CLI | Claude Code |
+| Customization | 49 themes, per project or branch; items shown, hidden and moved with `agentline style` | many more widgets (Jujutsu, CI status, cache timer, extra usage…), Powerline, gradients, any number of lines |
+
+If you want every widget and Powerline, ccstatusline does more. If you want a fast, offline statusline that follows your projects and branches, that is what agentline is for.
+
 ## Good to know
 
 - **Settings** live in `~/.config/agentline` (or `$AGENTLINE_CONFIG`). Your own themes go in its `themes/` folder: see [docs/themes.md](docs/themes.md).
@@ -79,7 +99,6 @@ agentline help     # every command
 - **Light background**: detected by `agentline install`; otherwise `agentline theme background light`.
 - **Over SSH**: the full statusline, with the font of the terminal on your own machine. For one short line without icons: `agentline style set ssh.short yes`.
 - **Other tools**: `agentline install` also offers to set the statusline of **Antigravity CLI** and **Copilot CLI** when they are installed (Copilot: turn the statusline on with `/experimental`). By hand: `agentline render --from antigravity` or `--from copilot` as their `statusLine` command. Copilot sends no quotas or cost.
-- **No network calls** from the statusline: everything comes from what the tool sends and from `git`.
 
 ## Uninstall
 
