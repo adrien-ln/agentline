@@ -120,7 +120,7 @@ func (m *Modele) piedDuMode(w int) []string {
 	case enQuitter:
 		morceaux := []string{gras + i18n.T("Quitter :") + z}
 		for _, r := range m.raccourcisDuPied(md) {
-			morceaux = append(morceaux, "["+r.touche()+"] "+r.maintenant(m))
+			morceaux = append(morceaux, "["+m.capsule(r.touche())+"] "+r.maintenant(m))
 		}
 		return replier(morceaux, "  ", w)
 	case enStyleSaisie:

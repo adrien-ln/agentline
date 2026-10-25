@@ -445,12 +445,12 @@ func (m *Modele) colonneFenetre(nom string) []string {
 
 // corpsAide : l'aide complète à la place de la liste ; sur deux colonnes si elle ne tient pas sur une.
 func (m *Modele) corpsAide(w int) []string {
-	l := lignesAide(w-2, modesAide[m.onglet])
+	l := m.lignesAide(w-2, modesAide[m.onglet])
 	if len(l) <= m.d.corps || w < aideDeuxColonnes {
 		return l
 	}
 	cw := (w - 3) / 2
-	l = lignesAide(cw-1, modesAide[m.onglet])
+	l = m.lignesAide(cw-1, modesAide[m.onglet])
 	coupe := -1 // à la ligne vide la plus proche du milieu : une section ne se coupe pas
 	for k, x := range l {
 		if x == "" && (coupe < 0 || abs(k-len(l)/2) < abs(coupe-len(l)/2)) {

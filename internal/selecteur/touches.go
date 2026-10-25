@@ -56,6 +56,9 @@ func (r raccourci) maintenant(m *Modele) string {
 // touche : le nom de la touche, tel qu'affiché dans la langue des textes (« Entrée », « Enter »).
 func (r raccourci) touche() string { return i18n.T(r.nom) }
 
+// capsule : une touche (son nom déjà traduit) telle que le sélecteur la dessine, partout où il la rappelle.
+func (m *Modele) capsule(nom string) string { return nom }
+
 func (r raccourci) disponible(m *Modele) bool { return r.dispo == nil || r.dispo(m) }
 
 var raccourcis []raccourci
@@ -402,7 +405,7 @@ func (m *Modele) aideCourte(md mode, w int) string {
 	for {
 		var t []string
 		for _, r := range l {
-			t = append(t, r.touche()+" "+r.maintenant(m))
+			t = append(t, m.capsule(r.touche())+" "+r.maintenant(m))
 		}
 		s := strings.Join(t, " · ")
 		if largeur(s) <= w || len(l) <= 1 {
@@ -422,7 +425,7 @@ const colonneTouche = 8 // largeur de la colonne des touches, dans l'aide compl�
 
 // lignesAide : l'aide complète tirée de la table, une section par mode, en lignes de largeur w au plus
 // (l'effet passe à la ligne sous lui-même, rien n'est coupé).
-func lignesAide(w int, modes []mode) []string {
+func (m *Modele) lignesAide(w int, modes []mode) []string {
 	var l []string
 	for _, md := range modes {
 		if len(l) > 0 {
@@ -433,7 +436,8 @@ func lignesAide(w int, modes []mode) []string {
 			if r.mode != md || r.effet == "" {
 				continue
 			}
-			nom := " " + r.touche() + espaces(colonneTouche-largeur(r.touche())) + " "
+			touche := m.capsule(r.touche())
+			nom := " " + touche + espaces(colonneTouche-largeur(touche)) + " "
 			retrait := espaces(colonneTouche + 2)
 			if largeur(nom) > colonneTouche+2 { // nom long : l'effet commence à la ligne suivante
 				l = append(l, nom)
