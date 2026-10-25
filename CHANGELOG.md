@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-25
+
 ### Added
 
 - Alerts that say what to do: a context in alert is followed by a `/compact` hint in Claude Code (`ctx.compact`), and uncommitted changes on `main` or `master` turn the branch red and put the git segment in alert (`git.protected`, set it to your own list or leave it empty to turn it off).
@@ -87,7 +89,8 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/adrien-ln/agentline/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/adrien-ln/agentline/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/adrien-ln/agentline/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/adrien-ln/agentline/compare/v0.3.0...v0.3.1
