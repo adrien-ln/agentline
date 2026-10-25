@@ -7,6 +7,7 @@ All notable changes to agentline are documented here. The format is based on [Ke
 ### Changed
 
 - The picker saves in one place: Enter chooses a theme, p, b or d sets where it applies, and s saves the theme and the statusline style together without closing. A bar shows what is not saved yet, u forgets it, and q asks before quitting with unsaved changes. Esc only steps back.
+- Keys are shown as small caps next to what they do, with their Nerd Font glyph for Enter, Tab, Esc, Backspace and Shift; the highlighted theme shows the key that acts on it.
 
 ## [0.5.0] - 2026-10-25
 
