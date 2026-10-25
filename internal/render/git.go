@@ -118,8 +118,9 @@ func lireGit(racine, tmp string, now int64, delai time.Duration) etatGit {
 	if e.fiable {
 		fiable = 1
 	}
-	os.WriteFile(cache, []byte(fmt.Sprintf("%d\n%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
-		now, e.branche, e.indexe, e.modifie, e.neuf, e.conflit, e.avance, e.retard, fiable)), 0o644)
+	// atomique : une autre session dans le même dépôt lit l'ancien cache ou le nouveau, jamais une moitié
+	theme.EcrireAtomique(filepath.Dir(cache), filepath.Base(cache), fmt.Sprintf("%d\n%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
+		now, e.branche, e.indexe, e.modifie, e.neuf, e.conflit, e.avance, e.retard, fiable))
 	return brancheDeSecours(e, racine)
 }
 
