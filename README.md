@@ -17,7 +17,7 @@ Model, Git, PR, context and quotas on two lines, in 49 themes: one by default, o
 | | |
 |---|---|
 | **Claude Code** | the statusline is declared in `~/.claude/settings.json` |
-| **A Nerd Font, set in your terminal** | for the icons. `agentline install` offers to install one and sets it in Windows Terminal and VS Code; other terminals: choose it in their settings. No Nerd Font: `agentline style set icons text` |
+| **A Nerd Font, set in your terminal** | for the icons. `agentline install` offers to install one (Fira Code, JetBrains Mono, Cascadia Code, Hack or Meslo) and sets it in Windows Terminal and VS Code; `agentline font set <name>` changes it later; other terminals: choose it in their settings. No Nerd Font: `agentline style set icons text` |
 | **A modern terminal** | Windows: **Windows Terminal** or the VS Code terminal (not the old console window). macOS, Linux: any terminal; 24-bit color is best |
 | **Git** on the PATH | for the branch and its status |
 

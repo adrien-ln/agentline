@@ -4,6 +4,15 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Added
+
+- `agentline install` asks which Nerd Font to install: Fira Code, JetBrains Mono, Cascadia Code, Hack or Meslo. `--font <name>` picks it without the question.
+- `agentline font` lists the fonts, the installed ones and the font of Windows Terminal and VS Code; `agentline font set <name>` installs a font if needed and selects it there.
+
+### Changed
+
+- `agentline doctor` names the installed font and warns when Windows Terminal or VS Code is set to a font that is not a Nerd Font.
+
 ## [0.2.0] - 2026-10-25
 
 ### Changed
