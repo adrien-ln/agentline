@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/adrien-ln/agentline"
+	"github.com/adrien-ln/agentline/internal/ansi"
 )
 
 var (
@@ -221,5 +222,31 @@ func TestBranches(t *testing.T) {
 		if MotifValide(m) != ok {
 			t.Errorf("MotifValide(%q) : %v", m, !ok)
 		}
+	}
+}
+
+// TestEcrituresAtomiques : le thème par défaut et le fond sont écrits d'un coup (aucun fichier temporaire
+// ne reste, le contenu est complet).
+func TestEcrituresAtomiques(t *testing.T) {
+	s := Sources{Config: t.TempDir()}
+	if err := s.EcrireDefaut("nord"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.EcrireFond(ansi.Clair, false); err != nil {
+		t.Fatal(err)
+	}
+	e, _ := os.ReadDir(s.Config)
+	var noms []string
+	for _, x := range e {
+		noms = append(noms, x.Name())
+	}
+	if strings.Join(noms, " ") != "defaut fond" {
+		t.Errorf("fichiers : %v", noms)
+	}
+	if b, _ := os.ReadFile(filepath.Join(s.Config, "defaut")); string(b) != "nord\n" {
+		t.Errorf("defaut : %q", b)
+	}
+	if b, _ := os.ReadFile(filepath.Join(s.Config, "fond")); string(b) != "light\n" {
+		t.Errorf("fond : %q", b)
 	}
 }

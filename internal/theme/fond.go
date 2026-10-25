@@ -44,19 +44,16 @@ func (s Sources) FondEnregistre() (ansi.Fond, bool) {
 	return f, ok && !auto
 }
 
-// EcrireFond : enregistre le fond ; auto retire le réglage (la détection reprend la main).
+// EcrireFond : enregistre le fond (écriture atomique, comme EcrireDefaut) ; auto retire le réglage (la
+// détection reprend la main).
 func (s Sources) EcrireFond(f ansi.Fond, auto bool) error {
-	chemin := filepath.Join(s.Config, "fond")
 	if auto {
-		if err := os.Remove(chemin); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := os.Remove(filepath.Join(s.Config, "fond")); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 		return nil
 	}
-	if err := os.MkdirAll(s.Config, 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(chemin, []byte(strings.ToLower(f.String())+"\n"), 0o644)
+	return EcrireAtomique(s.Config, "fond", strings.ToLower(f.String())+"\n")
 }
 
 // Un thème est fait pour un fond, sombre (les 46 premiers) ou clair (« # fond: clair »). Sur l'autre fond,

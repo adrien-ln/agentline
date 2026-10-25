@@ -68,12 +68,10 @@ func (s Sources) Entete(nom string) (titre string, tags []string) {
 var tagsAnglais = map[string]string{"popular": "populaire", "red": "rouge", "yellow": "jaune", "green": "vert",
 	"blue": "bleu", "purple": "violet", "pink": "rose", "gray": "gris", "grey": "gris"}
 
-// EcrireDefaut : le thème par défaut.
+// EcrireDefaut : le thème par défaut. Écriture atomique : un rendu lancé au même instant lit l'ancien
+// thème ou le nouveau, jamais un fichier vide.
 func (s Sources) EcrireDefaut(nom string) error {
-	if err := os.MkdirAll(s.Config, 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(s.Config, "defaut"), []byte(nom+"\n"), 0o644)
+	return EcrireAtomique(s.Config, "defaut", nom+"\n")
 }
 
 // Associations : les lignes du fichier projets, dans l'ordre (identifiant, thème).
