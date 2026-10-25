@@ -65,7 +65,7 @@ It checks the binary, `settings.json`, the font, the colors and the background, 
 ```bash
 agentline          # pick a theme (Enter) and where it applies (p this project, b this branch, d everywhere), then s to save
 agentline style    # show, hide, move and tune each item of the statusline
-agentline theme new my-theme   # make your own theme in the editor (docs/themes.md)
+agentline theme new my-theme   # make your own theme in the editor, or import one (docs/themes.md)
 agentline help     # every command
 ```
 

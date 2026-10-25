@@ -6,6 +6,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ### Added
 
+- `agentline theme import` turns a Windows Terminal, iTerm2 or base16 color scheme (or, with `--terminal`, the scheme of the current Windows Terminal profile) into a theme opened in the editor; `agentline theme export` prints a theme to share.
+- In the theme editor, `g` matches the gauge colors to the chosen color, `G` builds a whole theme around it, `a` previews it for color blindness; saved themes get color tags computed from their colors.
 - `agentline font preview` tries the installed Nerd Fonts live in Windows Terminal or VS Code: each one really becomes the terminal font while you choose (a .bak copy is made), Enter keeps it, Esc puts yours back. An interrupted preview is reported by doctor and undone by the next preview.
 - A theme editor: the picker's new Create tab (or `e` on a theme, `agentline theme new <name> [--from <theme>]`, `agentline theme edit <theme>`) tunes each color by lightness, chroma or hue or by its code, warns about low contrast, and previews the statusline on either background and at 256 or 16 colors; `s` saves it to your themes folder.
 - `agentline font test` draws every glyph agentline uses in the current font, so a missing or too wide glyph shows at a glance.
