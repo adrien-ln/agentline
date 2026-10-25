@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-25
+
 ### Changed
 
 - The Nerd Font is downloaded with `curl` instead of a network stack built into the binary: the binary is about 40% smaller and each statusline render starts faster.
@@ -55,7 +57,8 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/adrien-ln/agentline/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/adrien-ln/agentline/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/adrien-ln/agentline/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/adrien-ln/agentline/compare/v0.1.0...v0.1.1
