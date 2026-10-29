@@ -4,6 +4,10 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Changed
+
+- Key hints in the picker are quieter: bold keys in one fixed color, with no background, that no longer change with the highlighted theme.
+
 ## [0.7.0] - 2026-10-25
 
 ### Added

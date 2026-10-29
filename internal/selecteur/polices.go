@@ -129,7 +129,7 @@ func (m *Polices) poser() {
 // --- Dessin ----------------------------------------------------------------------------------------
 
 func (m *Polices) touchePied(nom, effet string) string {
-	return ansi.Bg(m.palette.Sep) + ansi.Fg(m.palette.Texte) + gras + " " + nom + " " + z + " " + estompe + effet + z
+	return ansi.Fg(couleurTouche(m.env.Couleurs.Fond == ansi.Clair)) + gras + nom + z + " " + estompe + effet + z
 }
 
 func (m *Polices) View() string {

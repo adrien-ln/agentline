@@ -454,14 +454,19 @@ func TestAideComplete(t *testing.T) {
 	}
 }
 
-// TestCapsules : les touches rappelées sont des capsules ; Entrée, Tab, Échap prennent leur glyphe Nerd Font
+// TestCapsules : les touches rappelées sont en gras, d'une couleur fixe qui ne suit pas le thème ; Entrée, Tab, Échap prennent leur glyphe Nerd Font
 // avec icons=nerd (le défaut), leur nom avec icons=text ; la ligne surlignée rappelle la touche utile.
 func TestCapsules(t *testing.T) {
 	m, _ := nouveau(t)
-	if c := visible(m.capsule("Entrée")); c != " "+glyphesTouches["Entrée"]+" " {
+	avant := m.capsule("Entrée")
+	appuyer(m, "↓", "↓", "↓")
+	if m.capsule("Entrée") != avant || strings.Contains(avant, "48;2") {
+		t.Error("la touche ne change pas avec le thème survolé, et n'a pas de fond")
+	}
+	if c := visible(m.capsule("Entrée")); c != glyphesTouches["Entrée"] {
 		t.Errorf("icons=nerd : %q", c)
 	}
-	if c := visible(m.capsule("Maj+←→ H L")); c != " "+glypheMaj+"←→ "+"  H   L " {
+	if c := visible(m.capsule("Maj+←→ H L")); c != glypheMaj+"←→ H L" {
 		t.Errorf("Maj+←→ H L : %q", c)
 	}
 	if !strings.Contains(m.ligneListe(m.i, true, 60), "choisir") {
@@ -472,7 +477,7 @@ func TestCapsules(t *testing.T) {
 		t.Error("thème choisi : la ligne surlignée doit rappeler s enregistrer")
 	}
 	m.os.st.Definir("icons", "text")
-	if c := visible(m.capsule("Entrée")); c != " Entrée " {
+	if c := visible(m.capsule("Entrée")); c != "Entrée" {
 		t.Errorf("icons=text : %q", c)
 	}
 }

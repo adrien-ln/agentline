@@ -75,14 +75,14 @@ var (
 const glypheMaj = "\U000f0636" // md-apple_keyboard_shift
 
 // capsule : une touche (son nom déjà traduit) telle que le sélecteur la dessine, partout où il la rappelle :
-// chaque touche du nom sur un fond discret (SEP du thème) ; avec une Nerd Font (icons=nerd), Entrée, Tab,
+// chaque touche du nom en gras, dans une couleur fixe (couleurTouche), sans fond ; avec une Nerd Font (icons=nerd), Entrée, Tab,
 // Échap, ⌫ et Maj prennent leur glyphe ; en gras, pour rester distincte de l'effet estompé même sans couleur.
 func (m *Modele) capsule(nom string) string {
 	if nom == i18n.T("lettres") { // pas une touche : ce qu'on tape
 		return nom
 	}
 	nerd := m.os.st.Valeur("icons") == "nerd"
-	p := m.palette(m.noms[m.i])
+	couleur := couleurTouche(m.clair())
 	var l []string
 	for _, t := range strings.Fields(nom) {
 		if g, ok := glyphesTouches[t]; ok && nerd {
@@ -93,9 +93,18 @@ func (m *Modele) capsule(nom string) string {
 				t = glypheMaj + r
 			}
 		}
-		l = append(l, ansi.Bg(p.Sep)+ansi.Fg(p.Texte)+gras+" "+t+" "+z)
+		l = append(l, ansi.Fg(couleur)+gras+t+z)
 	}
 	return strings.Join(l, " ")
+}
+
+// couleurTouche : la couleur fixe des touches rappelées, la même quel que soit le thème (un gris clair sur
+// fond sombre, foncé sur fond clair) : changer de thème ne fait pas clignoter le pied de page.
+func couleurTouche(clair bool) string {
+	if clair {
+		return "3a3f4b"
+	}
+	return "c8ccd6"
 }
 
 // GlyphesTouches : les touches dessinées avec un glyphe Nerd Font, nom traduit et glyphe, pour « agentline font
