@@ -56,6 +56,8 @@ var (
 	glyphesNerd = map[string]string{
 		"folder": "", "branch": "", "worktree": "", "pr": "", "alert": "",
 		"reset": "", "fast": "\U000f0211", "effort.low": "\U000f140c", "effort.high": "\U000f140b", "signal": "●",
+		// effort sur 5 niveaux (effort.levels=5) : compteurs de vitesse, chrono rapide, fusée
+		"level.low": "\U000f0f86", "level.medium": "\U000f0f85", "level.high": "\U000f04c5", "level.xhigh": "\U000f0152", "level.max": "\U000f14de",
 		// état de la PR (pr.display=icon) : approuvée, à corriger, en revue, brouillon
 		"pr.approved": "", "pr.changes": "", "pr.review": "", "pr.draft": "",
 		// libellés en icônes (labels=icons) : puce mémoire, chronomètre, calendrier de la semaine, billets
@@ -64,18 +66,21 @@ var (
 	glyphesTexte = map[string]string{
 		"folder": "▸", "branch": "⎇", "worktree": "⊕", "pr": "PR", "alert": "!",
 		"reset": "↻", "fast": "»", "effort.low": "▿", "effort.high": "▴", "signal": "●",
+		"level.low": "▁", "level.medium": "▃", "level.high": "▅", "level.xhigh": "▇", "level.max": "█",
 		// sans Nerd Font, le mot ou le libellé en texte reste
 		"pr.approved": "", "pr.changes": "", "pr.review": "", "pr.draft": "",
 		"ctx": "", "5h": "", "7d": "", "cost": "",
 	}
 	// nomsGlyphes : les icônes réglables une à une (icon.<nom>), dans l'ordre de « agentline style keys ».
 	nomsGlyphes = []string{"folder", "branch", "worktree", "pr", "alert", "reset", "fast", "effort.low", "effort.high", "signal",
+		"level.low", "level.medium", "level.high", "level.xhigh", "level.max",
 		"pr.approved", "pr.changes", "pr.review", "pr.draft", "ctx", "5h", "7d", "cost"}
 	// itemsGlyphes : l'item de chaque icône (vide : générale).
 	itemsGlyphes = map[string][]string{
 		"folder": {"folder"}, "branch": {"git"}, "worktree": {"worktree"}, "pr": {"pr"},
 		"alert": {"5h", "7d"}, "reset": {"5h", "7d"}, "fast": {"fast"}, "effort.low": {"effort"}, "effort.high": {"effort"},
 		"ctx": {"ctx"}, "5h": {"5h"}, "7d": {"7d"}, "cost": {"cost"},
+		"level.low": {"effort"}, "level.medium": {"effort"}, "level.high": {"effort"}, "level.xhigh": {"effort"}, "level.max": {"effort"},
 		"pr.approved": {"pr"}, "pr.changes": {"pr"}, "pr.review": {"pr"}, "pr.draft": {"pr"},
 	}
 	// glyphesLibelles : les icônes qui remplacent un libellé (labels=icons) ; vides, le libellé reste.
@@ -166,6 +171,7 @@ var catalogue = func() []Cle {
 		Cle{Nom: "model.name", Genre: Choix, Valeurs: []string{"full", "short"}, Defaut: "full", Items: []string{"model"}, Aide: i18n.M("nom du modèle en entier, ou son premier mot")},
 		Cle{Nom: "model.color", Genre: Choix, Valeurs: []string{"gradient", "solid"}, Defaut: "gradient", Items: []string{"model"}, Aide: i18n.M("nom du modèle en dégradé, ou d'une couleur")},
 		Cle{Nom: "effort.display", Genre: Choix, Valeurs: []string{"icon+text", "icon", "text"}, Defaut: "icon+text", Items: []string{"effort"}, Aide: i18n.M("niveau d'effort : jauge et nom, jauge seule, nom seul")},
+		Cle{Nom: "effort.levels", Genre: Choix, Valeurs: []string{"2", "5"}, Defaut: "2", Items: []string{"effort"}, Aide: i18n.M("icônes de l'effort : 2 (bas, haut), ou une par niveau (icon.level.low … icon.level.max)")},
 		Cle{Nom: "git.status", Genre: Choix, Valeurs: []string{"detail", "summary"}, Defaut: "detail", Items: []string{"git"}, Aide: i18n.M("compteurs (+1 ●2 ?3), ou un seul signe (✓ ou *)")},
 		Cle{Nom: "git.protected", Genre: Branches, Defaut: "main master", Items: []string{"git"}, Aide: i18n.M("branches où des changements non commités mettent la statusline en alerte (vide : jamais)"), SSH: true},
 		Cle{Nom: "git.upstream", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"git"}, Aide: i18n.M("commits d'avance et de retard (↑ ↓)")},

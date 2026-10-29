@@ -15,6 +15,7 @@ type options struct {
 
 	modeleCourt, modeleUnie bool   // premier mot du nom ; une seule couleur
 	effort                  string // icon+text, icon, text
+	effort5                 bool   // effort.levels=5 : une icône par niveau
 	gitResume, gitAmont     bool
 	protegees               map[string]bool // branches où des changements non commités sont une alerte
 	prEtat, prLien          bool
@@ -100,6 +101,7 @@ func lireOptions(st *style.Style, ssh bool) options {
 	}
 	o.modeleCourt, o.modeleUnie = v("model.name") == "short", v("model.color") == "solid"
 	o.effort = v("effort.display")
+	o.effort5 = !ssh && v("effort.levels") == "5"
 	o.gitResume, o.gitAmont = v("git.status") == "summary", v("git.upstream") == style.Oui
 	o.protegees = branchesDe(v("git.protected"))
 	o.prEtat, o.prLien = v("pr.status") == style.Oui, v("pr.link") == style.Oui

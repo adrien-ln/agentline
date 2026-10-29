@@ -178,6 +178,12 @@ func TestOptionsDuStyle(t *testing.T) {
 		{cas: "complet", regles: "labels=icons\nicon.ctx=C\nicon.7d=", voulu: []string{"C ━", "\U000f051b 61%", "· 7j 23%"}},
 		{cas: "complet", regles: "labels=icons\nicons=text", voulu: []string{"ctx ━", "· 5h 61%", "· 7j 23%"}},
 		{cas: "api", regles: "labels=icons\ncost.format=en", voulu: []string{"· \U000f0114 $4.98"}},
+		// effort : une icône par niveau (high dans complet, max dans tendu, low dans api)
+		{cas: "complet", regles: "effort.levels=5", voulu: []string{"Opus 5.5 \U000f04c5 high"}},
+		{cas: "tendu", regles: "effort.levels=5", voulu: []string{"\U000f14de max"}},
+		{cas: "api", regles: "effort.levels=5\nicons=text", voulu: []string{"▁ low"}},
+		{cas: "api", regles: "effort.levels=5\nicons=none", voulu: []string{"Haiku 5.5 low"}},
+		{cas: "complet", regles: "effort.levels=5\nicon.level.high=H", voulu: []string{"H high"}},
 		// état de la PR en icône ; sans Nerd Font ou icône vide, le mot reste
 		{cas: "complet", regles: "pr.display=icon", voulu: []string{"#42 "}, pas: []string{"en revue"}},
 		{cas: "api", regles: "pr.display=icon", voulu: []string{"#12 "}, pas: []string{"brouillon"}},

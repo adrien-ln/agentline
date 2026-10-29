@@ -105,6 +105,7 @@ type rendu struct {
 	intensite                                                              [5]string
 
 	iDossier, iBranche, iWorktree, iPR, iAlerte, iReset, iRapide, iEffortBas, iEffort string
+	iNiveaux                                                                          [5]string // effort.levels=5
 
 	o    options
 	g    etatGit
@@ -169,11 +170,28 @@ func (r *rendu) puissance(niveau string) string {
 	switch {
 	case r.env.SSH:
 		return r.intensite[i] + []string{"lo", "med", "hi", "xh", "max"}[i] + z
-	case i < 2:
-		return r.intensite[i] + r.iEffortBas + z
 	default:
-		return r.intensite[i] + r.iEffort + z
+		return r.intensite[i] + r.glypheEffort(i) + z
 	}
+}
+
+// glypheEffort : l'icône du niveau de rang i : une par niveau (effort.levels=5), sinon bas ou haut.
+func (r *rendu) glypheEffort(i int) string {
+	switch {
+	case r.o.effort5:
+		return r.iNiveaux[i]
+	case i < 2:
+		return r.iEffortBas
+	}
+	return r.iEffort
+}
+
+// sansGlypheEffort : aucune icône d'effort dans le jeu en vigueur (la jauge disparaît avec son espace).
+func (r *rendu) sansGlypheEffort() bool {
+	if r.o.effort5 {
+		return r.iNiveaux == [5]string{}
+	}
+	return r.iEffortBas == "" && r.iEffort == ""
 }
 
 // pct : comme printf '%.0f' (arrondi au plus proche, à égalité vers le pair).
@@ -434,6 +452,9 @@ func preparer(ss etat.Session, env Env) *rendu {
 		r.iAlerte, r.iReset = st.Glyphe("alert"), st.Glyphe("reset")
 		r.iRapide = st.Glyphe("fast")
 		r.iEffortBas, r.iEffort = st.Glyphe("effort.low"), st.Glyphe("effort.high")
+		for i, n := range []string{"low", "medium", "high", "xhigh", "max"} {
+			r.iNiveaux[i] = st.Glyphe("level." + n)
+		}
 	}
 	r.g, r.sale, r.nom = g, sale, rep[strings.LastIndex(rep, "/")+1:]
 	return r

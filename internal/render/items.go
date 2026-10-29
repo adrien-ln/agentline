@@ -68,7 +68,7 @@ func itemEffort(r *rendu, s *etat.Session, court bool) (string, bool) {
 		return " " + r.puissance(s.Effort), false
 	}
 	jauge, nom := " "+r.puissance(s.Effort), " "+r.discret+s.Effort+z
-	if r.iEffortBas == "" && r.iEffort == "" { // sans icône, la jauge disparaît avec son espace
+	if r.sansGlypheEffort() { // sans icône, la jauge disparaît avec son espace
 		jauge = ""
 	}
 	switch r.o.effort {
