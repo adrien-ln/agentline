@@ -1,6 +1,6 @@
 # Vaporwave
-# tags: cyan, rose
-TEXTE=f5f0ff DISCRET=9a8fb8 SEP=3f3558 ETEINT=5e5480
-MODELE=ff71ce DOSSIER=b967ff LIEU=01cdfe
-D0=05ffa1 D50=fffb96 D75=ffb86c D100=ff5c8a
+# tags: violet, vert, création
+TEXTE=fff0fb DISCRET=a990c0 SEP=3b2a50 ETEINT=54406e
+MODELE=ff71ce MODELE_FIN=01cdfe DOSSIER=b967ff LIEU=05ffa1
+D0=05ffa1 D50=fffb96 D75=ffb38a D100=ff6b9d
 INTENSITE=(01cdfe 05ffa1 b967ff ff71ce fffb96)

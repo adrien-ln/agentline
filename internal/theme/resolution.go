@@ -115,6 +115,7 @@ func (s Sources) resoudre(dossier string, branche func() string, getenv func(str
 	trouve := false
 	ajouter := func(e Etape) bool { // vrai : on peut s'arrêter là
 		if e.Nom != "" {
+			e.Nom = s.Remplacant(e.Nom)
 			e.Palette, e.Existe = s.Charger(e.Nom)
 		}
 		if e.Existe && !trouve {

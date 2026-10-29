@@ -4,8 +4,15 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+### Added
+
+- New themes: Catppuccin Latte, Gruvbox Light, Rosé Pine Dawn and GitHub Dark (official colors), and basic ones: Sobre, Contraste élevé, Classique, Papier. Seven themes are now made for a light background.
+- Themes come in three families, each a filter in the picker: popular (the official colors of a known theme), basic and original.
+
 ### Changed
 
+- The original themes are reworked to match their name (Aurore, Braise, Chrome, Forêt, Néon, Vaporwave, Radium, Tropique, Ultraviolet, Glitch), and Synthwave '84 uses its official colors. Some color tags are fixed to name the theme's real hues.
+- 17 themes too close to another are removed: Lave, Mangue, Pêche, Guimauve, Pastel, Instagram, Violet électrique, Plasma, Laser, Éclair, Lagune, Miami, Émeraude, Clairière, Prairie, Mojito, Pastèque. A default, project or branch setting that names one gets the closest remaining theme instead; a theme of yours with the same name still wins.
 - Key hints in the picker are quieter: bold keys in one fixed color, with no background, that no longer change with the highlighted theme.
 
 ## [0.7.0] - 2026-10-25

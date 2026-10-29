@@ -16,8 +16,8 @@ import (
 var (
 	ligneCouleurs  = regexp.MustCompile(`^([A-Z0-9_]+=[0-9a-f]{6}( |$))+$`)
 	ligneIntensite = regexp.MustCompile(`^INTENSITE(_CLAIR|_SOMBRE)?=\(([0-9a-f]{6} ){4}[0-9a-f]{6}\)$`)
-	// « populaire » et les couleurs dominantes seulement (pas de tons) : ce sont les filtres du sélecteur
-	tagsConnus = map[string]bool{"populaire": true, "rouge": true, "orange": true, "jaune": true, "vert": true,
+	// la famille et les couleurs dominantes seulement (pas de tons) : ce sont les filtres du sélecteur
+	tagsConnus = map[string]bool{"populaire": true, "basique": true, "création": true, "rouge": true, "orange": true, "jaune": true, "vert": true,
 		"cyan": true, "bleu": true, "violet": true, "rose": true, "gris": true}
 )
 

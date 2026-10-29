@@ -1,6 +1,0 @@
-# Pastèque
-# tags: vert, rouge
-TEXTE=f1f2f6 DISCRET=a4b0be SEP=3a3f4b ETEINT=57606f
-MODELE=ff6b81 DOSSIER=70a1ff LIEU=7bed9f
-D0=7bed9f D50=eccc68 D75=ffa502 D100=ff4757
-INTENSITE=(7bed9f 70a1ff a29bfe ff6b81 ffa502)

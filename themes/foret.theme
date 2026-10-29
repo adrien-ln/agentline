@@ -1,6 +1,6 @@
 # Forêt
-# tags: cyan, vert
-TEXTE=ecfdf5 DISCRET=9fbfae SEP=2d4a3a ETEINT=52705c
-MODELE=a3e635 DOSSIER=86efac LIEU=2dd4bf
-D0=4ade80 D50=facc15 D75=fb923c D100=f43f5e
-INTENSITE=(2dd4bf 86efac a3e635 facc15 fb923c)
+# tags: vert, création
+TEXTE=dfe6d5 DISCRET=8a9a7b SEP=2d3a2a ETEINT=445240
+MODELE=8fbc5c MODELE_FIN=4f9a6b DOSSIER=a3b18a LIEU=6fb58a
+D0=8fbc5c D50=e0c068 D75=d9895b D100=d2604f
+INTENSITE=(6fb58a 8fbc5c b5c96a e0c068 d9895b)

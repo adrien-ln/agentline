@@ -415,12 +415,12 @@ func TestRechercheTags(t *testing.T) {
 func TestRienNeCorrespond(t *testing.T) {
 	m, _ := nouveau(t)
 	m.Update(tea.WindowSizeMsg{Width: compacteLargeur - 10, Height: compacteHauteur - 4}) // la liste a toute la largeur
-	appuyer(m, "→", "/", "m", "i", "a", "m", "i", "entrée")
+	appuyer(m, "→", "/", "s", "a", "k", "u", "r", "a", "entrée")
 	if len(m.vue) != 0 {
-		t.Skip("Miami est populaire : choisir un autre exemple")
+		t.Skip("Sakura est populaire : choisir un autre exemple")
 	}
 	e := ecran(m)
-	for _, x := range []string{"aucun thème", "Échap : effacer /miami", "←→ : un autre filtre (1 dans « tous »)"} {
+	for _, x := range []string{"aucun thème", "Échap : effacer /sakura", "←→ : un autre filtre (1 dans « tous »)"} {
 		if !strings.Contains(e, x) {
 			t.Errorf("%q absent :\n%s", x, e)
 		}

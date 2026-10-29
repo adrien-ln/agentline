@@ -1,0 +1,7 @@
+# Gruvbox Light
+# tags: rouge, cyan, populaire
+# fond: clair
+TEXTE=3c3836 DISCRET=7c6f64 SEP=d5c4a1 ETEINT=bdae93
+MODELE=af3a03 DOSSIER=076678 LIEU=b57614
+D0=79740e D50=b57614 D75=af3a03 D100=9d0006
+INTENSITE=(427b58 076678 8f3f71 af3a03 9d0006)

@@ -78,6 +78,8 @@ var selecteur = map[string]string{
 	// Filtres (tags des thèmes)
 	"tous":      "all",
 	"populaire": "popular",
+	"basique":   "basic",
+	"création":  "original",
 	"rouge":     "red",
 	"orange":    "orange",
 	"jaune":     "yellow",

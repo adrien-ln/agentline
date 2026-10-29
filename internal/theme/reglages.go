@@ -65,7 +65,7 @@ func (s Sources) Entete(nom string) (titre string, tags []string) {
 }
 
 // tagsAnglais : tag anglais -> tag français (les thèmes intégrés écrivent les tags en français).
-var tagsAnglais = map[string]string{"popular": "populaire", "red": "rouge", "yellow": "jaune", "green": "vert",
+var tagsAnglais = map[string]string{"popular": "populaire", "basic": "basique", "original": "création", "red": "rouge", "yellow": "jaune", "green": "vert",
 	"blue": "bleu", "purple": "violet", "pink": "rose", "gray": "gris", "grey": "gris"}
 
 // EcrireDefaut : le thème par défaut. Écriture atomique : un rendu lancé au même instant lit l'ancien

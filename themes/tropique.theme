@@ -1,6 +1,6 @@
 # Tropique
-# tags: jaune, rose
-TEXTE=f8f8f2 DISCRET=8b8fa8 SEP=3d3f58 ETEINT=5a5d78
-MODELE=ffe600 DOSSIER=b967ff LIEU=00d4ff MODELE_FIN=ff2e97
-D0=39ff14 D50=ffe600 D75=ff8800 D100=ff1744
-INTENSITE=(00d4ff 00ff9f b967ff ff2e97 ffe600)
+# tags: jaune, cyan, création
+TEXTE=fff8e7 DISCRET=a59a84 SEP=3a3428 ETEINT=534a39
+MODELE=ffd60a MODELE_FIN=ff6b6b DOSSIER=2ec4b6 LIEU=ff9f1c
+D0=7bd389 D50=ffd60a D75=ff9f1c D100=ff6b6b
+INTENSITE=(2ec4b6 7bd389 ffd60a ff9f1c ff6b6b)

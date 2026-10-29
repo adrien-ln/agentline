@@ -3,7 +3,11 @@ package theme
 import "strings"
 
 // Trouver : le thème désigné par son nom (« tokyo ») ou son titre (« Tokyo Night »), casse indifférente.
+// Un thème intégré retiré donne son remplaçant.
 func (s Sources) Trouver(saisie string) (string, bool) {
+	if r := s.Remplacant(saisie); r != saisie {
+		return r, true
+	}
 	if _, ok := s.Fichier(saisie); ok {
 		return saisie, true
 	}

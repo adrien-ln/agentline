@@ -159,8 +159,31 @@ func (s Sources) Fichier(nom string) ([]byte, bool) {
 		if b, err := fs.ReadFile(s.Integre, "themes/"+nom+".theme"); err == nil {
 			return b, true
 		}
+		if r, ok := Remplaces[nom]; ok {
+			if b, err := fs.ReadFile(s.Integre, "themes/"+r+".theme"); err == nil {
+				return b, true
+			}
+		}
 	}
 	return nil, false
+}
+
+// Remplaces : les thèmes intégrés retirés (0.8.0) et celui qui les remplace. Un réglage qui en nomme un
+// (défaut, projet, branche, AGENTLINE_THEME) prend son remplaçant, sauf thème de l'utilisateur du même nom.
+var Remplaces = map[string]string{
+	"lave": "braise", "mangue": "tropique", "peche": "coucher-de-soleil", "guimauve": "barbe-a-papa",
+	"pastel": "barbe-a-papa", "instagram": "coucher-de-soleil", "violet-electrique": "ultraviolet",
+	"plasma": "ultraviolet", "laser": "neon", "eclair": "glitch", "lagune": "ocean-profond", "miami": "vaporwave",
+	"emeraude": "foret", "clairiere": "foret", "prairie": "foret", "mojito": "foret", "pasteque": "tropique",
+}
+
+// Remplacant : le nom à utiliser pour <nom> : son remplaçant s'il désigne un thème intégré retiré (et pas un
+// thème de l'utilisateur), sinon lui-même.
+func (s Sources) Remplacant(nom string) string {
+	if r, ok := Remplaces[nom]; ok && !s.DeLUtilisateur(nom) {
+		return r
+	}
+	return nom
 }
 
 // Charger : la palette du thème <nom> ; faux s'il n'existe pas.

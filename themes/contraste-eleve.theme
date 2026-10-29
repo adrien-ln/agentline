@@ -1,0 +1,6 @@
+# Contraste élevé
+# tags: gris, cyan, basique
+TEXTE=ffffff DISCRET=d0d0d0 SEP=808080 ETEINT=606060
+MODELE=ffffff MODELE_FIN=ffff00 DOSSIER=00ffff LIEU=ffff00
+D0=00ff00 D50=ffff00 D75=ff9900 D100=ff3333
+INTENSITE=(00ffff 00ff00 ffff00 ff9900 ff3333)

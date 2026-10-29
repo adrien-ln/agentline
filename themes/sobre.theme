@@ -1,0 +1,6 @@
+# Sobre
+# tags: bleu, gris, basique
+TEXTE=d4d4d8 DISCRET=8b8b93 SEP=3f3f46 ETEINT=52525b
+MODELE=e4e4e7 MODELE_FIN=a1a1aa DOSSIER=7aa2d6 LIEU=7aa2d6
+D0=8fbf8f D50=d6c27a D75=d69b6a D100=d47575
+INTENSITE=(a1a1aa a1a1aa 7aa2d6 d69b6a d47575)

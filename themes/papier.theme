@@ -1,0 +1,7 @@
+# Papier
+# tags: bleu, cyan, basique
+# fond: clair
+TEXTE=24292f DISCRET=6e7781 SEP=d0d7de ETEINT=afb8c1
+MODELE=1f6feb MODELE_FIN=0550ae DOSSIER=1f6feb LIEU=0a7ea4
+D0=1a7f37 D50=9a6700 D75=bc4c00 D100=cf222e
+INTENSITE=(0a7ea4 1f6feb 8250df bf3989 bc4c00)

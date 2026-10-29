@@ -1,5 +1,5 @@
 # Glacier
-# tags: bleu
+# tags: bleu, création
 TEXTE=f0f9ff DISCRET=94a3b8 SEP=334155 ETEINT=475569
 MODELE=bae6fd DOSSIER=7dd3fc LIEU=818cf8
 D0=6ee7b7 D50=fde68a D75=fdba74 D100=f87171

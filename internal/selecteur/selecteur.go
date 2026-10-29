@@ -38,7 +38,7 @@ const (
 
 // Filtres, dans l'ordre de ← → ; ceux qui n'ont aucun thème sont sautés. Ce sont les tags des thèmes, en
 // français ; ils sont traduits à l'affichage, et la recherche les trouve dans les deux langues.
-var filtresOrdre = []string{i18n.M("tous"), i18n.M("populaire"), i18n.M("rouge"), i18n.M("orange"), i18n.M("jaune"), i18n.M("vert"),
+var filtresOrdre = []string{i18n.M("tous"), i18n.M("populaire"), i18n.M("basique"), i18n.M("création"), i18n.M("rouge"), i18n.M("orange"), i18n.M("jaune"), i18n.M("vert"),
 	i18n.M("cyan"), i18n.M("bleu"), i18n.M("violet"), i18n.M("rose"), i18n.M("gris"), filtreClairs}
 
 // filtreClairs : les thèmes faits pour un fond clair (« # fond: clair »), filtre ajouté à leurs tags.

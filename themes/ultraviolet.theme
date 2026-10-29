@@ -1,6 +1,6 @@
 # Ultraviolet
-# tags: violet, rose
-TEXTE=f8f8f2 DISCRET=8b8fa8 SEP=3d3f58 ETEINT=5a5d78
-MODELE=7c4dff DOSSIER=b967ff LIEU=00d4ff MODELE_FIN=ff2e97
-D0=39ff14 D50=ffe600 D75=ff8800 D100=ff1744
-INTENSITE=(00d4ff 00ff9f b967ff ff2e97 ffe600)
+# tags: violet, bleu, création
+TEXTE=ece6ff DISCRET=9a8cc4 SEP=2e2550 ETEINT=443a70
+MODELE=7c4dff MODELE_FIN=e040fb DOSSIER=b388ff LIEU=8c9eff
+D0=69f0ae D50=ffd740 D75=ffab40 D100=ff5252
+INTENSITE=(8c9eff 7c4dff b388ff e040fb ff4081)

@@ -1,6 +1,6 @@
 # Synthwave '84
-# tags: orange, cyan
-TEXTE=f9f6ff DISCRET=9d8fb5 SEP=3d2f5a ETEINT=5d4e7d
-MODELE=2de2e6 DOSSIER=ff7edb LIEU=ff8b39
-D0=72f1b8 D50=fede5d D75=ff8b39 D100=fe4450
-INTENSITE=(2de2e6 72f1b8 ff7edb fede5d ff8b39)
+# tags: violet, cyan, populaire
+TEXTE=f4eeff DISCRET=848bbd SEP=34294f ETEINT=495495
+MODELE=ff7edb MODELE_FIN=f97e72 DOSSIER=36f9f6 LIEU=fede5d
+D0=72f1b8 D50=fede5d D75=f97e72 D100=fe4450
+INTENSITE=(36f9f6 72f1b8 ff7edb f97e72 fe4450)

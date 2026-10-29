@@ -1,0 +1,7 @@
+# Catppuccin Latte
+# tags: violet, bleu, populaire
+# fond: clair
+TEXTE=4c4f69 DISCRET=7c7f93 SEP=bcc0cc ETEINT=acb0be
+MODELE=8839ef DOSSIER=1e66f5 LIEU=209fb5
+D0=40a02b D50=df8e1d D75=fe640b D100=d20f39
+INTENSITE=(04a5e5 1e66f5 8839ef ea76cb fe640b)
