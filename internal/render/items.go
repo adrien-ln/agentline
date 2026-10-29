@@ -57,6 +57,10 @@ func itemModele(r *rendu, s *etat.Session, court bool) (string, bool) {
 	if m == "" {
 		m = "Claude"
 	}
+	// l'icône de la famille (model.icon), cherchée dans le nom entier même s'il est raccourci
+	if i := style.IconeModele(r.o.iconeModele, r.o.jeu, s.Modele); i != "" {
+		return r.couleurModele() + i + z + " " + r.nomModele(m), false
+	}
 	return r.nomModele(m), false
 }
 

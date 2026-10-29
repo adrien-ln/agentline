@@ -237,3 +237,16 @@ func TestJauge(t *testing.T) {
 		}
 	}
 }
+
+// TestIconeModele : la famille est un mot du nom, quelle que soit la casse ; un autre modèle n'a pas d'icône.
+func TestIconeModele(t *testing.T) {
+	for _, c := range []struct{ jeu, icons, modele, voulu string }{
+		{"writing", "nerd", "Opus 5.5", "\U000f0bc2"}, {"writing", "nerd", "Claude Sonnet 4.5", "\U000f0d13"},
+		{"weight", "nerd", "fable 5.1", "\U000f01a5"}, {"weight", "nerd", "Gemini 3 Pro", ""},
+		{"none", "nerd", "Opus 5.5", ""}, {"writing", "text", "Opus 5.5", ""}, {"writing", "nerd", "Opusculum", ""},
+	} {
+		if g := IconeModele(c.jeu, c.icons, c.modele); g != c.voulu {
+			t.Errorf("IconeModele(%s, %s, %s) = %q, attendu %q", c.jeu, c.icons, c.modele, g, c.voulu)
+		}
+	}
+}

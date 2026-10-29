@@ -102,6 +102,38 @@ var (
 	}
 )
 
+// iconesModeles : les jeux d'icônes de model.icon, par famille de modèle Claude. Écriture : plume (haïku),
+// stylo-plume (sonnet), parchemin (opus), livre ouvert (fable) ; poids : plume, diamant creux, diamant, couronne.
+var iconesModeles = map[string]map[string]string{
+	"writing": {"haiku": "\U000f06d3", "sonnet": "\U000f0d13", "opus": "\U000f0bc2", "fable": "\U000f05da"},
+	"weight":  {"haiku": "\U000f06d3", "sonnet": "\U000f0b8b", "opus": "\U000f0b8a", "fable": "\U000f01a5"},
+}
+
+// IconeModele : l'icône du modèle nommé (« Opus 5.5 », « Claude Sonnet 4.5 ») dans le jeu de model.icon ;
+// vide pour un autre modèle, sans jeu (none) ou sans Nerd Font (icons autre que nerd).
+func IconeModele(jeuModele, icons, modele string) string {
+	if icons != "nerd" {
+		return ""
+	}
+	for _, mot := range strings.Fields(strings.ToLower(modele)) {
+		if g, ok := iconesModeles[jeuModele][mot]; ok {
+			return g
+		}
+	}
+	return ""
+}
+
+// GlyphesModeles : les icônes de model.icon, jeu par jeu, pour « agentline font test ».
+func GlyphesModeles() string {
+	var b strings.Builder
+	for _, jeu := range []string{"writing", "weight"} {
+		for _, f := range []string{"haiku", "sonnet", "opus", "fable"} {
+			b.WriteString(iconesModeles[jeu][f])
+		}
+	}
+	return b.String()
+}
+
 // GlyphesJauges : tous les glyphes des jauges, pour « agentline font test ».
 func GlyphesJauges() string {
 	var b strings.Builder
@@ -170,6 +202,7 @@ var catalogue = func() []Cle {
 	return append(c,
 		Cle{Nom: "model.name", Genre: Choix, Valeurs: []string{"full", "short"}, Defaut: "full", Items: []string{"model"}, Aide: i18n.M("nom du modèle en entier, ou son premier mot")},
 		Cle{Nom: "model.color", Genre: Choix, Valeurs: []string{"gradient", "solid"}, Defaut: "gradient", Items: []string{"model"}, Aide: i18n.M("nom du modèle en dégradé, ou d'une couleur")},
+		Cle{Nom: "model.icon", Genre: Choix, Valeurs: []string{"none", "writing", "weight"}, Defaut: "none", Items: []string{"model"}, Aide: i18n.M("icône devant le modèle, selon sa famille (Haiku, Sonnet, Opus, Fable) : aucune, écriture, poids")},
 		Cle{Nom: "effort.display", Genre: Choix, Valeurs: []string{"icon+text", "icon", "text"}, Defaut: "icon+text", Items: []string{"effort"}, Aide: i18n.M("niveau d'effort : jauge et nom, jauge seule, nom seul")},
 		Cle{Nom: "effort.levels", Genre: Choix, Valeurs: []string{"2", "5"}, Defaut: "2", Items: []string{"effort"}, Aide: i18n.M("icônes de l'effort : 2 (bas, haut), ou une par niveau (icon.level.low … icon.level.max)")},
 		Cle{Nom: "git.status", Genre: Choix, Valeurs: []string{"detail", "summary"}, Defaut: "detail", Items: []string{"git"}, Aide: i18n.M("compteurs (+1 ●2 ?3), ou un seul signe (✓ ou *)")},

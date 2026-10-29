@@ -14,6 +14,7 @@ type options struct {
 	masque map[string]bool // items jamais affichés
 
 	modeleCourt, modeleUnie bool   // premier mot du nom ; une seule couleur
+	iconeModele             string // model.icon : none, writing, weight
 	effort                  string // icon+text, icon, text
 	effort5                 bool   // effort.levels=5 : une icône par niveau
 	gitResume, gitAmont     bool
@@ -47,6 +48,7 @@ func optionsDefaut() options {
 	return options{
 		disp:         dispositionDefaut,
 		effort:       "icon+text",
+		iconeModele:  "none",
 		gitAmont:     true,
 		protegees:    branchesDe("main master"),
 		prEtat:       true,
@@ -100,6 +102,7 @@ func lireOptions(st *style.Style, ssh bool) options {
 		o.masque = m
 	}
 	o.modeleCourt, o.modeleUnie = v("model.name") == "short", v("model.color") == "solid"
+	o.iconeModele = v("model.icon")
 	o.effort = v("effort.display")
 	o.effort5 = !ssh && v("effort.levels") == "5"
 	o.gitResume, o.gitAmont = v("git.status") == "summary", v("git.upstream") == style.Oui

@@ -178,6 +178,10 @@ func TestOptionsDuStyle(t *testing.T) {
 		{cas: "complet", regles: "labels=icons\nicon.ctx=C\nicon.7d=", voulu: []string{"C ━", "\U000f051b 61%", "· 7j 23%"}},
 		{cas: "complet", regles: "labels=icons\nicons=text", voulu: []string{"ctx ━", "· 5h 61%", "· 7j 23%"}},
 		{cas: "api", regles: "labels=icons\ncost.format=en", voulu: []string{"· \U000f0114 $4.98"}},
+		// icône de la famille du modèle, même avec le nom raccourci ; sans Nerd Font, aucune
+		{cas: "complet", regles: "model.icon=writing", voulu: []string{"\U000f0bc2 Opus 5.5"}},
+		{cas: "api", regles: "model.icon=weight\nmodel.name=short", voulu: []string{"\U000f06d3 Haiku \U000f140c low"}},
+		{cas: "complet", regles: "model.icon=weight\nicons=text", voulu: []string{"Opus 5.5"}, pas: []string{"\U000f0b8a"}},
 		// effort : une icône par niveau (high dans complet, max dans tendu, low dans api)
 		{cas: "complet", regles: "effort.levels=5", voulu: []string{"Opus 5.5 \U000f04c5 high"}},
 		{cas: "tendu", regles: "effort.levels=5", voulu: []string{"\U000f14de max"}},

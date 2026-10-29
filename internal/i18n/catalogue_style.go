@@ -14,6 +14,7 @@ var style = map[string]string{
 	"en SSH (SSH_CONNECTION défini) : la ligne courte, sans icônes, au lieu de la statusline complète": "over SSH (SSH_CONNECTION set): the short line, without icons, instead of the full statusline",
 	"séparateur de la ligne courte (SSH)":                                                                      "separator of the short line (SSH)",
 	"icône %s (auto : selon icons ; vide : aucune)":                                                            "%s icon (auto: from icons; empty: none)",
+	"icône devant le modèle, selon sa famille (Haiku, Sonnet, Opus, Fable) : aucune, écriture, poids":          "icon before the model, by family (Haiku, Sonnet, Opus, Fable): none, writing, weight",
 	"icônes de l'effort : 2 (bas, haut), ou une par niveau (icon.level.low … icon.level.max)":                  "effort icons: 2 (low, high), or one per level (icon.level.low … icon.level.max)",
 	"icône %s, avec pr.display=icon (auto : selon icons ; vide : le mot)":                                      "%s icon, with pr.display=icon (auto: from icons; empty: the word)",
 	"état de la revue en mots, ou en icône (icon.pr.approved, .changes, .review, .draft)":                      "review state in words, or as an icon (icon.pr.approved, .changes, .review, .draft)",

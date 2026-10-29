@@ -141,6 +141,14 @@ func (r *rendu) teinte(p int) string {
 	}
 }
 
+// couleurModele : la couleur du début du nom du modèle.
+func (r *rendu) couleurModele() string {
+	if !r.riche {
+		return r.c.SGR(r.f.modele)
+	}
+	return r.c.Fg(r.p.Modele)
+}
+
 func (r *rendu) nomModele(t string) string {
 	if !r.riche {
 		return r.c.SGR(r.f.modele) + t + z
