@@ -56,18 +56,25 @@ var (
 	glyphesNerd = map[string]string{
 		"folder": "", "branch": "", "worktree": "", "pr": "", "alert": "",
 		"reset": "", "fast": "\U000f0211", "effort.low": "\U000f140c", "effort.high": "\U000f140b", "signal": "●",
+		// libellés en icônes (labels=icons) : puce mémoire, chronomètre, calendrier de la semaine, billets
+		"ctx": "\U000f035b", "5h": "\U000f051b", "7d": "\U000f0a33", "cost": "\U000f0114",
 	}
 	glyphesTexte = map[string]string{
 		"folder": "▸", "branch": "⎇", "worktree": "⊕", "pr": "PR", "alert": "!",
 		"reset": "↻", "fast": "»", "effort.low": "▿", "effort.high": "▴", "signal": "●",
+		"ctx": "", "5h": "", "7d": "", "cost": "", // sans Nerd Font, le libellé en texte reste
 	}
 	// nomsGlyphes : les icônes réglables une à une (icon.<nom>), dans l'ordre de « agentline style keys ».
-	nomsGlyphes = []string{"folder", "branch", "worktree", "pr", "alert", "reset", "fast", "effort.low", "effort.high", "signal"}
+	nomsGlyphes = []string{"folder", "branch", "worktree", "pr", "alert", "reset", "fast", "effort.low", "effort.high", "signal",
+		"ctx", "5h", "7d", "cost"}
 	// itemsGlyphes : l'item de chaque icône (vide : générale).
 	itemsGlyphes = map[string][]string{
 		"folder": {"folder"}, "branch": {"git"}, "worktree": {"worktree"}, "pr": {"pr"},
 		"alert": {"5h", "7d"}, "reset": {"5h", "7d"}, "fast": {"fast"}, "effort.low": {"effort"}, "effort.high": {"effort"},
+		"ctx": {"ctx"}, "5h": {"5h"}, "7d": {"7d"}, "cost": {"cost"},
 	}
+	// glyphesLibelles : les icônes qui remplacent un libellé (labels=icons) ; vides, le libellé reste.
+	glyphesLibelles = map[string]bool{"ctx": true, "5h": true, "7d": true, "cost": true}
 	// Barres nommées de ctx.bar : pleine, à moitié, éteinte.
 	barres = map[string]string{"lines": "━╸─", "blocks": "█▌░", "dots": "●◐○", "none": ""}
 )
@@ -98,8 +105,11 @@ var catalogue = func() []Cle {
 		{Nom: "ssh.short", Genre: Choix, Valeurs: ouiNon, Defaut: Non, Aide: i18n.M("en SSH (SSH_CONNECTION défini) : la ligne courte, sans icônes, au lieu de la statusline complète"), SSH: true},
 	}
 	for _, n := range nomsGlyphes {
-		c = append(c, Cle{Nom: "icon." + n, Genre: Glyphe, Defaut: Auto, Items: itemsGlyphes[n],
-			Aide: i18n.M("icône %s (auto : selon icons ; vide : aucune)"), aideArg: strings.ReplaceAll(n, ".", " ")})
+		aide := i18n.M("icône %s (auto : selon icons ; vide : aucune)")
+		if glyphesLibelles[n] {
+			aide = i18n.M("icône %s, avec labels=icons (auto : selon icons ; vide : le libellé)")
+		}
+		c = append(c, Cle{Nom: "icon." + n, Genre: Glyphe, Defaut: Auto, Items: itemsGlyphes[n], Aide: aide, aideArg: strings.ReplaceAll(n, ".", " ")})
 	}
 	return append(c,
 		Cle{Nom: "model.name", Genre: Choix, Valeurs: []string{"full", "short"}, Defaut: "full", Items: []string{"model"}, Aide: i18n.M("nom du modèle en entier, ou son premier mot")},
@@ -122,6 +132,7 @@ var catalogue = func() []Cle {
 		Cle{Nom: "quota.reset", Genre: Choix, Valeurs: []string{"alert", "always", "never"}, Defaut: "alert", Items: quotas, Aide: i18n.M("heure de remise à zéro : en alerte, toujours, jamais")},
 		Cle{Nom: "5h.label", Genre: Libelle, Defaut: "5h", Items: []string{"5h"}, Aide: i18n.M("libellé du quota de 5 heures"), SSH: true},
 		Cle{Nom: "7d.label", Genre: Libelle, Defaut: Auto, Items: []string{"7d"}, Aide: i18n.M("libellé du quota de 7 jours (auto : 7j en français, 7d en anglais)"), SSH: true},
+		Cle{Nom: "labels", Genre: Choix, Valeurs: []string{"text", "icons"}, Defaut: "text", Items: []string{"ctx", "5h", "7d", "cost"}, Aide: i18n.M("libellés du contexte, des quotas et du coût : texte, ou icônes (icon.ctx, icon.5h, icon.7d, icon.cost)")},
 		Cle{Nom: "cost.when", Genre: Choix, Valeurs: []string{"api", "always"}, Defaut: "api", Items: []string{"cost"}, Aide: i18n.M("coût : sans abonnement seulement (api), ou toujours (always)")},
 		Cle{Nom: "cost.format", Genre: Choix, Valeurs: []string{Auto, "fr", "en"}, Defaut: Auto, Items: []string{"cost"}, Aide: i18n.M("4,98 $ (fr) ou $4.98 (en) ; auto : selon la langue")},
 	)

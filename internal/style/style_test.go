@@ -185,8 +185,13 @@ func TestEcrireRelire(t *testing.T) {
 }
 
 func TestDesItems(t *testing.T) {
-	if l := DesItems("ctx"); len(l) != 5 {
-		t.Errorf("ctx : %d options", len(l))
+	var noms []string
+	for _, c := range DesItems("ctx") {
+		noms = append(noms, c.Nom)
+	}
+	// dans l'ordre du catalogue, ses icônes en dernier
+	if v := "ctx.bar ctx.width ctx.alert ctx.compact ctx.label labels icon.ctx"; strings.Join(noms, " ") != v {
+		t.Errorf("ctx : %v, attendu %s", noms, v)
 	}
 	for _, c := range DesItems("") {
 		if len(c.Items) > 0 || c.Genre == Disposition {

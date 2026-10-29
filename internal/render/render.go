@@ -216,6 +216,14 @@ func (r *rendu) etiquette(l string) string {
 	return r.discret + l + z + " "
 }
 
+// libelle : le libellé de la valeur nom ; une icône de libellé (labels=icons) prend la couleur de la valeur.
+func (r *rendu) libelle(nom, l, couleur string) string {
+	if r.o.iconesLib[nom] {
+		return couleur + l + z + " "
+	}
+	return r.etiquette(l)
+}
+
 // ico : l'icône suivie d'une espace ; rien si elle est vide.
 func ico(i string) string {
 	if i == "" {
@@ -225,11 +233,16 @@ func ico(i string) string {
 }
 
 func (r *rendu) valeur(v string, alerte bool) string {
-	if alerte {
-		return r.rouge + gras + v + "%" + z
-	}
 	n, _ := strconv.Atoi(v)
-	return r.teinte(n) + gras + v + "%" + z
+	return r.couleurValeur(n, alerte) + gras + v + "%" + z
+}
+
+// couleurValeur : la couleur d'une part de n %, rouge en alerte.
+func (r *rendu) couleurValeur(n int, alerte bool) string {
+	if alerte {
+		return r.rouge
+	}
+	return r.teinte(n)
 }
 
 // largeurBarre : le nombre de cases de la barre de contexte.
@@ -255,7 +268,7 @@ func (r *rendu) barre(p, n int) string {
 }
 
 // quota : le segment d'une fenêtre d'utilisation, et s'il est en alerte (signal ● ajouté par le composeur).
-func (r *rendu) quota(libelle, utilise, reset string, fenetre int64) (string, bool) {
+func (r *rendu) quota(nom, libelle, utilise, reset string, fenetre int64) (string, bool) {
 	u := pct(utilise)
 	ui, _ := strconv.ParseInt(u, 10, 64)
 	ind, plafond := ui, ""
@@ -269,7 +282,7 @@ func (r *rendu) quota(libelle, utilise, reset string, fenetre int64) (string, bo
 		}
 	}
 	alerte := ui >= int64(r.o.quotaAlerte) || plafond != ""
-	s := r.etiquette(libelle) + r.valeur(u, alerte)
+	s := r.libelle(nom, libelle, r.couleurValeur(int(ui), alerte)) + r.valeur(u, alerte)
 	// Quota épuisé : la projection n'apprend plus rien (elle affichait ↗103 % à 100 %)
 	if r.o.projection && ind != ui && ind >= 75 && ui < 100 && plafond == "" {
 		s += " " + r.teinte(int(ind)) + "↗" + strconv.FormatInt(ind, 10) + "%" + z

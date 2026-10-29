@@ -232,11 +232,11 @@ func itemCtx(r *rendu, s *etat.Session, court bool) (string, bool) {
 	}
 	p := pct(s.Contexte)
 	n, _ := strconv.Atoi(p)
-	t := r.etiquette(r.o.ctxLibelle)
+	alerte := n >= r.o.ctxAlerte
+	t := r.libelle("ctx", r.o.ctxLibelle, r.couleurValeur(n, alerte))
 	if !court && !r.o.sansBarre {
 		t += r.barre(n, r.o.largeurBarre) + z + " "
 	}
-	alerte := n >= r.o.ctxAlerte
 	t += r.valeur(p, alerte)
 	// le geste qui libère le contexte, avant que l'auto-compact ne le fasse : une commande de Claude Code
 	if alerte && r.o.ctxCompact && !court && !r.sansIndice && s.Harness == "claude" {
@@ -250,14 +250,14 @@ func itemQuota5h(r *rendu, s *etat.Session, _ bool) (string, bool) {
 	if s.Quotas.H5.Utilise == "" {
 		return "", false
 	}
-	return r.quota(r.o.lib5h, s.Quotas.H5.Utilise, s.Quotas.H5.Reset, 18000)
+	return r.quota("5h", r.o.lib5h, s.Quotas.H5.Utilise, s.Quotas.H5.Reset, 18000)
 }
 
 func itemQuota7j(r *rendu, s *etat.Session, _ bool) (string, bool) {
 	if s.Quotas.J7.Utilise == "" {
 		return "", false
 	}
-	return r.quota(r.o.lib7j, s.Quotas.J7.Utilise, s.Quotas.J7.Reset, 604800)
+	return r.quota("7d", r.o.lib7j, s.Quotas.J7.Utilise, s.Quotas.J7.Reset, 604800)
 }
 
 // itemCout : le coût, par défaut seulement sans quotas (facturation à l'usage).
@@ -266,7 +266,7 @@ func itemCout(r *rendu, s *etat.Session, _ bool) (string, bool) {
 	if !r.o.coutToujours && (s.Quotas.H5.Utilise != "" || s.Quotas.J7.Utilise != "") || c == "" {
 		return "", false
 	}
-	return r.texte + c + z, false
+	return r.texte + ico(r.o.icCout) + c + z, false
 }
 
 // ligne : les segments d'une ligne, chacun la liste de ses items, et le caractère qui les sépare.

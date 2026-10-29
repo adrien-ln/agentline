@@ -31,6 +31,8 @@ type options struct {
 	projection, plafond       bool
 	reset                     string // alert, always, never
 	lib5h, lib7j              string
+	iconesLib                 map[string]bool // libellés remplacés par une icône (labels=icons) : ctx, 5h, 7d
+	icCout                    string          // icône devant le coût (labels=icons)
 	coutToujours, coutAnglais bool
 
 	signal string // devant un segment en alerte
@@ -108,6 +110,15 @@ func lireOptions(st *style.Style, ssh bool) options {
 	o.quotaAlerte = entierDe(v("quota.alert"))
 	o.projection, o.plafond, o.reset = v("quota.projection") == style.Oui, v("quota.limit") == style.Oui, v("quota.reset")
 	o.lib5h, o.lib7j = v("5h.label"), style.LibelleEnVigueur("7d.label", v("7d.label"))
+	if !ssh && v("labels") == "icons" { // une icône vide (icons=text ou none) laisse le libellé
+		o.iconesLib = map[string]bool{}
+		for nom, lib := range map[string]*string{"ctx": &o.ctxLibelle, "5h": &o.lib5h, "7d": &o.lib7j} {
+			if g := st.Glyphe(nom); g != "" {
+				*lib, o.iconesLib[nom] = g, true
+			}
+		}
+		o.icCout = st.Glyphe("cost")
+	}
 	o.coutToujours, o.coutAnglais = v("cost.when") == "always", style.CoutAnglais(v("cost.format"))
 	if !ssh {
 		o.signal = st.Glyphe("signal")

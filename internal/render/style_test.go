@@ -173,6 +173,12 @@ func TestOptionsDuStyle(t *testing.T) {
 		{cas: "api", regles: "cost.format=en", voulu: []string{"· $4.98"}},
 		{cas: "tendu", regles: "cost.when=always\ncost.format=en", pas: []string{"$"}},
 		{cas: "complet", regles: "model.color=solid", voulu: []string{"Opus 5.5"}},
+		// labels=icons : une icône à la place de chaque libellé ; sans Nerd Font (icons=text) ou vide, le libellé reste
+		{cas: "complet", regles: "labels=icons", voulu: []string{"\U000f035b ━", "· \U000f051b 61%", "· \U000f0a33 23%"}, pas: []string{"ctx", "5h", "7j"}},
+		{cas: "complet", regles: "labels=icons\nicon.ctx=C\nicon.7d=", voulu: []string{"C ━", "\U000f051b 61%", "· 7j 23%"}},
+		{cas: "complet", regles: "labels=icons\nicons=text", voulu: []string{"ctx ━", "· 5h 61%", "· 7j 23%"}},
+		{cas: "api", regles: "labels=icons\ncost.format=en", voulu: []string{"· \U000f0114 $4.98"}},
+		{cas: "tendu", ssh: true, regles: "labels=icons", voulu: []string{"5h"}, pas: []string{"\U000f051b"}},
 		// SSH : disposition court, seuils, libellés, séparateur ; le reste garde la variante compacte
 		{cas: "tendu", ssh: true, regles: "short=5h | model\nsep.short=/\n5h.label=jour\nquota.alert=99\nicons=none\nmodel.name=full\nquota.limit=no",
 			voulu: []string{"● jour 95% ↻ 08:30 plafond ~08:14 / Opus"}},
@@ -201,6 +207,25 @@ func TestModeleUni(t *testing.T) {
 	debut := l[:strings.Index(l, "Opus 5.5")]
 	if strings.Count(l[:strings.Index(l, "5.5")+3], "38;2;") != 1 || !strings.HasSuffix(debut, "m") {
 		t.Errorf("%q", l[:60])
+	}
+}
+
+// TestIconesLibellesCouleur : avec labels=icons, chaque icône a la couleur de sa valeur (le libellé en
+// texte reste discret).
+func TestIconesLibellesCouleur(t *testing.T) {
+	e := env(t, modes["riche"], t.TempDir())
+	e.GitFictif = &GitFictif{Branche: "main"}
+	e.Style = style.Lire([]byte("labels=icons"))
+	l := Render(casJSON(t, "complet", "/x"), e)
+	for _, c := range [][2]string{{"\U000f035b", "42%"}, {"\U000f051b", "61%"}, {"\U000f0a33", "23%"}} {
+		i := strings.Index(l, gras+c[1])
+		if i < 0 {
+			t.Fatalf("%s absent : %q", c[1], l)
+		}
+		couleur := l[strings.LastIndex(l[:i], "\x1b["):i] // la couleur juste avant la valeur
+		if !strings.Contains(l, couleur+c[0]+z) {
+			t.Errorf("icône %q : couleur %q de %s attendue\n%q", c[0], couleur, c[1], l)
+		}
 	}
 }
 
