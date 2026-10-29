@@ -28,12 +28,12 @@ Sleep 500ms
 Enter
 Sleep 3s
 
-# les thèmes : parcourir, filtrer par couleur
+# les thèmes : parcourir, filtrer par famille (les créations)
 Down@900ms 3
 Sleep 1s
-Right 4
+Right 3
 Sleep 2s
-Left 4
+Left 3
 Sleep 800ms
 
 # choisir le thème, pour ce projet : la barre dit ce qui reste à enregistrer

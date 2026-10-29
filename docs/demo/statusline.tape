@@ -17,7 +17,7 @@ Type `$d = Join-Path ([IO.Path]::GetTempPath()) "agentline-demo"; Remove-Item -R
 Enter
 Wait@60s
 # Pas de ligne vide après le dernier thème, et une pause pour que l'invite n'apparaisse pas sur la capture
-Type `Push-Location "$d\my-project"; Clear-Host; $n = 0; foreach ($t in "tokyo", "miami", "prairie", "dracula") { if ($n++) { "" }; & "$d\agentline.exe" theme preview $t }; [Console]::CursorVisible = $false; Start-Sleep 10; [Console]::CursorVisible = $true; Pop-Location`
+Type `Push-Location "$d\my-project"; Clear-Host; $n = 0; foreach ($t in "tokyo", "vaporwave", "foret", "dracula") { if ($n++) { "" }; & "$d\agentline.exe" theme preview $t }; [Console]::CursorVisible = $false; Start-Sleep 10; [Console]::CursorVisible = $true; Pop-Location`
 Enter
 Sleep 2s
 Show

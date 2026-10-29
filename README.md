@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/banniere.svg" alt="agentline: the Claude Code statusline, 49 themes, one binary" width="760">
+<img src="docs/banniere.svg" alt="agentline: the Claude Code statusline, 40 themes, one binary" width="760">
 
-Model, Git, PR, context and quotas on two lines, in 49 themes: one by default, one per project, one per branch.
+Model, Git, PR, context and quotas on two lines, in 40 themes: one by default, one per project, one per branch.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/adrien-ln/agentline/ci.yml?branch=main&label=CI&style=flat-square&labelColor=1a1b26)](https://github.com/adrien-ln/agentline/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/adrien-ln/agentline?style=flat-square&color=7dcfff&labelColor=1a1b26)](https://github.com/adrien-ln/agentline/releases/latest)
@@ -70,7 +70,7 @@ agentline help     # every command
 ```
 
 <div align="center">
-<img src="docs/demo/statusline.png" alt="The statusline in the Tokyo Night, Miami, Prairie and Dracula themes" width="480">
+<img src="docs/demo/statusline.png" alt="The statusline in the Tokyo Night, Vaporwave, Forêt and Dracula themes" width="480">
 </div>
 
 ## Why agentline
@@ -89,7 +89,7 @@ Compared with [ccstatusline](https://github.com/sirmalloc/ccstatusline), the mos
 | Time per render | about 50 ms (measured above) | 1.1 s with `npx`, 0.2 to 0.6 s with `bunx` (from its README) |
 | Network | none | its usage and Claude status widgets call online services |
 | Tools | Claude Code, Antigravity CLI, Copilot CLI | Claude Code |
-| Customization | 49 themes, per project or branch; items shown, hidden and moved with `agentline style` | many more widgets (Jujutsu, CI status, cache timer, extra usage…), Powerline, gradients, any number of lines |
+| Customization | 40 themes (popular, basic and original), per project or branch; items shown, hidden and moved with `agentline style` | many more widgets (Jujutsu, CI status, cache timer, extra usage…), Powerline, gradients, any number of lines |
 
 If you want every widget and Powerline, ccstatusline does more. If you want a fast, offline statusline that follows your projects and branches, that is what agentline is for.
 

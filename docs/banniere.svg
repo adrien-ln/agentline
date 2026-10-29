@@ -19,7 +19,7 @@
   </defs>
 
   <text x="440" y="62" text-anchor="middle" font-size="52" font-weight="700" fill="url(#titre)">agentline</text>
-  <text x="440" y="98" text-anchor="middle" font-size="17" class="discret" fill="#737aa2">the Claude Code statusline · 49 themes · one binary</text>
+  <text x="440" y="98" text-anchor="middle" font-size="17" class="discret" fill="#737aa2">the Claude Code statusline · 40 themes · one binary</text>
 
   <!-- Une statusline Tokyo Night, telle qu'agentline la dessine -->
   <text x="440" y="142" text-anchor="middle" font-size="17" xml:space="preserve"><tspan fill="#bb9af7" font-weight="700">Opus 5.5</tspan><tspan fill="#7aa2f7"> ϟ</tspan><tspan class="discret" fill="#737aa2"> high </tspan><tspan fill="#3b4261">│ </tspan><tspan class="fort" fill="#c0caf5" font-weight="700">my-project</tspan><tspan fill="#7dcfff">  ⎇ main</tspan><tspan fill="#9ece6a"> ✓</tspan><tspan fill="#3b4261"> │ </tspan><tspan fill="#7dcfff">#12</tspan><tspan fill="#9ece6a"> approved</tspan></text>
