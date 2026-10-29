@@ -106,6 +106,7 @@ type rendu struct {
 
 	iDossier, iBranche, iWorktree, iPR, iAlerte, iReset, iRapide, iEffortBas, iEffort string
 	iNiveaux                                                                          [5]string // effort.levels=5
+	cIDossier                                                                         string    // couleur de l'icône du dossier (celle du langage : folder.icon=language)
 
 	o    options
 	g    etatGit
@@ -139,6 +140,18 @@ func (r *rendu) teinte(p int) string {
 	default:
 		return r.c.SGR(r.f.bas)
 	}
+}
+
+// couleurSigne : la couleur de l'icône d'un langage ou d'une forge : discrète, ou sa couleur propre
+// (project.color=brand ; le texte pour une forge sans couleur, et en 16 couleurs fixes).
+func (r *rendu) couleurSigne(s signe) string {
+	switch {
+	case !r.o.couleurPropre:
+		return r.discret
+	case s.couleur == "" || !r.riche:
+		return r.texte
+	}
+	return r.c.Fg(s.couleur)
 }
 
 // couleurModele : la couleur du début du nom du modèle.
@@ -462,6 +475,16 @@ func preparer(ss etat.Session, env Env) *rendu {
 		r.iEffortBas, r.iEffort = st.Glyphe("effort.low"), st.Glyphe("effort.high")
 		for i, n := range []string{"low", "medium", "high", "xhigh", "max"} {
 			r.iNiveaux[i] = st.Glyphe("level." + n)
+		}
+	}
+	r.cIDossier = r.dossier
+	// folder.icon=language : l'icône du langage du projet (Nerd Font seulement), discrète par défaut
+	if r.o.dossierLangage && r.o.jeu == "nerd" {
+		if racine == "" {
+			racine = rep
+		}
+		if l, ok := langageDe(racine); ok {
+			r.iDossier, r.cIDossier = l.icone, r.couleurSigne(l)
 		}
 	}
 	r.g, r.sale, r.nom = g, sale, rep[strings.LastIndex(rep, "/")+1:]

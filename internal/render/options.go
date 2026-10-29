@@ -21,6 +21,8 @@ type options struct {
 	signesGit               map[string]string // git.counts=icons : l'icône de chaque compteur (icon.git.staged…)
 	protegees               map[string]bool   // branches où des changements non commités sont une alerte
 	prEtat, prLien          bool
+	dossierLangage, prForge bool              // folder.icon=language, pr.icon=forge
+	couleurPropre           bool              // project.color=brand : le langage et la forge dans leur couleur
 	etatPR                  map[string]string // pr.display=icon : l'icône de chaque état (icon.pr.approved…)
 	sessionMax              int               // longueur au-delà de laquelle le nom de session est coupé
 
@@ -115,6 +117,8 @@ func lireOptions(st *style.Style, ssh bool) options {
 		}
 	}
 	o.prEtat, o.prLien = v("pr.status") == style.Oui, v("pr.link") == style.Oui
+	o.dossierLangage, o.prForge = v("folder.icon") == "language", v("pr.icon") == "forge"
+	o.couleurPropre = v("project.color") == "brand"
 	if !ssh && v("pr.display") == "icon" {
 		o.etatPR = map[string]string{}
 		for _, n := range []string{"pr.approved", "pr.changes", "pr.review", "pr.draft"} {

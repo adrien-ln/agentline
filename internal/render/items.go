@@ -102,7 +102,7 @@ func itemDossier(r *rendu, _ *etat.Session, court bool) (string, bool) {
 	if r.nom == "" {
 		return "", false
 	}
-	return r.dossier + ico(r.iDossier) + r.texte + gras + r.nom + maigre, false
+	return r.cIDossier + ico(r.iDossier) + r.texte + gras + r.nom + maigre, false
 }
 
 // itemGit : la branche et son état ; en version longue, seulement avec le dossier, en alerte s'il y a
@@ -193,7 +193,12 @@ func itemPR(r *rendu, s *etat.Session, _ bool) (string, bool) {
 	if s.PR.URL != "" && r.o.prLien {
 		t = "\x1b]8;;" + s.PR.URL + "\a" + t + "\x1b]8;;\a" // cliquable (Ctrl+clic)
 	}
-	t = r.lieu + ico(r.iPR) + t
+	// pr.icon=forge : l'icône de la forge (Nerd Font seulement), discrète par défaut, devant le numéro
+	if f, ok := forgeDe(s.PR.URL); ok && r.o.prForge && r.o.jeu == "nerd" {
+		t = r.couleurSigne(f) + f.icone + " " + r.lieu + t
+	} else {
+		t = r.lieu + ico(r.iPR) + t
+	}
 	revue := s.PR.Revue
 	if !r.o.prEtat {
 		revue = ""
