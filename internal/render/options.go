@@ -18,7 +18,8 @@ type options struct {
 	effort                  string // icon+text, icon, text
 	effort5                 bool   // effort.levels=5 : une icône par niveau
 	gitResume, gitAmont     bool
-	protegees               map[string]bool // branches où des changements non commités sont une alerte
+	signesGit               map[string]string // git.counts=icons : l'icône de chaque compteur (icon.git.staged…)
+	protegees               map[string]bool   // branches où des changements non commités sont une alerte
 	prEtat, prLien          bool
 	etatPR                  map[string]string // pr.display=icon : l'icône de chaque état (icon.pr.approved…)
 	sessionMax              int               // longueur au-delà de laquelle le nom de session est coupé
@@ -107,6 +108,12 @@ func lireOptions(st *style.Style, ssh bool) options {
 	o.effort5 = !ssh && v("effort.levels") == "5"
 	o.gitResume, o.gitAmont = v("git.status") == "summary", v("git.upstream") == style.Oui
 	o.protegees = branchesDe(v("git.protected"))
+	if !ssh && v("git.counts") == "icons" {
+		o.signesGit = map[string]string{}
+		for _, n := range []string{"git.staged", "git.modified", "git.untracked", "git.conflict", "git.ahead", "git.behind"} {
+			o.signesGit[n] = st.Glyphe(n)
+		}
+	}
 	o.prEtat, o.prLien = v("pr.status") == style.Oui, v("pr.link") == style.Oui
 	if !ssh && v("pr.display") == "icon" {
 		o.etatPR = map[string]string{}

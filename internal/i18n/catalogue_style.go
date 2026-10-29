@@ -16,6 +16,8 @@ var style = map[string]string{
 	"icône %s (auto : selon icons ; vide : aucune)":                                                            "%s icon (auto: from icons; empty: none)",
 	"icône devant le modèle, selon sa famille (Haiku, Sonnet, Opus, Fable) : aucune, écriture, poids":          "icon before the model, by family (Haiku, Sonnet, Opus, Fable): none, writing, weight",
 	"icônes de l'effort : 2 (bas, haut), ou une par niveau (icon.level.low … icon.level.max)":                  "effort icons: 2 (low, high), or one per level (icon.level.low … icon.level.max)",
+	"icône %s, avec git.counts=icons (auto : selon icons ; vide : le symbole)":                                 "%s icon, with git.counts=icons (auto: from icons; empty: the symbol)",
+	"signes des compteurs : symboles (+1 ●2), ou icônes espacées (icon.git.staged…)":                           "counter signs: symbols (+1 ●2), or spaced icons (icon.git.staged…)",
 	"icône %s, avec pr.display=icon (auto : selon icons ; vide : le mot)":                                      "%s icon, with pr.display=icon (auto: from icons; empty: the word)",
 	"état de la revue en mots, ou en icône (icon.pr.approved, .changes, .review, .draft)":                      "review state in words, or as an icon (icon.pr.approved, .changes, .review, .draft)",
 	"icône %s, avec labels=icons (auto : selon icons ; vide : le libellé)":                                     "%s icon, with labels=icons (auto: from icons; empty: the label)",

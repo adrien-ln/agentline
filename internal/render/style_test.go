@@ -178,6 +178,10 @@ func TestOptionsDuStyle(t *testing.T) {
 		{cas: "complet", regles: "labels=icons\nicon.ctx=C\nicon.7d=", voulu: []string{"C ━", "\U000f051b 61%", "· 7j 23%"}},
 		{cas: "complet", regles: "labels=icons\nicons=text", voulu: []string{"ctx ━", "· 5h 61%", "· 7j 23%"}},
 		{cas: "api", regles: "labels=icons\ncost.format=en", voulu: []string{"· \U000f0114 $4.98"}},
+		// compteurs git en icônes espacées ; icons=text : les symboles, espacés ; icône vide : le symbole collé
+		{cas: "complet", regles: "line1=git effort | model\ngit.counts=icons", voulu: []string{"main  1  2  3  2  1"}},
+		{cas: "complet", regles: "line1=git effort | model\ngit.counts=icons\nicons=text", voulu: []string{"main + 1 ● 2 ? 3 ↑ 2 ↓ 1"}},
+		{cas: "complet", regles: "line1=git effort | model\ngit.counts=icons\nicon.git.staged=", voulu: []string{"main +1  2"}},
 		// icône de la famille du modèle, même avec le nom raccourci ; sans Nerd Font, aucune
 		{cas: "complet", regles: "model.icon=writing", voulu: []string{"\U000f0bc2 Opus 5.5"}},
 		{cas: "api", regles: "model.icon=weight\nmodel.name=short", voulu: []string{"\U000f06d3 Haiku \U000f140c low"}},

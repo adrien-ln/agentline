@@ -58,6 +58,8 @@ var (
 		"reset": "", "fast": "\U000f0211", "effort.low": "\U000f140c", "effort.high": "\U000f140b", "signal": "●",
 		// effort sur 5 niveaux (effort.levels=5) : compteurs de vitesse, chrono rapide, fusée
 		"level.low": "\U000f0f86", "level.medium": "\U000f0f85", "level.high": "\U000f04c5", "level.xhigh": "\U000f0152", "level.max": "\U000f14de",
+		// compteurs git (git.counts=icons) : indexés, modifiés, nouveaux, en conflit, avance, retard
+		"git.staged": "", "git.modified": "", "git.untracked": "", "git.conflict": "", "git.ahead": "", "git.behind": "",
 		// état de la PR (pr.display=icon) : approuvée, à corriger, en revue, brouillon
 		"pr.approved": "", "pr.changes": "", "pr.review": "", "pr.draft": "",
 		// libellés en icônes (labels=icons) : puce mémoire, chronomètre, calendrier de la semaine, billets
@@ -66,6 +68,7 @@ var (
 	glyphesTexte = map[string]string{
 		"folder": "▸", "branch": "⎇", "worktree": "⊕", "pr": "PR", "alert": "!",
 		"reset": "↻", "fast": "»", "effort.low": "▿", "effort.high": "▴", "signal": "●",
+		"git.staged": "+", "git.modified": "●", "git.untracked": "?", "git.conflict": "×", "git.ahead": "↑", "git.behind": "↓",
 		"level.low": "▁", "level.medium": "▃", "level.high": "▅", "level.xhigh": "▇", "level.max": "█",
 		// sans Nerd Font, le mot ou le libellé en texte reste
 		"pr.approved": "", "pr.changes": "", "pr.review": "", "pr.draft": "",
@@ -74,6 +77,7 @@ var (
 	// nomsGlyphes : les icônes réglables une à une (icon.<nom>), dans l'ordre de « agentline style keys ».
 	nomsGlyphes = []string{"folder", "branch", "worktree", "pr", "alert", "reset", "fast", "effort.low", "effort.high", "signal",
 		"level.low", "level.medium", "level.high", "level.xhigh", "level.max",
+		"git.staged", "git.modified", "git.untracked", "git.conflict", "git.ahead", "git.behind",
 		"pr.approved", "pr.changes", "pr.review", "pr.draft", "ctx", "5h", "7d", "cost"}
 	// itemsGlyphes : l'item de chaque icône (vide : générale).
 	itemsGlyphes = map[string][]string{
@@ -81,6 +85,7 @@ var (
 		"alert": {"5h", "7d"}, "reset": {"5h", "7d"}, "fast": {"fast"}, "effort.low": {"effort"}, "effort.high": {"effort"},
 		"ctx": {"ctx"}, "5h": {"5h"}, "7d": {"7d"}, "cost": {"cost"},
 		"level.low": {"effort"}, "level.medium": {"effort"}, "level.high": {"effort"}, "level.xhigh": {"effort"}, "level.max": {"effort"},
+		"git.staged": {"git"}, "git.modified": {"git"}, "git.untracked": {"git"}, "git.conflict": {"git"}, "git.ahead": {"git"}, "git.behind": {"git"},
 		"pr.approved": {"pr"}, "pr.changes": {"pr"}, "pr.review": {"pr"}, "pr.draft": {"pr"},
 	}
 	// glyphesLibelles : les icônes qui remplacent un libellé (labels=icons) ; vides, le libellé reste.
@@ -197,6 +202,9 @@ var catalogue = func() []Cle {
 		if glyphesEtatPR[n] {
 			aide = i18n.M("icône %s, avec pr.display=icon (auto : selon icons ; vide : le mot)")
 		}
+		if strings.HasPrefix(n, "git.") {
+			aide = i18n.M("icône %s, avec git.counts=icons (auto : selon icons ; vide : le symbole)")
+		}
 		c = append(c, Cle{Nom: "icon." + n, Genre: Glyphe, Defaut: Auto, Items: itemsGlyphes[n], Aide: aide, aideArg: strings.ReplaceAll(n, ".", " ")})
 	}
 	return append(c,
@@ -206,6 +214,7 @@ var catalogue = func() []Cle {
 		Cle{Nom: "effort.display", Genre: Choix, Valeurs: []string{"icon+text", "icon", "text"}, Defaut: "icon+text", Items: []string{"effort"}, Aide: i18n.M("niveau d'effort : jauge et nom, jauge seule, nom seul")},
 		Cle{Nom: "effort.levels", Genre: Choix, Valeurs: []string{"2", "5"}, Defaut: "2", Items: []string{"effort"}, Aide: i18n.M("icônes de l'effort : 2 (bas, haut), ou une par niveau (icon.level.low … icon.level.max)")},
 		Cle{Nom: "git.status", Genre: Choix, Valeurs: []string{"detail", "summary"}, Defaut: "detail", Items: []string{"git"}, Aide: i18n.M("compteurs (+1 ●2 ?3), ou un seul signe (✓ ou *)")},
+		Cle{Nom: "git.counts", Genre: Choix, Valeurs: []string{"symbols", "icons"}, Defaut: "symbols", Items: []string{"git"}, Aide: i18n.M("signes des compteurs : symboles (+1 ●2), ou icônes espacées (icon.git.staged…)")},
 		Cle{Nom: "git.protected", Genre: Branches, Defaut: "main master", Items: []string{"git"}, Aide: i18n.M("branches où des changements non commités mettent la statusline en alerte (vide : jamais)"), SSH: true},
 		Cle{Nom: "git.upstream", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"git"}, Aide: i18n.M("commits d'avance et de retard (↑ ↓)")},
 		Cle{Nom: "pr.status", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"pr"}, Aide: i18n.M("état de la revue (approuvée, en revue…)")},

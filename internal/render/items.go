@@ -134,18 +134,25 @@ func itemGit(r *rendu, _ *etat.Session, court bool) (string, bool) {
 	s := ""
 	if g.branche != "" {
 		s += "  " + couleur + ico(r.iBranche) + g.branche + r.texte
+		// le signe d'un compteur : le symbole, ou son icône suivie d'une espace (git.counts=icons)
+		signe := func(nom, symbole string) string {
+			if i := r.o.signesGit[nom]; i != "" {
+				return i + " "
+			}
+			return symbole
+		}
 		compteurs := ""
 		if g.indexe != 0 {
-			compteurs += " +" + strconv.Itoa(g.indexe)
+			compteurs += " " + signe("git.staged", "+") + strconv.Itoa(g.indexe)
 		}
 		if g.modifie != 0 {
-			compteurs += " ●" + strconv.Itoa(g.modifie)
+			compteurs += " " + signe("git.modified", "●") + strconv.Itoa(g.modifie)
 		}
 		if g.neuf != 0 {
-			compteurs += " ?" + strconv.Itoa(g.neuf)
+			compteurs += " " + signe("git.untracked", "?") + strconv.Itoa(g.neuf)
 		}
 		if g.conflit != 0 {
-			compteurs += " " + r.rouge + gras + "×" + strconv.Itoa(g.conflit) + maigre + r.texte
+			compteurs += " " + r.rouge + gras + signe("git.conflict", "×") + strconv.Itoa(g.conflit) + maigre + r.texte
 		}
 		switch {
 		case !g.fiable:
@@ -162,10 +169,10 @@ func itemGit(r *rendu, _ *etat.Session, court bool) (string, bool) {
 			s += compteurs
 		}
 		if g.avance != 0 && r.o.gitAmont {
-			s += " " + r.texte + "↑" + strconv.Itoa(g.avance)
+			s += " " + r.texte + signe("git.ahead", "↑") + strconv.Itoa(g.avance)
 		}
 		if g.retard != 0 && r.o.gitAmont {
-			s += " " + r.orange + "↓" + strconv.Itoa(g.retard)
+			s += " " + r.orange + signe("git.behind", "↓") + strconv.Itoa(g.retard)
 		}
 	}
 	return s, g.conflit != 0 || protegee
