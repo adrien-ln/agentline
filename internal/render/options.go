@@ -18,7 +18,8 @@ type options struct {
 	gitResume, gitAmont     bool
 	protegees               map[string]bool // branches où des changements non commités sont une alerte
 	prEtat, prLien          bool
-	sessionMax              int // longueur au-delà de laquelle le nom de session est coupé
+	etatPR                  map[string]string // pr.display=icon : l'icône de chaque état (icon.pr.approved…)
+	sessionMax              int               // longueur au-delà de laquelle le nom de session est coupé
 
 	barre        [3]string // cases pleine, à moitié, éteinte
 	sansBarre    bool
@@ -102,6 +103,12 @@ func lireOptions(st *style.Style, ssh bool) options {
 	o.gitResume, o.gitAmont = v("git.status") == "summary", v("git.upstream") == style.Oui
 	o.protegees = branchesDe(v("git.protected"))
 	o.prEtat, o.prLien = v("pr.status") == style.Oui, v("pr.link") == style.Oui
+	if !ssh && v("pr.display") == "icon" {
+		o.etatPR = map[string]string{}
+		for _, n := range []string{"pr.approved", "pr.changes", "pr.review", "pr.draft"} {
+			o.etatPR[n] = st.Glyphe(n)
+		}
+	}
 	o.sessionMax = entierDe(v("session.max"))
 	if ssh {
 		o.barre, o.sansBarre = [3]string{"━", "╸", "─"}, false

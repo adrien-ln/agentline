@@ -178,6 +178,11 @@ func TestOptionsDuStyle(t *testing.T) {
 		{cas: "complet", regles: "labels=icons\nicon.ctx=C\nicon.7d=", voulu: []string{"C ━", "\U000f051b 61%", "· 7j 23%"}},
 		{cas: "complet", regles: "labels=icons\nicons=text", voulu: []string{"ctx ━", "· 5h 61%", "· 7j 23%"}},
 		{cas: "api", regles: "labels=icons\ncost.format=en", voulu: []string{"· \U000f0114 $4.98"}},
+		// état de la PR en icône ; sans Nerd Font ou icône vide, le mot reste
+		{cas: "complet", regles: "pr.display=icon", voulu: []string{"#42 "}, pas: []string{"en revue"}},
+		{cas: "api", regles: "pr.display=icon", voulu: []string{"#12 "}, pas: []string{"brouillon"}},
+		{cas: "tendu", regles: "pr.display=icon\nicon.pr.changes=!", voulu: []string{"#7 !"}, pas: []string{"à corriger"}},
+		{cas: "complet", regles: "pr.display=icon\nicons=text", voulu: []string{"#42 en revue"}},
 		// jauges en un glyphe, dans le jeu d'icônes : camembert du contexte, batterie (ce qui reste) ou camembert des quotas
 		{cas: "complet", regles: "ctx.bar=pie", voulu: []string{"ctx \U000f0aa0 42%"}, pas: []string{"━"}},
 		{cas: "complet", regles: "ctx.bar=pie\nicons=text", voulu: []string{"ctx ◑ 42%"}},

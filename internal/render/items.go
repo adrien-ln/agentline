@@ -187,15 +187,22 @@ func itemPR(r *rendu, s *etat.Session, _ bool) (string, bool) {
 	if !r.o.prEtat {
 		revue = ""
 	}
+	// l'état, en mot ou en icône (pr.display=icon ; une icône vide laisse le mot)
+	etat := func(couleur, mot, icone string) {
+		if r.o.etatPR[icone] != "" {
+			mot = r.o.etatPR[icone]
+		}
+		t += " " + couleur + mot
+	}
 	switch revue {
 	case "approved":
-		t += " " + r.vert + i18n.T("approuvée")
+		etat(r.vert, i18n.T("approuvée"), "pr.approved")
 	case "changes_requested":
-		t += " " + r.rouge + i18n.T("à corriger")
+		etat(r.rouge, i18n.T("à corriger"), "pr.changes")
 	case "pending":
-		t += " " + r.jaune + i18n.T("en revue")
+		etat(r.jaune, i18n.T("en revue"), "pr.review")
 	case "draft":
-		t += " " + r.discret + i18n.T("brouillon")
+		etat(r.discret, i18n.T("brouillon"), "pr.draft")
 	}
 	return t + z, false
 }

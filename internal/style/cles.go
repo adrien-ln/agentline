@@ -56,25 +56,32 @@ var (
 	glyphesNerd = map[string]string{
 		"folder": "", "branch": "", "worktree": "", "pr": "", "alert": "",
 		"reset": "", "fast": "\U000f0211", "effort.low": "\U000f140c", "effort.high": "\U000f140b", "signal": "●",
+		// état de la PR (pr.display=icon) : approuvée, à corriger, en revue, brouillon
+		"pr.approved": "", "pr.changes": "", "pr.review": "", "pr.draft": "",
 		// libellés en icônes (labels=icons) : puce mémoire, chronomètre, calendrier de la semaine, billets
 		"ctx": "\U000f035b", "5h": "\U000f051b", "7d": "\U000f0a33", "cost": "\U000f0114",
 	}
 	glyphesTexte = map[string]string{
 		"folder": "▸", "branch": "⎇", "worktree": "⊕", "pr": "PR", "alert": "!",
 		"reset": "↻", "fast": "»", "effort.low": "▿", "effort.high": "▴", "signal": "●",
-		"ctx": "", "5h": "", "7d": "", "cost": "", // sans Nerd Font, le libellé en texte reste
+		// sans Nerd Font, le mot ou le libellé en texte reste
+		"pr.approved": "", "pr.changes": "", "pr.review": "", "pr.draft": "",
+		"ctx": "", "5h": "", "7d": "", "cost": "",
 	}
 	// nomsGlyphes : les icônes réglables une à une (icon.<nom>), dans l'ordre de « agentline style keys ».
 	nomsGlyphes = []string{"folder", "branch", "worktree", "pr", "alert", "reset", "fast", "effort.low", "effort.high", "signal",
-		"ctx", "5h", "7d", "cost"}
+		"pr.approved", "pr.changes", "pr.review", "pr.draft", "ctx", "5h", "7d", "cost"}
 	// itemsGlyphes : l'item de chaque icône (vide : générale).
 	itemsGlyphes = map[string][]string{
 		"folder": {"folder"}, "branch": {"git"}, "worktree": {"worktree"}, "pr": {"pr"},
 		"alert": {"5h", "7d"}, "reset": {"5h", "7d"}, "fast": {"fast"}, "effort.low": {"effort"}, "effort.high": {"effort"},
 		"ctx": {"ctx"}, "5h": {"5h"}, "7d": {"7d"}, "cost": {"cost"},
+		"pr.approved": {"pr"}, "pr.changes": {"pr"}, "pr.review": {"pr"}, "pr.draft": {"pr"},
 	}
 	// glyphesLibelles : les icônes qui remplacent un libellé (labels=icons) ; vides, le libellé reste.
 	glyphesLibelles = map[string]bool{"ctx": true, "5h": true, "7d": true, "cost": true}
+	// glyphesEtatPR : les icônes qui remplacent l'état de la PR (pr.display=icon) ; vides, le mot reste.
+	glyphesEtatPR = map[string]bool{"pr.approved": true, "pr.changes": true, "pr.review": true, "pr.draft": true}
 	// Barres nommées de ctx.bar : pleine, à moitié, éteinte ; pie : pas de barre, un camembert (Jauge).
 	barres = map[string]string{"lines": "━╸─", "blocks": "█▌░", "dots": "●◐○", "pie": "", "none": ""}
 	// jauges : les glyphes d'une jauge en un caractère, du vide au plein, par forme et jeu d'icônes ; la
@@ -150,6 +157,9 @@ var catalogue = func() []Cle {
 		if glyphesLibelles[n] {
 			aide = i18n.M("icône %s, avec labels=icons (auto : selon icons ; vide : le libellé)")
 		}
+		if glyphesEtatPR[n] {
+			aide = i18n.M("icône %s, avec pr.display=icon (auto : selon icons ; vide : le mot)")
+		}
 		c = append(c, Cle{Nom: "icon." + n, Genre: Glyphe, Defaut: Auto, Items: itemsGlyphes[n], Aide: aide, aideArg: strings.ReplaceAll(n, ".", " ")})
 	}
 	return append(c,
@@ -160,6 +170,7 @@ var catalogue = func() []Cle {
 		Cle{Nom: "git.protected", Genre: Branches, Defaut: "main master", Items: []string{"git"}, Aide: i18n.M("branches où des changements non commités mettent la statusline en alerte (vide : jamais)"), SSH: true},
 		Cle{Nom: "git.upstream", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"git"}, Aide: i18n.M("commits d'avance et de retard (↑ ↓)")},
 		Cle{Nom: "pr.status", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"pr"}, Aide: i18n.M("état de la revue (approuvée, en revue…)")},
+		Cle{Nom: "pr.display", Genre: Choix, Valeurs: []string{"text", "icon"}, Defaut: "text", Items: []string{"pr"}, Aide: i18n.M("état de la revue en mots, ou en icône (icon.pr.approved, .changes, .review, .draft)")},
 		Cle{Nom: "pr.link", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"pr"}, Aide: i18n.M("numéro cliquable (lien OSC 8)")},
 		Cle{Nom: "session.max", Genre: Nombre, Min: 8, Max: 120, Defaut: "40", Items: []string{"session"}, Aide: i18n.M("longueur du nom de session avant coupure")},
 		Cle{Nom: "ctx.bar", Genre: Barre, Valeurs: []string{"lines", "blocks", "dots", "pie", "none"}, Defaut: "lines", Items: []string{"ctx"}, Aide: i18n.M("barre du contexte : lines, blocks, dots, pie (un camembert), none, ou 3 caractères (plein, moitié, vide)")},

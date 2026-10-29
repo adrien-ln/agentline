@@ -14,6 +14,8 @@ var style = map[string]string{
 	"en SSH (SSH_CONNECTION défini) : la ligne courte, sans icônes, au lieu de la statusline complète": "over SSH (SSH_CONNECTION set): the short line, without icons, instead of the full statusline",
 	"séparateur de la ligne courte (SSH)":                                                                      "separator of the short line (SSH)",
 	"icône %s (auto : selon icons ; vide : aucune)":                                                            "%s icon (auto: from icons; empty: none)",
+	"icône %s, avec pr.display=icon (auto : selon icons ; vide : le mot)":                                      "%s icon, with pr.display=icon (auto: from icons; empty: the word)",
+	"état de la revue en mots, ou en icône (icon.pr.approved, .changes, .review, .draft)":                      "review state in words, or as an icon (icon.pr.approved, .changes, .review, .draft)",
 	"icône %s, avec labels=icons (auto : selon icons ; vide : le libellé)":                                     "%s icon, with labels=icons (auto: from icons; empty: the label)",
 	"libellés du contexte, des quotas et du coût : texte, ou icônes (icon.ctx, icon.5h, icon.7d, icon.cost)":   "labels of the context, quotas and cost: text, or icons (icon.ctx, icon.5h, icon.7d, icon.cost)",
 	"nom du modèle en entier, ou son premier mot":                                                              "model name in full, or its first word",
