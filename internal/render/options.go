@@ -22,9 +22,12 @@ type options struct {
 
 	barre        [3]string // cases pleine, à moitié, éteinte
 	sansBarre    bool
-	largeurBarre int  // nombre de cases
-	ctxAlerte    int  // seuil d'alerte du contexte, en %
-	ctxCompact   bool // en alerte, rappeler /compact (Claude Code)
+	camembert    bool   // ctx.bar=pie : un glyphe au lieu de la barre
+	jaugeQuota   string // quota.gauge : none, battery, pie
+	jeu          string // jeu d'icônes (icons), pour les jauges en un glyphe
+	largeurBarre int    // nombre de cases
+	ctxAlerte    int    // seuil d'alerte du contexte, en %
+	ctxCompact   bool   // en alerte, rappeler /compact (Claude Code)
 	ctxLibelle   string
 
 	quotaAlerte               int // seuil d'alerte des quotas, en %
@@ -60,6 +63,8 @@ func optionsDefaut() options {
 		lib7j:        style.Libelle7j(),
 		coutAnglais:  !i18n.Francais(),
 		signal:       "●",
+		jaugeQuota:   "none",
+		jeu:          "nerd",
 	}
 }
 
@@ -103,6 +108,8 @@ func lireOptions(st *style.Style, ssh bool) options {
 	} else {
 		c, ok := st.CasesBarre()
 		o.barre, o.sansBarre = c, !ok
+		o.camembert = v("ctx.bar") == "pie"
+		o.jaugeQuota, o.jeu = v("quota.gauge"), v("icons")
 	}
 	o.largeurBarre = entierDe(v("ctx.width"))
 	o.ctxAlerte, o.ctxLibelle = entierDe(v("ctx.alert")), v("ctx.label")

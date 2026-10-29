@@ -219,3 +219,21 @@ func FuzzLire(f *testing.F) {
 		}
 	})
 }
+
+// TestJauge : les extrêmes de chaque forme, et une part non nulle jamais dessinée vide.
+func TestJauge(t *testing.T) {
+	for _, c := range []struct {
+		forme, jeu string
+		p          int
+		voulu      string
+	}{
+		{"pie", "nerd", 0, "\U000f0130"}, {"pie", "nerd", 1, "\U000f0a9e"}, {"pie", "nerd", 100, "\U000f0aa5"},
+		{"pie", "text", 0, "○"}, {"pie", "text", 50, "◑"}, {"pie", "text", 100, "●"}, {"pie", "none", 50, ""},
+		{"battery", "nerd", 0, "\U000f0079"}, {"battery", "nerd", 99, "\U000f007a"}, {"battery", "nerd", 100, "\U000f008e"},
+		{"battery", "text", 50, ""}, {"none", "nerd", 50, ""}, {"pie", "nerd", 140, "\U000f0aa5"},
+	} {
+		if g := Jauge(c.forme, c.jeu, c.p); g != c.voulu {
+			t.Errorf("Jauge(%s, %s, %d) = %q, attendu %q", c.forme, c.jeu, c.p, g, c.voulu)
+		}
+	}
+}

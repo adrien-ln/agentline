@@ -237,6 +237,9 @@ func itemCtx(r *rendu, s *etat.Session, court bool) (string, bool) {
 	if !court && !r.o.sansBarre {
 		t += r.barre(n, r.o.largeurBarre) + z + " "
 	}
+	if !court && r.o.camembert {
+		t += r.jauge("pie", n, alerte)
+	}
 	t += r.valeur(p, alerte)
 	// le geste qui libère le contexte, avant que l'auto-compact ne le fasse : une commande de Claude Code
 	if alerte && r.o.ctxCompact && !court && !r.sansIndice && s.Harness == "claude" {

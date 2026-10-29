@@ -237,6 +237,16 @@ func (r *rendu) valeur(v string, alerte bool) string {
 	return r.couleurValeur(n, alerte) + gras + v + "%" + z
 }
 
+// jauge : la jauge en un glyphe (style.Jauge) pour p %, dans la couleur de la valeur, suivie d'une espace ;
+// rien sans glyphe (forme none, ou absente du jeu d'icônes).
+func (r *rendu) jauge(forme string, p int, alerte bool) string {
+	g := style.Jauge(forme, r.o.jeu, p)
+	if g == "" {
+		return ""
+	}
+	return r.couleurValeur(p, alerte) + g + z + " "
+}
+
 // couleurValeur : la couleur d'une part de n %, rouge en alerte.
 func (r *rendu) couleurValeur(n int, alerte bool) string {
 	if alerte {
@@ -282,7 +292,7 @@ func (r *rendu) quota(nom, libelle, utilise, reset string, fenetre int64) (strin
 		}
 	}
 	alerte := ui >= int64(r.o.quotaAlerte) || plafond != ""
-	s := r.libelle(nom, libelle, r.couleurValeur(int(ui), alerte)) + r.valeur(u, alerte)
+	s := r.libelle(nom, libelle, r.couleurValeur(int(ui), alerte)) + r.jauge(r.o.jaugeQuota, int(ui), alerte) + r.valeur(u, alerte)
 	// Quota épuisé : la projection n'apprend plus rien (elle affichait ↗103 % à 100 %)
 	if r.o.projection && ind != ui && ind >= 75 && ui < 100 && plafond == "" {
 		s += " " + r.teinte(int(ind)) + "↗" + strconv.FormatInt(ind, 10) + "%" + z

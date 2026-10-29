@@ -154,6 +154,7 @@ var cli = map[string]string{
 	"Touches du sélecteur":                      "Picker keys",
 	"Pip (demi-blocs)":                          "Pip (half blocks)",
 	"barres du contexte":                        "context bars",
+	"jauges en un glyphe":                       "one-glyph gauges",
 	"cadres et flèches":                         "frames and arrows",
 	"La statusline avec ce thème et ce style :": "The statusline with this theme and style:",
 	"modifier un thème dans l'éditeur (un thème intégré : une copie)":                "edit a theme in the editor (a built-in theme: a copy)",

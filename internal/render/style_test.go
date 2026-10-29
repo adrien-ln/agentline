@@ -178,6 +178,14 @@ func TestOptionsDuStyle(t *testing.T) {
 		{cas: "complet", regles: "labels=icons\nicon.ctx=C\nicon.7d=", voulu: []string{"C ━", "\U000f051b 61%", "· 7j 23%"}},
 		{cas: "complet", regles: "labels=icons\nicons=text", voulu: []string{"ctx ━", "· 5h 61%", "· 7j 23%"}},
 		{cas: "api", regles: "labels=icons\ncost.format=en", voulu: []string{"· \U000f0114 $4.98"}},
+		// jauges en un glyphe, dans le jeu d'icônes : camembert du contexte, batterie (ce qui reste) ou camembert des quotas
+		{cas: "complet", regles: "ctx.bar=pie", voulu: []string{"ctx \U000f0aa0 42%"}, pas: []string{"━"}},
+		{cas: "complet", regles: "ctx.bar=pie\nicons=text", voulu: []string{"ctx ◑ 42%"}},
+		{cas: "complet", regles: "ctx.bar=pie\nicons=none", voulu: []string{"\nctx 42%"}},
+		{cas: "complet", regles: "quota.gauge=battery", voulu: []string{"5h \U000f007d 61%", "7j \U000f0081 23%"}},
+		{cas: "complet", regles: "quota.gauge=battery\nicons=text", voulu: []string{"5h 61%", "7j 23%"}},
+		{cas: "complet", regles: "quota.gauge=pie\nicons=text", voulu: []string{"5h ◑ 61%", "7j ◔ 23%"}},
+		{cas: "tendu", ssh: true, regles: "quota.gauge=battery\nctx.bar=pie", pas: []string{"\U000f007a", "\U000f007b", "\U000f0aa4"}},
 		{cas: "tendu", ssh: true, regles: "labels=icons", voulu: []string{"5h"}, pas: []string{"\U000f051b"}},
 		// SSH : disposition court, seuils, libellés, séparateur ; le reste garde la variante compacte
 		{cas: "tendu", ssh: true, regles: "short=5h | model\nsep.short=/\n5h.label=jour\nquota.alert=99\nicons=none\nmodel.name=full\nquota.limit=no",

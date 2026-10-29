@@ -75,9 +75,50 @@ var (
 	}
 	// glyphesLibelles : les icônes qui remplacent un libellé (labels=icons) ; vides, le libellé reste.
 	glyphesLibelles = map[string]bool{"ctx": true, "5h": true, "7d": true, "cost": true}
-	// Barres nommées de ctx.bar : pleine, à moitié, éteinte.
-	barres = map[string]string{"lines": "━╸─", "blocks": "█▌░", "dots": "●◐○", "none": ""}
+	// Barres nommées de ctx.bar : pleine, à moitié, éteinte ; pie : pas de barre, un camembert (Jauge).
+	barres = map[string]string{"lines": "━╸─", "blocks": "█▌░", "dots": "●◐○", "pie": "", "none": ""}
+	// jauges : les glyphes d'une jauge en un caractère, du vide au plein, par forme et jeu d'icônes ; la
+	// batterie se vide (elle montre ce qui reste), le camembert se remplit.
+	jauges = map[string]map[string][]string{
+		"pie": {
+			"nerd": {"\U000f0130", "\U000f0a9e", "\U000f0a9f", "\U000f0aa0", "\U000f0aa1", "\U000f0aa2", "\U000f0aa3", "\U000f0aa4", "\U000f0aa5"},
+			"text": {"○", "◔", "◑", "◕", "●"},
+		},
+		"battery": {
+			"nerd": {"\U000f008e", "\U000f007a", "\U000f007b", "\U000f007c", "\U000f007d", "\U000f007e", "\U000f007f", "\U000f0080", "\U000f0081", "\U000f0082", "\U000f0079"},
+		},
+	}
 )
+
+// GlyphesJauges : tous les glyphes des jauges, pour « agentline font test ».
+func GlyphesJauges() string {
+	var b strings.Builder
+	for _, forme := range []string{"pie", "battery"} {
+		for _, jeu := range []string{"nerd", "text"} {
+			b.WriteString(strings.Join(jauges[forme][jeu], ""))
+		}
+	}
+	return b.String()
+}
+
+// Jauge : le glyphe de la forme (pie, battery) pour p % utilisés, dans le jeu d'icônes ; vide si la forme
+// n'existe pas dans ce jeu (battery sans Nerd Font, icons=none). Une part non nulle n'est jamais vide.
+func Jauge(forme, jeu string, p int) string {
+	g := jauges[forme][jeu]
+	if len(g) == 0 {
+		return ""
+	}
+	p = max(0, min(100, p))
+	if forme == "battery" {
+		p = 100 - p
+	}
+	n := len(g) - 1
+	k := (p*n + 50) / 100
+	if k == 0 && p > 0 {
+		k = 1
+	}
+	return g[k]
+}
 
 // Auto : la valeur des icônes « selon le réglage icons », et des libellés et formats qui suivent la langue.
 const Auto = "auto"
@@ -121,7 +162,7 @@ var catalogue = func() []Cle {
 		Cle{Nom: "pr.status", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"pr"}, Aide: i18n.M("état de la revue (approuvée, en revue…)")},
 		Cle{Nom: "pr.link", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"pr"}, Aide: i18n.M("numéro cliquable (lien OSC 8)")},
 		Cle{Nom: "session.max", Genre: Nombre, Min: 8, Max: 120, Defaut: "40", Items: []string{"session"}, Aide: i18n.M("longueur du nom de session avant coupure")},
-		Cle{Nom: "ctx.bar", Genre: Barre, Valeurs: []string{"lines", "blocks", "dots", "none"}, Defaut: "lines", Items: []string{"ctx"}, Aide: i18n.M("barre du contexte : lines, blocks, dots, none, ou 3 caractères (plein, moitié, vide)")},
+		Cle{Nom: "ctx.bar", Genre: Barre, Valeurs: []string{"lines", "blocks", "dots", "pie", "none"}, Defaut: "lines", Items: []string{"ctx"}, Aide: i18n.M("barre du contexte : lines, blocks, dots, pie (un camembert), none, ou 3 caractères (plein, moitié, vide)")},
 		Cle{Nom: "ctx.width", Genre: Nombre, Min: 4, Max: 20, Defaut: "8", Items: []string{"ctx"}, Aide: i18n.M("cases de la barre du contexte")},
 		Cle{Nom: "ctx.alert", Genre: Nombre, Min: 1, Max: 100, Defaut: "85", Items: []string{"ctx"}, Aide: i18n.M("seuil d'alerte du contexte, en %"), SSH: true},
 		Cle{Nom: "ctx.compact", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: []string{"ctx"}, Aide: i18n.M("contexte en alerte : rappeler /compact (Claude Code)")},
@@ -129,6 +170,7 @@ var catalogue = func() []Cle {
 		Cle{Nom: "quota.alert", Genre: Nombre, Min: 1, Max: 100, Defaut: "90", Items: quotas, Aide: i18n.M("seuil d'alerte des quotas, en %"), SSH: true},
 		Cle{Nom: "quota.projection", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: quotas, Aide: i18n.M("projection à la fin de la fenêtre (↗)")},
 		Cle{Nom: "quota.limit", Genre: Choix, Valeurs: ouiNon, Defaut: Oui, Items: quotas, Aide: i18n.M("heure prévue du plafond, en alerte")},
+		Cle{Nom: "quota.gauge", Genre: Choix, Valeurs: []string{"none", "battery", "pie"}, Defaut: "none", Items: quotas, Aide: i18n.M("jauge devant chaque quota : aucune, batterie qui se vide (Nerd Font), camembert")},
 		Cle{Nom: "quota.reset", Genre: Choix, Valeurs: []string{"alert", "always", "never"}, Defaut: "alert", Items: quotas, Aide: i18n.M("heure de remise à zéro : en alerte, toujours, jamais")},
 		Cle{Nom: "5h.label", Genre: Libelle, Defaut: "5h", Items: []string{"5h"}, Aide: i18n.M("libellé du quota de 5 heures"), SSH: true},
 		Cle{Nom: "7d.label", Genre: Libelle, Defaut: Auto, Items: []string{"7d"}, Aide: i18n.M("libellé du quota de 7 jours (auto : 7j en français, 7d en anglais)"), SSH: true},

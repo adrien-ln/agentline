@@ -9,6 +9,7 @@ All notable changes to agentline are documented here. The format is based on [Ke
 - New themes: Catppuccin Latte, Gruvbox Light, Rosé Pine Dawn and GitHub Dark (official colors), and basic ones: Sobre, Contraste élevé, Classique, Papier. Seven themes are now made for a light background.
 - Themes come in three families, each a filter in the picker: popular (the official colors of a known theme), basic and original.
 - `labels=icons` replaces the context, 5h and 7d labels by Nerd Font icons drawn in the color of their value, and puts one before the cost; each is set with `icon.ctx`, `icon.5h`, `icon.7d` and `icon.cost`. Off by default.
+- One-glyph gauges: `ctx.bar=pie` draws the context as a pie chart, `quota.gauge=battery` (what is left) or `pie` (what is used) puts one before each quota, in the color of the value; without a Nerd Font the pie becomes ○◔◑◕●. Off by default.
 
 ### Changed
 
