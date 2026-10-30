@@ -43,19 +43,20 @@ const (
 
 type disposition struct {
 	agencement
-	logo     bool     // le titre en grandes lettres
-	fenetre  bool     // la mini-fenêtre (sinon l'aperçu de la statusline seule)
-	mascotte bool     // la place de Pip au-dessus de la fenêtre
-	lw, ww   int      // largeurs de la colonne de la liste et de la fenêtre
-	liste    int      // thèmes visibles
-	wh       int      // hauteur de la fenêtre
-	corps    int      // lignes entre l'en-tête et le pied
-	pied     []string // le pied de page (aide courte, recherche, ou panneau de validation)
+	logo      bool     // le titre en grandes lettres
+	fenetre   bool     // la mini-fenêtre (sinon l'aperçu de la statusline seule)
+	mascotte  bool     // la place de Pip au-dessus de la fenêtre
+	lw, ww    int      // largeurs de la colonne de la liste et de la fenêtre
+	liste     int      // thèmes visibles
+	wh        int      // hauteur de la fenêtre
+	corps     int      // lignes entre l'en-tête et le pied
+	pied      []string // le pied de page (aide courte, recherche, ou panneau de validation)
+	brouillon int      // lignes du brouillon en tête du pied (« Non enregistré », « ✓ Enregistré »)
 }
 
 func (m *Modele) disposer() disposition {
 	w, h := max(m.largeur, largeurMin), max(m.hauteur, hauteurMin)
-	d := disposition{pied: m.lignesPied(w - 1), mascotte: m.mascotte != mascotteMasquee}
+	d := disposition{pied: m.lignesPied(w - 1), brouillon: len(m.lignesBrouillon(w - 1)), mascotte: m.mascotte != mascotteMasquee}
 	reste := h - len(d.pied) - 1 // une ligne vide au-dessus du pied
 	if w < compacteLargeur || h < compacteHauteur {
 		d.agencement, d.lw, d.mascotte = compacte, w-1, false

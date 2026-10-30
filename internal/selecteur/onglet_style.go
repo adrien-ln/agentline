@@ -920,8 +920,9 @@ func (m *Modele) corpsStyle(nom string) []string {
 			corps = append(corps, marge+l)
 		}
 		corps = append(corps, marge+"  "+m.ligneChoix(nom, bw-2, bw-4))
-		// centré en hauteur, sur la place du plus long menu : rien ne saute quand un menu s'ouvre
-		haut := max((d.corps-len(corps)-1-hauteurMenuMax())/2, 0)
+		// centré en hauteur, sur la place du plus long menu, et comme si une ligne de brouillon était
+		// toujours au pied : rien ne saute quand un menu s'ouvre ou que « Non enregistré » apparaît
+		haut := max((d.corps+d.brouillon-1-len(corps)-1-hauteurMenuMax())/2, 0)
 		corps = append(make([]string, haut), corps...)
 		corps = append(corps, "")
 		for _, x := range m.blocMenu(bw - 2) {
