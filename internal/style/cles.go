@@ -10,11 +10,11 @@ import (
 	"github.com/adrien-ln/agentline/internal/i18n"
 )
 
-// Items : les items de la statusline, dans l'ordre de la disposition par défaut (le registre du rendu,
-// internal/render/items.go, a les mêmes noms : un test le vérifie). Les anciens noms français sont encore
-// lus (anciens.go).
+// Items : les items de la statusline, dans l'ordre de la disposition par défaut, puis ceux qu'on ajoute
+// soi-même (machine) ; le registre du rendu, internal/render/items.go, a les mêmes noms : un test le
+// vérifie. Les anciens noms français sont encore lus (anciens.go).
 var Items = []string{"model", "effort", "fast", "folder", "git", "worktree", "pr", "agent", "style", "session",
-	"ctx", "5h", "7d", "cost"}
+	"ctx", "5h", "7d", "cost", "machine"}
 
 // Les dispositions par défaut (« | » sépare les segments, l'espace colle les items d'un segment).
 const (
@@ -58,6 +58,8 @@ var (
 		"reset": "", "fast": "\U000f0211", "effort.low": "\U000f140c", "effort.high": "\U000f140b", "signal": "●",
 		// effort sur 5 niveaux (effort.levels=5) : compteurs de vitesse, chrono rapide, fusée
 		"level.low": "\U000f0f86", "level.medium": "\U000f0f85", "level.high": "\U000f04c5", "level.xhigh": "\U000f0152", "level.max": "\U000f14de",
+		// item machine : en SSH, dans un conteneur (sinon l'icône du système, GlypheSysteme)
+		"ssh": "\U000f08c0", "container": "\U000f0868",
 		// compteurs git (git.counts=icons) : indexés, modifiés, nouveaux, en conflit, avance, retard
 		"git.staged": "", "git.modified": "", "git.untracked": "", "git.conflict": "", "git.ahead": "", "git.behind": "",
 		// état de la PR (pr.display=icon) : approuvée, à corriger, en revue, brouillon
@@ -68,6 +70,7 @@ var (
 	glyphesTexte = map[string]string{
 		"folder": "▸", "branch": "⎇", "worktree": "⊕", "pr": "PR", "alert": "!",
 		"reset": "↻", "fast": "»", "effort.low": "▿", "effort.high": "▴", "signal": "●",
+		"ssh": "ssh", "container": "",
 		"git.staged": "+", "git.modified": "●", "git.untracked": "?", "git.conflict": "×", "git.ahead": "↑", "git.behind": "↓",
 		"level.low": "▁", "level.medium": "▃", "level.high": "▅", "level.xhigh": "▇", "level.max": "█",
 		// sans Nerd Font, le mot ou le libellé en texte reste
@@ -78,6 +81,7 @@ var (
 	nomsGlyphes = []string{"folder", "branch", "worktree", "pr", "alert", "reset", "fast", "effort.low", "effort.high", "signal",
 		"level.low", "level.medium", "level.high", "level.xhigh", "level.max",
 		"git.staged", "git.modified", "git.untracked", "git.conflict", "git.ahead", "git.behind",
+		"ssh", "container",
 		"pr.approved", "pr.changes", "pr.review", "pr.draft", "ctx", "5h", "7d", "cost"}
 	// itemsGlyphes : l'item de chaque icône (vide : générale).
 	itemsGlyphes = map[string][]string{
@@ -85,6 +89,7 @@ var (
 		"alert": {"5h", "7d"}, "reset": {"5h", "7d"}, "fast": {"fast"}, "effort.low": {"effort"}, "effort.high": {"effort"},
 		"ctx": {"ctx"}, "5h": {"5h"}, "7d": {"7d"}, "cost": {"cost"},
 		"level.low": {"effort"}, "level.medium": {"effort"}, "level.high": {"effort"}, "level.xhigh": {"effort"}, "level.max": {"effort"},
+		"ssh": {"machine"}, "container": {"machine"},
 		"git.staged": {"git"}, "git.modified": {"git"}, "git.untracked": {"git"}, "git.conflict": {"git"}, "git.ahead": {"git"}, "git.behind": {"git"},
 		"pr.approved": {"pr"}, "pr.changes": {"pr"}, "pr.review": {"pr"}, "pr.draft": {"pr"},
 	}
@@ -126,6 +131,22 @@ func IconeModele(jeuModele, icons, modele string) string {
 		}
 	}
 	return ""
+}
+
+// glyphesSystemes : l'icône de chaque système (runtime.GOOS), pour l'item machine.
+var glyphesSystemes = map[string]string{"windows": "\U000f05b3", "linux": "\U000f033d", "darwin": "\U000f0035"}
+
+// GlypheSysteme : l'icône du système goos dans le jeu d'icônes ; vide sans Nerd Font ou pour un autre système.
+func GlypheSysteme(jeu, goos string) string {
+	if jeu != "nerd" {
+		return ""
+	}
+	return glyphesSystemes[goos]
+}
+
+// GlyphesSystemes : les icônes des systèmes, pour « agentline font test ».
+func GlyphesSystemes() string {
+	return glyphesSystemes["windows"] + glyphesSystemes["linux"] + glyphesSystemes["darwin"]
 }
 
 // GlyphesModeles : les icônes de model.icon, jeu par jeu, pour « agentline font test ».

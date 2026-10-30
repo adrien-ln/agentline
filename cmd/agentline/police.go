@@ -97,6 +97,7 @@ var glyphesDivers = [][2]string{
 	{i18n.M("barres du contexte"), "━╸─█▌░●◐○"},
 	{i18n.M("jauges en un glyphe"), style.GlyphesJauges()},
 	{i18n.M("icônes des modèles"), style.GlyphesModeles()},
+	{i18n.M("icônes des systèmes"), style.GlyphesSystemes()},
 	{i18n.M("cadres et flèches"), "╭╮╰╯│↑↓←→↗↻✓×·"},
 }
 

@@ -256,6 +256,43 @@ func TestIconesLibellesCouleur(t *testing.T) {
 	}
 }
 
+// TestItemMachine : l'item machine, absent par défaut, ajouté à la 1re ligne : le système, le conteneur,
+// ou en SSH l'icône et le nom court de la machine ; sans Nerd Font, seul le nom en SSH reste.
+func TestItemMachine(t *testing.T) {
+	rendu := func(regles string, ssh, conteneur bool) string {
+		e := env(t, modes["riche"], t.TempDir())
+		e.GitFictif = &GitFictif{Branche: "main"}
+		e.Style = style.Lire([]byte(regles))
+		e.Systeme, e.Hote, e.Conteneur = "linux", "mc.tailnet.ts.net", conteneur
+		e.Getenv = func(k string) string {
+			if k == "SSH_CONNECTION" && ssh {
+				return "100.64.0.1 5555 100.64.0.2 22"
+			}
+			return ""
+		}
+		return ansi.Visible(Render(casJSON(t, "complet", "/x"), e))
+	}
+	if l := rendu("", true, false); strings.Contains(l, "mc") {
+		t.Errorf("par défaut, pas d'item machine : %q", l)
+	}
+	for _, c := range []struct {
+		regles         string
+		ssh, conteneur bool
+		voulu          string
+	}{
+		{"line1=machine | model", false, false, "\U000f033d │ Opus"},
+		{"line1=machine | model", false, true, "\U000f0868 │ Opus"},
+		{"line1=machine | model", true, false, "\U000f08c0 mc │ Opus"},
+		{"line1=machine | model\nicons=text", true, false, "ssh mc │ Opus"},
+		{"line1=machine | model\nicons=none", true, false, "mc │ Opus"},
+		{"line1=machine | model\nicons=text", false, false, "Opus"},
+	} {
+		if l := rendu(c.regles, c.ssh, c.conteneur); !strings.HasPrefix(l, c.voulu) {
+			t.Errorf("%q ssh %v conteneur %v : %q attendu au début de\n%s", c.regles, c.ssh, c.conteneur, c.voulu, l)
+		}
+	}
+}
+
 // TestStyleInvalideIgnore : un fichier de style truffé d'erreurs ne casse pas le rendu.
 func TestStyleInvalideIgnore(t *testing.T) {
 	if a, b := rendre(t, "complet", "", false, nil), rendre(t, "complet", "#!\nzut\nctx.width=99\nline1=model | ???\nicons=emoji\n=\n", false, nil); a != b {

@@ -63,6 +63,8 @@ func environnement() render.Env {
 	niveau, _, impose := niveauCouleurs(getenv, court)
 	themes := theme.Sources{Config: dossierConfig(), Integre: agentline.Themes, Windows: runtime.GOOS == "windows"}
 	fond, _ := themes.Fond(getenv)
+	hote, _ := os.Hostname()
+	_, dockerenv := os.Stat("/.dockerenv")
 	return render.Env{
 		Now: now, Loc: time.Local, Columns: colonnes,
 		SSH: court, SSHRiche: riche != 0,
@@ -71,6 +73,8 @@ func environnement() render.Env {
 		Themes: themes,
 		Getenv: getenv,
 		Style:  st,
+		// item machine : le nom ne sert qu'en SSH, le conteneur se reconnaît à /.dockerenv ou $container
+		Systeme: runtime.GOOS, Hote: hote, Conteneur: dockerenv == nil || getenv("container") != "",
 	}
 }
 

@@ -31,7 +31,11 @@ type Env struct {
 	TempDir          string        // dossier du cache git
 	GitDelai         time.Duration // AGENTLINE_GIT_TIMEOUT
 	Themes           theme.Sources
-	Getenv           func(string) string // AGENTLINE_THEME, AGENTLINE_PALETTE
+	Getenv           func(string) string // AGENTLINE_THEME, AGENTLINE_PALETTE, SSH_CONNECTION
+	// La machine, pour l'item machine : son système (runtime.GOOS ; vide : celui-ci), son nom, et si l'on
+	// est dans un conteneur.
+	Systeme, Hote string
+	Conteneur     bool
 	// GitFictif : état git imposé (aperçu du sélecteur, sans dépôt ni processus) ; nil : lu dans le dépôt.
 	GitFictif *GitFictif
 	Style     *style.Style // nil : le style par défaut
@@ -106,6 +110,7 @@ type rendu struct {
 
 	iDossier, iBranche, iWorktree, iPR, iAlerte, iReset, iRapide, iEffortBas, iEffort string
 	iNiveaux                                                                          [5]string // effort.levels=5
+	iSSH, iConteneur                                                                  string    // item machine
 	cIDossier                                                                         string    // couleur de l'icône du dossier (celle du langage : folder.icon=language)
 
 	o    options
@@ -476,6 +481,7 @@ func preparer(ss etat.Session, env Env) *rendu {
 		for i, n := range []string{"low", "medium", "high", "xhigh", "max"} {
 			r.iNiveaux[i] = st.Glyphe("level." + n)
 		}
+		r.iSSH, r.iConteneur = st.Glyphe("ssh"), st.Glyphe("container")
 	}
 	r.cIDossier = r.dossier
 	// folder.icon=language : l'icône du langage du projet (Nerd Font seulement), discrète par défaut

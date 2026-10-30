@@ -22,7 +22,8 @@ func TestNouvelleLigne(t *testing.T) {
 	nouvelleLigne("model inconnu", "·")
 }
 
-// TestDispositionDefautComplete : la version longue utilise chaque item du registre une fois.
+// TestDispositionDefautComplete : la version longue utilise chaque item du registre une fois, sauf ceux
+// qu'on ajoute soi-même (machine), absents.
 func TestDispositionDefautComplete(t *testing.T) {
 	vus := map[string]int{}
 	for _, l := range dispositionDefaut.lignes {
@@ -32,8 +33,8 @@ func TestDispositionDefautComplete(t *testing.T) {
 			}
 		}
 	}
-	for n := range items {
-		if vus[n] != 1 {
+	for n, d := range items {
+		if voulu := map[bool]int{false: 1, true: 0}[d.ajoute]; vus[n] != voulu {
 			t.Errorf("item %s : %d fois dans la disposition par défaut", n, vus[n])
 		}
 	}

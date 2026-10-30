@@ -1,6 +1,7 @@
 package render
 
 import (
+	"runtime"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -21,11 +22,13 @@ import (
 type item func(r *rendu, s *etat.Session, court bool) (texte string, alerte bool)
 
 // defItem : un item du registre ; ouvert : en version longue, il laisse ses couleurs ouvertes pour
-// l'item suivant, et le composeur ferme le segment par z ; colle : il porte son espace de tête.
+// l'item suivant, et le composeur ferme le segment par z ; colle : il porte son espace de tête ; ajoute :
+// absent de la disposition par défaut, on l'ajoute soi-même.
 type defItem struct {
 	f      item
 	ouvert bool
 	colle  bool
+	ajoute bool
 }
 
 var items = map[string]defItem{
@@ -43,6 +46,7 @@ var items = map[string]defItem{
 	"5h":       {f: itemQuota5h},
 	"7d":       {f: itemQuota7j},
 	"cost":     {f: itemCout},
+	"machine":  {f: itemMachine, ajoute: true},
 }
 
 func itemModele(r *rendu, s *etat.Session, court bool) (string, bool) {
@@ -293,6 +297,29 @@ func itemCout(r *rendu, s *etat.Session, _ bool) (string, bool) {
 		return "", false
 	}
 	return r.texte + ico(r.o.icCout) + c + z, false
+}
+
+// itemMachine : où tourne la session : en SSH, l'icône et le nom de la machine ; dans un conteneur, son
+// icône ; sinon l'icône du système. Discret ; rien sans icône (sauf le nom en SSH).
+func itemMachine(r *rendu, _ *etat.Session, _ bool) (string, bool) {
+	var t string
+	switch {
+	case r.env.Getenv != nil && r.env.Getenv("SSH_CONNECTION") != "":
+		h, _, _ := strings.Cut(r.env.Hote, ".")
+		t = strings.TrimSpace(ico(r.iSSH) + h)
+	case r.env.Conteneur:
+		t = r.iConteneur
+	default:
+		s := r.env.Systeme
+		if s == "" {
+			s = runtime.GOOS
+		}
+		t = style.GlypheSysteme(r.o.jeu, s)
+	}
+	if t == "" {
+		return "", false
+	}
+	return r.discret + t + z, false
 }
 
 // ligne : les segments d'une ligne, chacun la liste de ses items, et le caractère qui les sépare.
