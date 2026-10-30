@@ -4,6 +4,8 @@ All notable changes to agentline are documented here. The format is based on [Ke
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-30
+
 ### Added
 
 - New themes: Catppuccin Latte, Gruvbox Light, Rosé Pine Dawn and GitHub Dark (official colors), and basic ones: Sobre, Contraste élevé, Classique, Papier. Seven themes are now made for a light background.
@@ -127,7 +129,8 @@ First public release.
 - English and French; 256 colors, 16 colors and no color; light and dark backgrounds.
 - Release binaries for Windows, Linux and macOS (amd64 and arm64) with `SHA256SUMS` and build provenance.
 
-[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/adrien-ln/agentline/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/adrien-ln/agentline/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/adrien-ln/agentline/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/adrien-ln/agentline/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/adrien-ln/agentline/compare/v0.4.0...v0.5.0
