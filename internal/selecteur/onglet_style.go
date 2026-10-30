@@ -346,7 +346,7 @@ func valeursDe(c style.Cle, actuelle string) []string {
 		} else {
 			v = []string{c.Defaut, "│", "·", "|", "/", "•", "»", ""}
 		}
-	case style.Libelle, style.Branches:
+	case style.Libelle, style.Branches, style.Couleurs:
 		v = []string{c.Defaut, ""}
 	}
 	var u []string
@@ -421,7 +421,7 @@ func (o *ongletStyle) entrer() {
 
 // saisissable : l'option se règle aussi en tapant sa valeur.
 func saisissable(c style.Cle) bool {
-	return c.Genre == style.Libelle || c.Genre == style.Glyphe || c.Genre == style.Barre || c.Genre == style.Branches
+	return c.Genre == style.Libelle || c.Genre == style.Glyphe || c.Genre == style.Barre || c.Genre == style.Branches || c.Genre == style.Couleurs
 }
 
 // valider : Entrée pendant la saisie ; une valeur refusée (glyphe trop large…) le dit et reste à corriger.
@@ -602,9 +602,16 @@ func (r apercuRendu) dessine(item string) bool {
 func surligner(s string, debut, fin int, marque string) string {
 	var b strings.Builder
 	vus := 0
+	fond := "" // le fond en cours (statusline en blocs, sep.style) : la fin de la marque le remet
 	dedans := func() bool { return vus >= debut && vus < fin }
 	for len(s) > 0 {
 		if n := longueurSequence(s); n > 0 {
+			switch seq := s[:n]; {
+			case strings.HasPrefix(seq, "\x1b[48;"):
+				fond = seq
+			case seq == z:
+				fond = ""
+			}
 			b.WriteString(s[:n])
 			s = s[n:]
 			if dedans() && vus > debut {
@@ -616,7 +623,7 @@ func surligner(s string, debut, fin int, marque string) string {
 			b.WriteString(marque)
 		}
 		if vus == fin {
-			b.WriteString(finSurligne)
+			b.WriteString(finSurligne + fond)
 		}
 		_, t := utf8.DecodeRuneInString(s)
 		b.WriteString(s[:t])

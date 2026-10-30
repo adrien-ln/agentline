@@ -89,7 +89,7 @@ Compared with [ccstatusline](https://github.com/sirmalloc/ccstatusline), the mos
 | Time per render | about 50 ms (measured above) | 1.1 s with `npx`, 0.2 to 0.6 s with `bunx` (from its README) |
 | Network | none | its usage and Claude status widgets call online services |
 | Tools | Claude Code, Antigravity CLI, Copilot CLI | Claude Code |
-| Customization | 40 themes (popular, basic and original), per project or branch; items shown, hidden and moved with `agentline style` | many more widgets (Jujutsu, CI status, cache timer, extra usage…), Powerline, gradients, any number of lines |
+| Customization | 40 themes (popular, basic and original), per project or branch; items shown, hidden and moved with `agentline style`, Powerline blocks, Nerd Font icons and one-glyph gauges | many more widgets (Jujutsu, CI status, cache timer, extra usage…), gradients, any number of lines |
 
 If you want every widget and Powerline, ccstatusline does more. If you want a fast, offline statusline that follows your projects and branches, that is what agentline is for.
 

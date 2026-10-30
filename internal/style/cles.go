@@ -1,6 +1,8 @@
 package style
 
 import (
+	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -35,6 +37,7 @@ const (
 	Disposition              // des items, « | » entre les segments
 	ListeItems               // des items séparés par des espaces
 	Branches                 // des noms de branches séparés par des espaces (vide permis)
+	Couleurs                 // des « item=couleur » séparés par des espaces (vide permis)
 )
 
 // Cle : une option du style. C'est la seule description des options : la CLI (agentline style keys), le
@@ -213,6 +216,8 @@ var catalogue = func() []Cle {
 		{Nom: "sep.line1", Genre: Glyphe, Defaut: "│", Aide: i18n.M("séparateur des segments de la 1re ligne")},
 		{Nom: "sep.line2", Genre: Glyphe, Defaut: "·", Aide: i18n.M("séparateur des segments de la 2e ligne")},
 		{Nom: "sep.short", Genre: Glyphe, Defaut: "·", Aide: i18n.M("séparateur de la ligne courte (SSH)"), SSH: true},
+		{Nom: "sep.style", Genre: Choix, Valeurs: []string{"plain", "arrow", "round", "slant"}, Defaut: "plain", Aide: i18n.M("forme des segments : séparés par sep.line1 et sep.line2, ou en blocs de couleur (Powerline : flèche, arrondi, biseau ; Nerd Font)")},
+		{Nom: "sep.colors", Genre: Couleurs, Defaut: "", Aide: i18n.M("en blocs : couleur des segments, d'après leur premier item, « item=couleur » (rôle du thème ou rrggbb), ex. folder=d0 model=ff8800")},
 		{Nom: "ssh.short", Genre: Choix, Valeurs: ouiNon, Defaut: Non, Aide: i18n.M("en SSH (SSH_CONNECTION défini) : la ligne courte, sans icônes, au lieu de la statusline complète"), SSH: true},
 	}
 	for _, n := range nomsGlyphes {
@@ -435,8 +440,40 @@ func (c Cle) Valider(v string) error {
 			}
 		}
 		return nil
+	case Couleurs:
+		for _, x := range strings.Fields(v) {
+			n, coul, ok := strings.Cut(x, "=")
+			if _, connu := NomItem(n); !ok || !connu {
+				return Erreur(i18n.T("« %s » : item=couleur attendu (items : %s)", x, strings.Join(Items, ", ")))
+			}
+			if !CouleurValide(coul) {
+				return Erreur(i18n.T("couleur inconnue : %s (un rôle : %s ; ou un code rrggbb)", coul, strings.Join(Roles, ", ")))
+			}
+		}
+		return nil
 	}
 	return Erreur(i18n.T("option inconnue"))
+}
+
+// Roles : les couleurs du thème qu'une option peut nommer (sep.colors), en anglais comme dans les thèmes.
+var Roles = []string{"text", "muted", "sep", "dim", "model", "model_end", "folder", "branch",
+	"d0", "d50", "d75", "d100", "i1", "i2", "i3", "i4", "i5"}
+
+var hexa = regexp.MustCompile(`^#?[0-9a-fA-F]{6}$`)
+
+// CouleurValide : un rôle de Roles, ou un code rrggbb (# permis).
+func CouleurValide(c string) bool { return slices.Contains(Roles, c) || hexa.MatchString(c) }
+
+// CouleursItems : sep.colors lu : item (nom anglais) -> rôle ou code rrggbb (sans #, en minuscules).
+func CouleursItems(v string) map[string]string {
+	m := map[string]string{}
+	for _, x := range strings.Fields(v) {
+		n, c, _ := strings.Cut(x, "=")
+		if i, ok := NomItem(n); ok && CouleurValide(c) {
+			m[i] = strings.ToLower(strings.TrimPrefix(c, "#"))
+		}
+	}
+	return m
 }
 
 func itemInconnu(n string) error {

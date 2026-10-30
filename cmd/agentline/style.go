@@ -195,6 +195,8 @@ func permis(c style.Cle) string {
 		return i18n.T("items, « | »")
 	case style.Branches:
 		return i18n.T("branches")
+	case style.Couleurs:
+		return i18n.T("item=couleur")
 	}
 	return "items"
 }

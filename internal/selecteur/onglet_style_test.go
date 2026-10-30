@@ -456,6 +456,14 @@ func TestSurligner(t *testing.T) {
 			t.Errorf("%q [%d:%d] : %q, attendu %q", c.s, c.debut, c.fin, obtenu, c.attendu)
 		}
 	}
+	// dans un bloc de couleur (sep.style), la fin de la marque remet le fond du bloc, qu'un z avait fini
+	bloc := "\x1b[48;2;1;2;3m abc def \x1b[0mz"
+	if s := surligner(bloc, 1, 4, souligne); !strings.Contains(s, finSurligne+"\x1b[48;2;1;2;3m def") {
+		t.Errorf("fond du bloc perdu après la marque : %q", s)
+	}
+	if s := surligner(bloc, 9, 10, souligne); strings.Contains(s, finSurligne+"\x1b[48") {
+		t.Errorf("après un z, plus de fond à remettre : %q", s)
+	}
 }
 
 // TestStyleCentre : sur un grand écran, l'aperçu descend vers le milieu, et ne bouge pas quand un menu

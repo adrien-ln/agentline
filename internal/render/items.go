@@ -372,17 +372,24 @@ func (r *rendu) composer(s *etat.Session, d disposition) string {
 	}
 	var sortie strings.Builder
 	k := 0 // lignes écrites
+	blocs := !court && r.blocs()
 	for _, l := range lignes {
 		r.indice = false
-		segments, places := r.segmentsDe(l, s, court)
+		segments, places, infos := r.segmentsDe(l, s, court)
 		if len(segments) > 0 {
 			sep := " " + couleur + l.sep + z + " "
-			texte, debuts := r.afficher(sep, segments)
+			afficher := func() (string, []int) {
+				if blocs {
+					return r.afficherBlocs(segments, infos)
+				}
+				return r.afficher(sep, segments)
+			}
+			texte, debuts := afficher()
 			if len(debuts) < len(segments) && r.indice { // trop large : les indices cèdent leur place aux segments
 				r.sansIndice = true
-				segments, places = r.segmentsDe(l, s, court)
+				segments, places, infos = r.segmentsDe(l, s, court)
 				r.sansIndice = false
-				texte, debuts = r.afficher(sep, segments)
+				texte, debuts = afficher()
 			}
 			sortie.WriteString(texte)
 			if r.places != nil {
@@ -399,10 +406,16 @@ func (r *rendu) composer(s *etat.Session, d disposition) string {
 	return sortie.String()
 }
 
+// infoSegment : ce qui décide de la couleur d'un segment en blocs : son premier item affiché, son alerte.
+type infoSegment struct {
+	premier string
+	alerte  bool
+}
+
 // segmentsDe : les segments d'une ligne, chacun avec les colonnes de ses items (relatives au segment).
-func (r *rendu) segmentsDe(l ligne, s *etat.Session, court bool) (segments []string, places [][]Place) {
+func (r *rendu) segmentsDe(l ligne, s *etat.Session, court bool) (segments []string, places [][]Place, infos []infoSegment) {
 	for _, seg := range l.segments {
-		texte, alerte, ouvert := "", false, false
+		texte, alerte, ouvert, premier := "", false, false, ""
 		var ps []Place
 		for _, n := range seg {
 			if r.o.masque[n] {
@@ -417,6 +430,9 @@ func (r *rendu) segmentsDe(l ligne, s *etat.Session, court bool) (segments []str
 				t = " " + t
 			}
 			if v := ansi.Visible(t); strings.TrimSpace(v) != "" {
+				if premier == "" {
+					premier = n
+				}
 				debut := visibles(ansi.Visible(texte)) + visibles(v) - visibles(strings.TrimLeft(v, " "))
 				ps = append(ps, Place{Item: n, Debut: debut, Fin: visibles(ansi.Visible(texte)) + visibles(strings.TrimRight(v, " "))})
 			}
@@ -437,8 +453,9 @@ func (r *rendu) segmentsDe(l ligne, s *etat.Session, court bool) (segments []str
 		}
 		segments = append(segments, texte)
 		places = append(places, ps)
+		infos = append(infos, infoSegment{premier, alerte})
 	}
-	return segments, places
+	return segments, places, infos
 }
 
 // Place : où un item est dessiné : sa ligne (0 : la première écrite), ses colonnes de début et de fin

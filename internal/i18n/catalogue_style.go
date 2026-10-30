@@ -56,9 +56,13 @@ var style = map[string]string{
 	"un nombre de %d à %d":                                             "a number from %d to %d",
 	"%d caractères au plus":                                            "%d characters at most",
 	"nom de branche invalide : %s":                                     "invalid branch name: %s",
-	"%s, ou exactement 3 caractères (plein, moitié, vide)":             "%s, or exactly 3 characters (full, half, empty)",
-	"option inconnue":                                                  "unknown option",
-	"option inconnue : %s":                                             "unknown option: %s",
+	"« %s » : item=couleur attendu (items : %s)":                       "\"%s\": item=color expected (items: %s)",
+	"couleur inconnue : %s (un rôle : %s ; ou un code rrggbb)":         "unknown color: %s (a role: %s; or an rrggbb code)",
+	"forme des segments : séparés par sep.line1 et sep.line2, ou en blocs de couleur (Powerline : flèche, arrondi, biseau ; Nerd Font)":  "segment shape: split by sep.line1 and sep.line2, or color blocks (Powerline: arrow, round, slant; Nerd Font)",
+	"en blocs : couleur des segments, d'après leur premier item, « item=couleur » (rôle du thème ou rrggbb), ex. folder=d0 model=ff8800": "in blocks: the color of segments, from their first item, \"item=color\" (a theme role or rrggbb), e.g. folder=d0 model=ff8800",
+	"%s, ou exactement 3 caractères (plein, moitié, vide)":                                                                               "%s, or exactly 3 characters (full, half, empty)",
+	"option inconnue":      "unknown option",
+	"option inconnue : %s": "unknown option: %s",
 	"# Style de la statusline : agentline style keys pour les options, agentline style pour les régler.\n": "# Statusline style: agentline style keys for the options, agentline style to set them.\n",
 
 	// Sources des thèmes

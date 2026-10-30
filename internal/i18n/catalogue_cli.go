@@ -104,6 +104,7 @@ var cli = map[string]string{
 	"texte":                                "text",
 	"glyphe":                               "glyph",
 	"branches":                             "branches",
+	"item=couleur":                         "item=color",
 	"|3 car.":                              "|3 chars",
 	"items, « | »":                         "items, \"|\"",
 	" (aussi en SSH)":                      " (also over SSH)",

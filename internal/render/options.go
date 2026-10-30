@@ -45,33 +45,38 @@ type options struct {
 	coutToujours, coutAnglais bool
 
 	signal string // devant un segment en alerte
+
+	forme         string            // sep.style : plain, ou en blocs (arrow, round, slant)
+	couleursBlocs map[string]string // sep.colors : le rôle ou le code du fond de chaque item
 }
 
 func optionsDefaut() options {
 	return options{
-		disp:         dispositionDefaut,
-		effort:       "icon+text",
-		iconeModele:  "none",
-		gitAmont:     true,
-		protegees:    branchesDe("main master"),
-		prEtat:       true,
-		prLien:       true,
-		sessionMax:   40,
-		barre:        [3]string{"━", "╸", "─"},
-		largeurBarre: largeurBarre,
-		ctxAlerte:    85,
-		ctxCompact:   true,
-		ctxLibelle:   "ctx",
-		quotaAlerte:  90,
-		projection:   true,
-		plafond:      true,
-		reset:        "alert",
-		lib5h:        "5h",
-		lib7j:        style.Libelle7j(),
-		coutAnglais:  !i18n.Francais(),
-		signal:       "●",
-		jaugeQuota:   "none",
-		jeu:          "nerd",
+		disp:          dispositionDefaut,
+		effort:        "icon+text",
+		iconeModele:   "none",
+		gitAmont:      true,
+		protegees:     branchesDe("main master"),
+		prEtat:        true,
+		prLien:        true,
+		sessionMax:    40,
+		barre:         [3]string{"━", "╸", "─"},
+		largeurBarre:  largeurBarre,
+		ctxAlerte:     85,
+		ctxCompact:    true,
+		ctxLibelle:    "ctx",
+		quotaAlerte:   90,
+		projection:    true,
+		plafond:       true,
+		reset:         "alert",
+		lib5h:         "5h",
+		lib7j:         style.Libelle7j(),
+		coutAnglais:   !i18n.Francais(),
+		signal:        "●",
+		jaugeQuota:    "none",
+		forme:         "plain",
+		couleursBlocs: map[string]string{},
+		jeu:           "nerd",
 	}
 }
 
@@ -152,6 +157,7 @@ func lireOptions(st *style.Style, ssh bool) options {
 	o.coutToujours, o.coutAnglais = v("cost.when") == "always", style.CoutAnglais(v("cost.format"))
 	if !ssh {
 		o.signal = st.Glyphe("signal")
+		o.forme, o.couleursBlocs = v("sep.style"), style.CouleursItems(v("sep.colors"))
 	}
 	return o
 }
